@@ -1,0 +1,15 @@
+{
+  "name": "martin3r/platform-helpdesk",
+  "autoload": {
+    "psr-4": {
+      "Platform\\Helpdesk\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Platform\\Helpdesk\\HelpdeskServiceProvider"
+      ]
+    }
+  }
+}
