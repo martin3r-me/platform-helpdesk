@@ -4,10 +4,18 @@ namespace Platform\Helpdesk;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Platform\Core\PlatformCore;
 use Platform\Core\Routing\ModuleRouter;
+
+// Optional: Models und Policies absichern
+use Platform\Helpdesk\Models\HelpdeskTicket;
+use Platform\Helpdesk\Models\HelpdeskBoard;
+use Platform\Helpdesk\Policies\HelpdeskTicketPolicy;
+use Platform\Helpdesk\Policies\HelpdeskBoardPolicy;
+
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
@@ -15,18 +23,13 @@ class HelpdeskServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Falls in Zukunft Artisan Commands o.ä. nötig sind, hier rein
+        // Reserve für zukünftige Command-Registrierung
     }
 
     public function boot(): void
     {
-
-        $this->mergeConfigFrom(__DIR__.'/../config/helpdesk.php', 'helpdesk');
-
-        // Modul sicher registrieren (nur wenn Config und Tabelle vorhanden)
+        // Modul-Registrierung nur, wenn Config & Tabelle vorhanden
         if (
-            config()->has('helpdesk.routing') &&
-            config()->has('helpdesk.navigation') &&
             Schema::hasTable('modules')
         ) {
             PlatformCore::registerModule([
@@ -36,10 +39,11 @@ class HelpdeskServiceProvider extends ServiceProvider
                 'guard'      => config('helpdesk.guard'),
                 'navigation' => config('helpdesk.navigation'),
                 'sidebar'    => config('helpdesk.sidebar'),
+                'billables'  => config('helpdesk.billables'),
             ]);
         }
 
-        // Routen nur laden, wenn das Modul korrekt registriert wurde
+        // Routen nur laden, wenn das Modul registriert wurde
         if (PlatformCore::getModule('helpdesk')) {
             ModuleRouter::group('helpdesk', function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/guest.php');
@@ -50,16 +54,26 @@ class HelpdeskServiceProvider extends ServiceProvider
             });
         }
 
-        // Config veröffentlichen & mergen
+        // Config veröffentlichen & zusammenführen
         $this->publishes([
             __DIR__.'/../config/helpdesk.php' => config_path('helpdesk.php'),
         ], 'config');
 
-        
+        $this->mergeConfigFrom(__DIR__.'/../config/helpdesk.php', 'helpdesk');
 
-        // Views & Livewire-Komponenten
+        // Migrations, Views, Livewire-Komponenten
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'helpdesk');
         $this->registerLivewireComponents();
+
+        // Policies nur registrieren, wenn Klassen vorhanden sind
+        if (class_exists(HelpdeskTicket::class) && class_exists(HelpdeskTicketPolicy::class)) {
+            Gate::policy(HelpdeskTicket::class, HelpdeskTicketPolicy::class);
+        }
+
+        if (class_exists(HelpdeskBoard::class) && class_exists(HelpdeskBoardPolicy::class)) {
+            Gate::policy(HelpdeskBoard::class, HelpdeskBoardPolicy::class);
+        }
     }
 
     protected function registerLivewireComponents(): void
@@ -89,7 +103,7 @@ class HelpdeskServiceProvider extends ServiceProvider
                 continue;
             }
 
-            // crm.contact.index aus crm + contact/index.php
+            // helpdesk.ticket.index aus helpdesk + ticket/index.php
             $aliasPath = str_replace(['\\', '/'], '.', Str::kebab(str_replace('.php', '', $relativePath)));
             $alias = $prefix . '.' . $aliasPath;
 

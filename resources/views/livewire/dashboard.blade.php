@@ -1,5 +1,236 @@
-<div>
-	HELPDESK Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc,
+<div class="h-full overflow-y-auto p-6">
+    <!-- Header mit Datum und Perspektive-Toggle -->
+    <div class="mb-6">
+        <div class="d-flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Helpdesk Dashboard</h1>
+                <p class="text-gray-600">{{ $currentDay }}, {{ $currentDate }}</p>
+            </div>
+            <div class="d-flex items-center gap-4">
+                <!-- Perspektive-Toggle -->
+                <div class="d-flex bg-gray-100 rounded-lg p-1">
+                    <button 
+                        wire:click="$set('perspective', 'personal')"
+                        class="px-4 py-2 rounded-md text-sm font-medium transition"
+                        :class="'{{ $perspective }}' === 'personal' 
+                            ? 'bg-success text-on-success shadow-sm' 
+                            : 'text-gray-600 hover:text-gray-900'"
+                    >
+                        <div class="d-flex items-center gap-2">
+                            @svg('heroicon-o-user', 'w-4 h-4')
+                            <span>Persönlich</span>
+                        </div>
+                    </button>
+                    <button 
+                        wire:click="$set('perspective', 'team')"
+                        class="px-4 py-2 rounded-md text-sm font-medium transition"
+                        :class="'{{ $perspective }}' === 'team' 
+                            ? 'bg-success text-on-success shadow-sm' 
+                            : 'text-gray-600 hover:text-gray-900'"
+                    >
+                        <div class="d-flex items-center gap-2">
+                            @svg('heroicon-o-users', 'w-4 h-4')
+                            <span>Team</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-	Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu. In enim justo, rhoncus ut, imperdiet a, venenatis vitae, justo. Nullam dictum felis eu pede mollis pretium. Integer tincidunt. Cras dapibus. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus. Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet. Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus, sem quam semper libero, sit amet adipiscing sem neque sed ipsum. Nam quam nunc, blandit vel, luctus pulvinar, hendrerit id, lorem. Maecenas nec odio et ante tincidunt tempus. Donec vitae sapien ut libero venenatis faucibus. Nullam quis ante. Etiam sit amet orci eget eros faucibus tincidunt. Duis leo. Sed fringilla mauris sit amet nibh. Donec sodales sagittis magna. Sed consequat, leo eget bibendum sodales, augue velit cursus nunc, quis gravida magna mi a libero. Fusce vulputate eleifend sapien. Vestibulum purus quam, scelerisque ut, mollis sed, nonummy id, metus. Nullam accumsan lorem in dui. Cras ultricies mi eu turpis hendrerit fringilla. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; In ac dui quis mi consectetuer lacinia. Nam pretium turpis et arcu. Duis arcu tortor, suscipit eget, imperdiet nec, imperdiet iaculis, ipsum. Sed aliquam ultrices mauris. Integer ante arcu, accumsan a, consectetuer eget, posuere ut, mauris. Praesent adipiscing. Phasellus ullamcorper ipsum rutrum nunc. Nunc nonummy metus. Vestibulum volutpat pretium libero. Cras id dui. Aenean ut eros et nisl sagittis vestibulum. Nullam nulla eros, ultricies sit amet, nonummy id, imperdiet feugiat, pede. Sed lectus. Donec mollis hendrerit risus. Phasellus nec sem in justo pellentesque facilisis. Etiam imperdiet imperdiet orci. Nunc nec neque. Phasellus leo dolor, tempus non, auctor et, hendrerit quis, nisi. Curabitur ligula sapien, tincidunt non, euismod vitae, posuere imperdiet, leo. Maecenas malesuada. Praesent congue erat at massa. Sed cursus turpis vitae tortor. Donec posuere vulputate arcu. Phasellus accumsan cursus velit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed aliquam, nisi quis porttitor congue, elit erat euismod orci, ac placerat dolor lectus quis orci. Phasellus consectetuer vestibulum elit. Aenean tellus metus, bibendum sed, posuere ac, mattis non, nunc. Vestibulum fringilla pede sit amet augue. In turpis. Pellentesque posuere. Praesent turpis. Aenean posuere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus. Donec elit libero, sodales nec, volutpat a, suscipit non, turpis. Nullam sagittis. Suspendisse pulvinar, augue ac venenatis condimentum, sem libero volutpat nibh, nec pellentesque velit pede quis nunc. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce id purus. Ut varius tincidunt libero. Phasellus dolor. Maecenas vestibulum mollis diam. Pellentesque ut neque. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. In dui magna, posuere eget, vestibulum et, tempor auctor, justo. In ac felis quis tortor malesuada pretium. Pellentesque auctor neque nec urna. Proin sapien ipsum, porta a, auctor quis, euismod ut, mi. Aenean viverra rhoncus pede. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Ut non enim eleifend felis pretium feugiat. Vivamus quis mi. Phasellus a est. Phasellus magna. In hac habitasse platea dictumst. Curabitur at lacus ac velit ornare lobortis. Curabitur a felis in nunc fringilla tristique. Morbi mattis ullamcorper velit. Phasellus gravida semper nisi. Nullam vel sem. Pellentesque libero tortor, tincidunt et, tincidunt eget, semper nec, quam. Sed hendrerit. Morbi ac felis. Nunc egestas, augue at pellentesque laoreet, felis eros vehicula leo, at malesuada velit leo quis pede. Donec interdum, metus et hendrerit aliquet, dolor diam sagittis ligula, eget egestas libero turpis vel mi. Nunc nulla. Fusce risus nisl, viverra et, tempor et, pretium in, sapien. Donec venenatis vulputate lorem. Morbi nec metus. Phasellus blandit leo ut odio. Maecenas ullamcorper, dui et placerat feugiat, eros pede varius nisi, condimentum viverra felis nunc et lorem. Sed magna purus, fermentum eu, tincidunt eu, varius ut, felis. In auctor lobortis lacus. Quisque libero metus, condimentum nec, tempor a, commodo mollis, magna. Vestibulum ullamcorper mauris at ligula. Fusce fermentum. Nullam cursus lacinia erat. Praesent blandit laoreet nibh. Fusce convallis metus id felis luctus adipiscing. Pellentesque egestas, neque sit amet convallis pulvinar, justo nulla eleifend augue, ac auctor orci leo non est. Quisque id mi. Ut tincidunt tincidunt erat. Etiam feugiat lorem non metus. Vestibulum dapibus nunc ac augue. Curabitur vestibulum aliquam leo. Praesent egestas neque eu enim. In hac habitasse platea dictumst. Fusce a quam. Etiam ut purus mattis mauris sodales aliquam. Curabitur nisi. Quisque malesuada placerat nisl. Nam ipsum risus, rutrum vitae, vestibulum eu, molestie vel, lacus. Sed augue ipsum, egestas nec, vestibulum et, malesuada adipiscing, dui. Vestibulum facilisis, purus nec pulvinar iaculis, ligula mi congue nunc, vitae euismod ligula urna in dolor. Mauris sollicitudin fermentum libero. Praesent nonummy mi in odio. Nunc interdum lacus sit amet orci. Vestibulum rutrum, mi nec elementum vehicula, eros quam gravida nisl, id fringilla neque ante vel mi. Morbi mollis tellus ac sapien. Phasellus volutpat, metus eget egestas mollis, lacus lacus blandit dui, id egestas quam mauris ut lacus. Fusce vel dui. Sed in libero ut nibh placerat accumsan. Proin faucibus arcu quis ante. In consectetuer turpis ut velit. Nulla sit amet est. Praesent metus tellus, elementum eu, semper a, adipiscing nec, purus. Cras risus ipsum, faucibus ut, ullamcorper id, varius ac, leo. Suspendisse feugiat. Suspendisse enim turpis, dictum sed, iaculis a, condimentum nec, nisi. Praesent nec nisl a purus blandit viverra. Praesent ac massa at ligula laoreet iaculis. Nulla neque dolor, sagittis eget, iaculis quis, molestie non, velit. Mauris turpis nunc, blandit et, volutpat molestie, porta ut, ligula. Fusce pharetra convallis urna. Quisque ut nisi. Donec mi odio, faucibus at, scelerisque quis, convallis in, nisi. Suspendisse non nisl sit amet velit hendrerit rutrum. Ut leo. Ut a nisl id ante tempus hendrerit. Proin pretium, leo ac pellentesque mollis, felis nunc ultrices eros, sed gravida augue augue mollis justo. Suspendisse eu ligula. Nulla facilisi. Donec id justo. Praesent porttitor, nulla vitae posuere iaculis, arcu nisl dignissim dolor, a pretium mi sem ut ipsum. Curabitur suscipit suscipit tellus. Praesent vestibulum dapibus nibh. Etiam iaculis nunc ac metus. Ut id nisl quis enim dignissim sagittis. Etiam sollicitudin, ipsum eu pulvinar rutrum, tellus ipsum laoreet sapien, quis venenatis ante odio sit amet eros. Proin magna. Duis
+    <!-- Perspektive-spezifische Statistiken -->
+    @if($perspective === 'personal')
+        <!-- Persönliche Perspektive -->
+        <div class="mb-4">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="d-flex items-center gap-2 mb-2">
+                    @svg('heroicon-o-user', 'w-5 h-5 text-blue-600')
+                    <h3 class="text-lg font-semibold text-blue-900">Persönliche Übersicht</h3>
+                </div>
+                <p class="text-blue-700 text-sm">Deine persönlichen Helpdesk-Tickets und zuständigen Support-Anfragen.</p>
+            </div>
+        </div>
+    @else
+        <!-- Team-Perspektive -->
+        <div class="mb-4">
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="d-flex items-center gap-2 mb-2">
+                    @svg('heroicon-o-users', 'w-5 h-5 text-green-600')
+                    <h3 class="text-lg font-semibold text-green-900">Team-Übersicht</h3>
+                </div>
+                <p class="text-green-700 text-sm">Alle Helpdesk-Tickets des Teams in allen aktiven Boards.</p>
+            </div>
+        </div>
+    @endif
+
+    <!-- Haupt-Statistiken (4x2 Grid) -->
+    <div class="grid grid-cols-4 gap-4 mb-8">
+        <!-- Boards -->
+        <x-ui-dashboard-tile
+            title="Aktive Boards"
+            :count="$activeBoards"
+            subtitle="Helpdesk Boards"
+            icon="folder"
+            variant="primary"
+            size="lg"
+        />
+        
+        <!-- Tickets -->
+        <x-ui-dashboard-tile
+            title="Offene Tickets"
+            :count="$openTickets"
+            subtitle="von {{ $totalTickets }}"
+            icon="clock"
+            variant="warning"
+            size="lg"
+        />
+        
+        <!-- Erledigte Tickets -->
+        <x-ui-dashboard-tile
+            title="Erledigte Tickets"
+            :count="$completedTickets"
+            subtitle="diesen Monat: {{ $monthlyCompletedTickets }}"
+            icon="check-circle"
+            variant="success"
+            size="lg"
+        />
+        
+        <!-- SLA-Überschreitungen -->
+        <x-ui-dashboard-tile
+            title="SLA-Überschreitungen"
+            :count="$slaOverdueTickets"
+            subtitle="gefährdet: {{ $slaAtRiskTickets }}"
+            icon="exclamation-triangle"
+            variant="danger"
+            size="lg"
+        />
+    </div>
+
+    <!-- Detaillierte Statistiken (2x3 Grid) -->
+    <div class="grid grid-cols-2 gap-6 mb-8">
+        <!-- Linke Spalte: Ticket-Details -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket-Übersicht</h3>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <x-ui-dashboard-tile
+                    title="Hohe Priorität"
+                    :count="$highPriorityTickets"
+                    icon="exclamation-triangle"
+                    variant="danger"
+                    size="sm"
+                />
+                
+                <x-ui-dashboard-tile
+                    title="Überfällig"
+                    :count="$overdueTickets"
+                    icon="exclamation-circle"
+                    variant="danger"
+                    size="sm"
+                />
+                
+                <x-ui-dashboard-tile
+                    title="Erstellt (Monat)"
+                    :count="$monthlyCreatedTickets"
+                    icon="plus-circle"
+                    variant="neutral"
+                    size="sm"
+                />
+                
+                <x-ui-dashboard-tile
+                    title="Erledigt (Monat)"
+                    :count="$monthlyCompletedTickets"
+                    icon="check-circle"
+                    variant="success"
+                    size="sm"
+                />
+            </div>
+        </div>
+
+        <!-- Rechte Spalte: SLA Performance -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">SLA Performance</h3>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <x-ui-dashboard-tile
+                    title="Überschritten"
+                    :count="$slaOverdueTickets"
+                    icon="exclamation-triangle"
+                    variant="danger"
+                    size="sm"
+                />
+                
+                <x-ui-dashboard-tile
+                    title="Gefährdet"
+                    :count="$slaAtRiskTickets"
+                    icon="clock"
+                    variant="warning"
+                    size="sm"
+                />
+                
+                <x-ui-dashboard-tile
+                    title="Offen"
+                    :count="$openTickets"
+                    icon="clock"
+                    variant="warning"
+                    size="sm"
+                />
+                
+                <x-ui-dashboard-tile
+                    title="Erledigt"
+                    :count="$completedTickets"
+                    icon="check-circle"
+                    variant="success"
+                    size="sm"
+                />
+            </div>
+        </div>
+    </div>
+
+    <!-- Board-Übersicht -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Meine aktiven Helpdesk Boards</h3>
+            <p class="text-sm text-gray-600 mt-1">Top 5 Boards nach offenen Tickets</p>
+        </div>
+        
+        <div class="p-6">
+            @if($activeBoardsList->count() > 0)
+                <div class="space-y-4">
+                    @foreach($activeBoardsList as $board)
+                        <div class="d-flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                            <div class="d-flex items-center gap-4">
+                                <div class="w-10 h-10 bg-primary text-on-primary rounded-lg d-flex items-center justify-center">
+                                    <x-heroicon-o-folder class="w-5 h-5"/>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">{{ $board['name'] }}</h4>
+                                    <p class="text-sm text-gray-600">
+                                        {{ $board['open_tickets'] }} offene von {{ $board['total_tickets'] }} Tickets
+                                        @if($board['high_priority'] > 0)
+                                            • {{ $board['high_priority'] }} hohe Priorität
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{{ route('helpdesk.boards.show', $board['id']) }}" 
+                               class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-on-primary rounded-md hover:bg-primary-dark transition text-sm"
+                               wire:navigate>
+                                <div class="d-flex items-center gap-2">
+                                    @svg('heroicon-o-arrow-right', 'w-4 h-4')
+                                    <span>Öffnen</span>
+                                </div>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-center py-8">
+                    <x-heroicon-o-folder class="w-12 h-12 text-gray-400 mx-auto mb-4"/>
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">Keine aktiven Boards</h4>
+                    <p class="text-gray-600">Du hast noch keine Helpdesk Boards oder bist in keinem Board zuständig.</p>
+                </div>
+            @endif
+        </div>
+    </div>
 </div>
