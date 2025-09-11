@@ -23,6 +23,17 @@
                 </div>
                 <div class="flex-grow-1 text-right d-flex items-center justify-end gap-2">
                     <span>{{ $ticket->title }}</span>
+                    <x-ui-button 
+                        variant="secondary" 
+                        size="sm"
+                        wire:click="printTicket"
+                        title="Ticket drucken"
+                    >
+                        <div class="d-flex items-center gap-2">
+                            @svg('heroicon-o-printer', 'w-4 h-4')
+                            Drucken
+                        </div>
+                    </x-ui-button>
                     @if($ticket->is_done)
                         <x-ui-badge variant="success" size="sm">
                             @svg('heroicon-o-check-circle', 'w-3 h-3')
@@ -424,25 +435,7 @@
                     </div>
                 @endcan
 
-                {{-- Frosch-Checkbox --}}
-                @can('update', $ticket)
-                    <x-ui-input-checkbox
-                        model="ticket.is_frog"
-                        checked-label="Ist ein Frosch"
-                        unchecked-label="Sei ein Frosch"
-                        size="md"
-                        block="true"
-                        variant="warning"
-                        :icon="@svg('heroicon-o-exclamation-triangle', 'w-4 h-4')->toHtml()"
-                    />
-                @else
-                    <div class="mb-2">
-                        <x-ui-badge variant="{{ $ticket->is_frog ? 'warning' : 'gray' }}">
-                            @svg('heroicon-o-exclamation-triangle', 'w-4 h-4')
-                            {{ $ticket->is_frog ? 'Frosch-Ticket' : 'Normales Ticket' }}
-                        </x-ui-badge>
-                    </div>
-                @endcan
+
             </div>
 
             <hr>
@@ -499,3 +492,48 @@
         </div>
     </div>
 </div>
+
+<!-- Print Modal -->
+<x-ui-modal model="printModalShow" size="md">
+    <x-slot name="header">
+        Ticket drucken
+    </x-slot>
+
+    <div class="space-y-4">
+        <div class="grid grid-cols-1 gap-4">
+            <x-ui-input-select
+                name="selectedPrinterId"
+                label="Drucker"
+                :options="$printers"
+                optionValue="id"
+                optionLabel="name"
+                :nullable="true"
+                nullLabel="– Drucker auswählen –"
+                wire:model.live="selectedPrinterId"
+            />
+
+            <x-ui-input-select
+                name="selectedPrinterGroupId"
+                label="Gruppe"
+                :options="$printerGroups"
+                optionValue="id"
+                optionLabel="name"
+                :nullable="true"
+                nullLabel="– Gruppe auswählen –"
+                wire:model.live="selectedPrinterGroupId"
+            />
+        </div>
+        <div class="text-xs text-muted">Hinweis: Entweder Drucker <em>oder</em> Gruppe auswählen.</div>
+    </div>
+
+    <x-slot name="footer">
+        <div class="d-flex justify-end gap-2">
+            <x-ui-button type="button" variant="secondary-outline" @click="$wire.closePrintModal()">
+                Abbrechen
+            </x-ui-button>
+            <x-ui-button type="button" variant="primary" wire:click="printTicketConfirm">
+                Drucken
+            </x-ui-button>
+        </div>
+    </x-slot>
+</x-ui-modal>

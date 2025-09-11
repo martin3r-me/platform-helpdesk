@@ -5,15 +5,19 @@ namespace Platform\Helpdesk\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Platform\Helpdesk\Models\HelpdeskTicket;
+use Platform\Printing\Contracts\PrintingServiceInterface;
 
 class Ticket extends Component
 {
     public $ticket;
+    public $printModalShow = false;
+    public $selectedPrinterId = null;
+    public $selectedPrinterGroupId = null;
 
     protected $rules = [
         'ticket.title' => 'required|string|max:255',
         'ticket.description' => 'nullable|string',
-        'ticket.is_frog' => 'boolean',
+
         'ticket.is_done' => 'boolean',
         'ticket.due_date' => 'nullable|date',
         'ticket.user_in_charge_id' => 'nullable|integer',
@@ -81,6 +85,47 @@ class Ticket extends Component
         return $this->redirect(route('helpdesk.boards.show', $this->ticket->helpdeskBoard), navigate: true);
     }
 
+    public function printTicket()
+    {
+        $this->printModalShow = true;
+    }
+
+    public function closePrintModal()
+    {
+        $this->printModalShow = false;
+    }
+
+    public function printTicketConfirm()
+    {
+        if (!$this->selectedPrinterId && !$this->selectedPrinterGroupId) {
+            $this->dispatch('notify', [
+                'type' => 'error',
+                'message' => 'Bitte wählen Sie einen Drucker oder eine Gruppe',
+            ]);
+            return;
+        }
+
+        /** @var PrintingServiceInterface $printing */
+        $printing = app(PrintingServiceInterface::class);
+
+        $printing->createJob(
+            printable: $this->ticket,
+            template: 'helpdesk-ticket',
+            data: [
+                'requested_by' => Auth::user()?->name,
+            ],
+            printerId: $this->selectedPrinterId,
+            printerGroupId: $this->selectedPrinterGroupId,
+        );
+
+        $this->closePrintModal();
+
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Druckauftrag wurde erstellt',
+        ]);
+    }
+
     public function render()
     {        
         // Teammitglieder für Zuweisung laden
@@ -90,8 +135,16 @@ class Ticket extends Component
             ->orderBy('name')
             ->get();
             
+        /** @var PrintingServiceInterface $printing */
+        $printing = app(PrintingServiceInterface::class);
+
+        $printers = $printing->listPrinters();
+        $groups   = $printing->listPrinterGroups();
+
         return view('helpdesk::livewire.ticket', [
             'teamUsers' => $teamUsers,
+            'printers' => $printers,
+            'printerGroups' => $groups,
         ])->layout('platform::layouts.app');
     }
 }

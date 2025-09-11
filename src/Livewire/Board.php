@@ -60,7 +60,7 @@ class Board extends Component
         $ticket->priority = null;
         $ticket->status = null;
         $ticket->story_points = null;
-        $ticket->is_frog = false;
+        
         $ticket->is_done = false;
         $ticket->order = 0;
         $ticket->slot_order = 0;

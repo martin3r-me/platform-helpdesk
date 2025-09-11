@@ -23,7 +23,12 @@ class HelpdeskServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Reserve für zukünftige Command-Registrierung
+        // Commands registrieren
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \Platform\Helpdesk\Console\Commands\CheckTicketEscalationsCommand::class,
+            ]);
+        }
     }
 
     public function boot(): void

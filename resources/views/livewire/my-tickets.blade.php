@@ -52,7 +52,7 @@
                 />
                 <x-ui-dashboard-tile
                     title="Frösche"
-                    :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => $t->is_frog)->count()"
+                    :count="0"
                     icon="exclamation-triangle"
                     variant="danger"
                     size="sm"

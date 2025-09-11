@@ -29,9 +29,12 @@ return new class extends Migration
             $table->string('priority')->nullable();
             $table->string('status')->nullable();
             $table->string('story_points')->nullable();
-            $table->boolean('is_frog')->default(false);
+
             $table->boolean('is_done')->default(false);
             $table->timestamp('done_at')->nullable();
+            $table->enum('escalation_level', ['none', 'warning', 'escalated', 'critical', 'urgent'])->default('none');
+            $table->timestamp('escalated_at')->nullable();
+            $table->integer('escalation_count')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });

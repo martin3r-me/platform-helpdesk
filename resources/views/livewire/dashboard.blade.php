@@ -63,8 +63,31 @@
         </div>
     @endif
 
-    <!-- Haupt-Statistiken (4x2 Grid) -->
-    <div class="grid grid-cols-4 gap-4 mb-8">
+    <!-- SLA & Eskalationen (2er Grid) -->
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        <!-- SLA-Überschreitungen -->
+        <x-ui-dashboard-tile
+            title="SLA-Überschreitungen"
+            :count="$slaOverdueTickets"
+            subtitle="gefährdet: {{ $slaAtRiskTickets }}"
+            icon="exclamation-triangle"
+            variant="danger"
+            size="lg"
+        />
+        
+        <!-- Eskalierte Tickets -->
+        <x-ui-dashboard-tile
+            title="Eskalierte Tickets"
+            :count="$escalatedTickets"
+            subtitle="kritisch: {{ $criticalEscalations }}"
+            icon="fire"
+            variant="danger"
+            size="lg"
+        />
+    </div>
+
+    <!-- Allgemeine Statistiken (3er Grid) -->
+    <div class="grid grid-cols-3 gap-4 mb-8">
         <!-- Boards -->
         <x-ui-dashboard-tile
             title="Aktive Boards"
@@ -94,17 +117,57 @@
             variant="success"
             size="lg"
         />
-        
-        <!-- SLA-Überschreitungen -->
-        <x-ui-dashboard-tile
-            title="SLA-Überschreitungen"
-            :count="$slaOverdueTickets"
-            subtitle="gefährdet: {{ $slaAtRiskTickets }}"
-            icon="exclamation-triangle"
-            variant="danger"
-            size="lg"
-        />
     </div>
+
+    <!-- Eskalations-Übersicht -->
+    @if($escalatedTickets > 0)
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+            <div class="p-6 border-b border-gray-200">
+                <div class="d-flex items-center gap-2">
+                    <x-heroicon-o-fire class="w-5 h-5 text-red-600"/>
+                    <h3 class="text-lg font-semibold text-gray-900">Eskalierte Tickets</h3>
+                    <x-ui-badge variant="danger" size="sm">{{ $escalatedTickets }}</x-ui-badge>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">Tickets die dringend Aufmerksamkeit benötigen</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-4 gap-4">
+                    <x-ui-dashboard-tile
+                        title="Warnung"
+                        :count="$escalationLevels['warning']"
+                        icon="exclamation-triangle"
+                        variant="warning"
+                        size="sm"
+                    />
+                    
+                    <x-ui-dashboard-tile
+                        title="Eskaliert"
+                        :count="$escalationLevels['escalated']"
+                        icon="exclamation-circle"
+                        variant="danger"
+                        size="sm"
+                    />
+                    
+                    <x-ui-dashboard-tile
+                        title="Kritisch"
+                        :count="$escalationLevels['critical']"
+                        icon="fire"
+                        variant="danger"
+                        size="sm"
+                    />
+                    
+                    <x-ui-dashboard-tile
+                        title="Dringend"
+                        :count="$escalationLevels['urgent']"
+                        icon="bolt"
+                        variant="danger"
+                        size="sm"
+                    />
+                </div>
+            </div>
+        </div>
+    @endif
 
     <!-- Detaillierte Statistiken (2x3 Grid) -->
     <div class="grid grid-cols-2 gap-6 mb-8">

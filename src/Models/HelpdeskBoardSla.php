@@ -73,6 +73,41 @@ class HelpdeskBoardSla extends Model
     }
 
     /**
+     * Bestimmt das Eskalations-Level basierend auf SLA-Zeit
+     */
+    public function getEscalationLevel($ticket): \Platform\Helpdesk\Enums\TicketEscalationLevel
+    {
+        if (!$this->is_active) {
+            return \Platform\Helpdesk\Enums\TicketEscalationLevel::NONE;
+        }
+
+        $totalTime = $this->response_time_hours ?? $this->resolution_time_hours;
+        
+        if ($totalTime === null) {
+            return \Platform\Helpdesk\Enums\TicketEscalationLevel::NONE;
+        }
+        
+        $elapsedTime = $ticket->created_at->diffInHours(now());
+        $elapsedPercentage = ($elapsedTime / $totalTime) * 100;
+        
+        return match(true) {
+            $elapsedPercentage >= 300 => \Platform\Helpdesk\Enums\TicketEscalationLevel::URGENT,
+            $elapsedPercentage >= 200 => \Platform\Helpdesk\Enums\TicketEscalationLevel::CRITICAL,
+            $elapsedPercentage >= 100 => \Platform\Helpdesk\Enums\TicketEscalationLevel::ESCALATED,
+            $elapsedPercentage >= 80  => \Platform\Helpdesk\Enums\TicketEscalationLevel::WARNING,
+            default => \Platform\Helpdesk\Enums\TicketEscalationLevel::NONE,
+        };
+    }
+
+    /**
+     * Prüft ob eine Eskalation nötig ist
+     */
+    public function needsEscalation($ticket): bool
+    {
+        return $this->getEscalationLevel($ticket)->isEscalated();
+    }
+
+    /**
      * Gibt die verbleibende Zeit bis zur SLA-Überschreitung zurück
      */
     public function getRemainingTime($ticket): ?int
@@ -87,18 +122,12 @@ class HelpdeskBoardSla extends Model
 
         // Prüfe Reaktionszeit
         if ($this->response_time_hours) {
-            $remaining = $this->response_time_hours - $hoursSinceCreation;
-            if ($remaining > 0) {
-                return $remaining;
-            }
+            return $this->response_time_hours - $hoursSinceCreation;
         }
 
         // Prüfe Lösungszeit (nur wenn Ticket nicht erledigt ist)
         if (!$ticket->is_done && $this->resolution_time_hours) {
-            $remaining = $this->resolution_time_hours - $hoursSinceCreation;
-            if ($remaining > 0) {
-                return $remaining;
-            }
+            return $this->resolution_time_hours - $hoursSinceCreation;
         }
 
         return null;

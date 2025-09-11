@@ -5,6 +5,7 @@ namespace Platform\Helpdesk\Models;
 use Platform\Helpdesk\Enums\TicketPriority;
 use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Helpdesk\Enums\TicketStoryPoints;
+use Platform\Helpdesk\Enums\TicketEscalationLevel;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,20 +30,25 @@ class HelpdeskTicket extends Model
         'status',
         'priority',
         'story_points',
-        'is_frog',
+
         'is_done',
         'order',
         'slot_order',
         'helpdesk_board_id',
         'helpdesk_board_slot_id',
         'helpdesk_ticket_group_id',
+        'escalation_level',
+        'escalated_at',
+        'escalation_count',
     ];
 
     protected $casts = [
         'priority' => TicketPriority::class,
         'status' => TicketStatus::class,
         'story_points' => TicketStoryPoints::class,
-        'due_date' => 'date'
+        'escalation_level' => TicketEscalationLevel::class,
+        'due_date' => 'date',
+        'escalated_at' => 'datetime'
     ];
 
     protected static function booted(): void
@@ -108,5 +114,25 @@ class HelpdeskTicket extends Model
     public function getSlaAttribute()
     {
         return $this->helpdeskBoard?->sla;
+    }
+
+    public function escalations()
+    {
+        return $this->hasMany(HelpdeskTicketEscalation::class, 'helpdesk_ticket_id');
+    }
+
+    public function currentEscalation()
+    {
+        return $this->escalations()->latest('escalated_at')->first();
+    }
+
+    public function isEscalated(): bool
+    {
+        return $this->escalation_level->isEscalated();
+    }
+
+    public function isCritical(): bool
+    {
+        return $this->escalation_level->isCritical();
     }
 }

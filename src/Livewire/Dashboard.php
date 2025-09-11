@@ -10,7 +10,7 @@ use Carbon\Carbon;
 
 class Dashboard extends Component
 {
-    public $perspective = 'personal';
+    public $perspective = 'team';
 
     public function render()
     {
@@ -68,6 +68,30 @@ class Dashboard extends Component
                 })
                 ->count();
 
+            // === PERSÖNLICHE ESKALATIONS-STATISTIKEN ===
+            $escalatedTickets = $myTickets->where('is_done', false)
+                ->filter(fn($ticket) => $ticket->isEscalated())
+                ->count();
+
+            $criticalEscalations = $myTickets->where('is_done', false)
+                ->filter(fn($ticket) => $ticket->isCritical())
+                ->count();
+
+            $escalationLevels = [
+                'warning' => $myTickets->where('is_done', false)
+                    ->filter(fn($ticket) => $ticket->escalation_level === \Platform\Helpdesk\Enums\TicketEscalationLevel::WARNING)
+                    ->count(),
+                'escalated' => $myTickets->where('is_done', false)
+                    ->filter(fn($ticket) => $ticket->escalation_level === \Platform\Helpdesk\Enums\TicketEscalationLevel::ESCALATED)
+                    ->count(),
+                'critical' => $myTickets->where('is_done', false)
+                    ->filter(fn($ticket) => $ticket->escalation_level === \Platform\Helpdesk\Enums\TicketEscalationLevel::CRITICAL)
+                    ->count(),
+                'urgent' => $myTickets->where('is_done', false)
+                    ->filter(fn($ticket) => $ticket->escalation_level === \Platform\Helpdesk\Enums\TicketEscalationLevel::URGENT)
+                    ->count(),
+            ];
+
         } else {
             // === TEAM-TICKETS ===
             $teamTickets = HelpdeskTicket::query()
@@ -108,6 +132,30 @@ class Dashboard extends Component
                     return $remaining !== null && $remaining <= 4; // 4 Stunden oder weniger
                 })
                 ->count();
+
+            // === TEAM ESKALATIONS-STATISTIKEN ===
+            $escalatedTickets = $teamTickets->where('is_done', false)
+                ->filter(fn($ticket) => $ticket->isEscalated())
+                ->count();
+
+            $criticalEscalations = $teamTickets->where('is_done', false)
+                ->filter(fn($ticket) => $ticket->isCritical())
+                ->count();
+
+            $escalationLevels = [
+                'warning' => $teamTickets->where('is_done', false)
+                    ->filter(fn($ticket) => $ticket->escalation_level === \Platform\Helpdesk\Enums\TicketEscalationLevel::WARNING)
+                    ->count(),
+                'escalated' => $teamTickets->where('is_done', false)
+                    ->filter(fn($ticket) => $ticket->escalation_level === \Platform\Helpdesk\Enums\TicketEscalationLevel::ESCALATED)
+                    ->count(),
+                'critical' => $teamTickets->where('is_done', false)
+                    ->filter(fn($ticket) => $ticket->escalation_level === \Platform\Helpdesk\Enums\TicketEscalationLevel::CRITICAL)
+                    ->count(),
+                'urgent' => $teamTickets->where('is_done', false)
+                    ->filter(fn($ticket) => $ticket->escalation_level === \Platform\Helpdesk\Enums\TicketEscalationLevel::URGENT)
+                    ->count(),
+            ];
         }
 
         // === BOARD-ÜBERSICHT ===
@@ -147,6 +195,9 @@ class Dashboard extends Component
             'monthlyCompletedTickets' => $monthlyCompletedTickets,
             'slaOverdueTickets' => $slaOverdueTickets,
             'slaAtRiskTickets' => $slaAtRiskTickets,
+            'escalatedTickets' => $escalatedTickets,
+            'criticalEscalations' => $criticalEscalations,
+            'escalationLevels' => $escalationLevels,
             'activeBoardsList' => $activeBoardsList,
         ])->layout('platform::layouts.app');
     }

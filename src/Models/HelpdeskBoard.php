@@ -57,6 +57,8 @@ class HelpdeskBoard extends Model
         return $this->belongsTo(HelpdeskBoardSla::class, 'helpdesk_board_sla_id');
     }
 
+
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(\Platform\Core\Models\User::class);
