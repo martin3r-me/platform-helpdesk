@@ -497,30 +497,98 @@
             </x-slot>
 
             <div class="space-y-4">
-                <div class="grid grid-cols-1 gap-4">
-                    <x-ui-input-select
-                        name="selectedPrinterId"
-                        label="Drucker"
-                        :options="$printers"
-                        optionValue="id"
-                        optionLabel="name"
-                        :nullable="true"
-                        nullLabel="– Drucker auswählen –"
-                        wire:model.live="selectedPrinterId"
-                    />
-
-                    <x-ui-input-select
-                        name="selectedPrinterGroupId"
-                        label="Gruppe"
-                        :options="$printerGroups"
-                        optionValue="id"
-                        optionLabel="name"
-                        :nullable="true"
-                        nullLabel="– Gruppe auswählen –"
-                        wire:model.live="selectedPrinterGroupId"
-                    />
+                <!-- Auswahl-Typ -->
+                <div class="space-y-2">
+                    <label class="font-semibold text-sm">Druckziel wählen:</label>
+                    <div class="d-flex gap-4">
+                        <label class="d-flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="printTarget" 
+                                value="printer" 
+                                wire:model.live="printTarget"
+                                class="w-4 h-4"
+                            >
+                            <span class="text-sm">Einzelner Drucker</span>
+                        </label>
+                        <label class="d-flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="radio" 
+                                name="printTarget" 
+                                value="group" 
+                                wire:model.live="printTarget"
+                                class="w-4 h-4"
+                            >
+                            <span class="text-sm">Drucker-Gruppe</span>
+                        </label>
+                    </div>
                 </div>
-                <div class="text-xs text-muted">Hinweis: Entweder Drucker <em>oder</em> Gruppe auswählen.</div>
+
+                <!-- Drucker-Auswahl -->
+                @if($printTarget === 'printer')
+                    <div class="space-y-2">
+                        <label class="font-semibold text-sm">Drucker auswählen:</label>
+                        @if($printers->count() > 0)
+                            <div class="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                                @foreach($printers as $printer)
+                                    <label class="d-flex items-center gap-2 cursor-pointer p-2 hover:bg-muted-5 rounded">
+                                        <input 
+                                            type="radio" 
+                                            name="selectedPrinterId" 
+                                            value="{{ $printer->id }}" 
+                                            wire:model.live="selectedPrinterId"
+                                            class="w-4 h-4"
+                                        >
+                                        <span class="text-sm">{{ $printer->name }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-sm text-muted p-3 bg-muted-5 rounded-lg">
+                                Keine aktiven Drucker verfügbar
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                <!-- Gruppen-Auswahl -->
+                @if($printTarget === 'group')
+                    <div class="space-y-2">
+                        <label class="font-semibold text-sm">Gruppe auswählen:</label>
+                        @if($printerGroups->count() > 0)
+                            <div class="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                                @foreach($printerGroups as $group)
+                                    <label class="d-flex items-center gap-2 cursor-pointer p-2 hover:bg-muted-5 rounded">
+                                        <input 
+                                            type="radio" 
+                                            name="selectedPrinterGroupId" 
+                                            value="{{ $group->id }}" 
+                                            wire:model.live="selectedPrinterGroupId"
+                                            class="w-4 h-4"
+                                        >
+                                        <span class="text-sm">{{ $group->name }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-sm text-muted p-3 bg-muted-5 rounded-lg">
+                                Keine aktiven Drucker-Gruppen verfügbar
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                <!-- Info -->
+                <div class="text-xs text-muted bg-muted-5 p-2 rounded">
+                    <strong>Info:</strong> 
+                    @if($printTarget === 'printer')
+                        Das Ticket wird auf dem ausgewählten Drucker gedruckt.
+                    @elseif($printTarget === 'group')
+                        Das Ticket wird auf allen aktiven Druckern der Gruppe gedruckt.
+                    @else
+                        Wählen Sie einen Drucker oder eine Gruppe aus.
+                    @endif
+                </div>
             </div>
 
             <x-slot name="footer">
@@ -528,7 +596,12 @@
                     <x-ui-button type="button" variant="secondary-outline" @click="$wire.closePrintModal()">
                         Abbrechen
                     </x-ui-button>
-                    <x-ui-button type="button" variant="primary" wire:click="printTicketConfirm">
+                    <x-ui-button 
+                        type="button" 
+                        variant="primary" 
+                        wire:click="printTicketConfirm"
+                        :disabled="!$wire.selectedPrinterId && !$wire.selectedPrinterGroupId"
+                    >
                         Drucken
                     </x-ui-button>
                 </div>

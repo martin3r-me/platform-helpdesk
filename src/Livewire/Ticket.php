@@ -11,6 +11,7 @@ class Ticket extends Component
 {
     public $ticket;
     public $printModalShow = false;
+    public $printTarget = 'printer'; // 'printer' oder 'group'
     public $selectedPrinterId = null;
     public $selectedPrinterGroupId = null;
 
@@ -93,6 +94,19 @@ class Ticket extends Component
     public function closePrintModal()
     {
         $this->printModalShow = false;
+        $this->resetPrintSelection();
+    }
+
+    public function updatedPrintTarget()
+    {
+        // Reset Auswahl wenn Typ gewechselt wird
+        $this->resetPrintSelection();
+    }
+
+    private function resetPrintSelection()
+    {
+        $this->selectedPrinterId = null;
+        $this->selectedPrinterGroupId = null;
     }
 
     public function printTicketConfirm()
@@ -114,8 +128,8 @@ class Ticket extends Component
             data: [
                 'requested_by' => Auth::user()?->name,
             ],
-            printerId: $this->selectedPrinterId,
-            printerGroupId: $this->selectedPrinterGroupId,
+            printerId: $this->selectedPrinterId ? (int) $this->selectedPrinterId : null,
+            printerGroupId: $this->selectedPrinterGroupId ? (int) $this->selectedPrinterGroupId : null,
         );
 
         $this->closePrintModal();
