@@ -600,7 +600,6 @@
                         type="button" 
                         variant="primary" 
                         wire:click="printTicketConfirm"
-                        :disabled="!$this->canPrint"
                     >
                         Drucken
                     </x-ui-button>
