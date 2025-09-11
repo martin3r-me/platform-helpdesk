@@ -110,7 +110,7 @@ class Ticket extends Component
 
         $printing->createJob(
             printable: $this->ticket,
-            template: 'helpdesk-ticket',
+            // template: null, // Automatische Template-Auswahl: helpdesk-ticket
             data: [
                 'requested_by' => Auth::user()?->name,
             ],
