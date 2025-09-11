@@ -491,16 +491,17 @@
             @endcan
         </div>
         <!-- Print Modal -->
-        <x-ui-modal model="printModalShow" size="md">
-            <x-slot name="header">
-                Ticket drucken
-            </x-slot>
+        <div x-data="{
+            get canPrint() {
+                return $wire.selectedPrinterId || $wire.selectedPrinterGroupId;
+            }
+        }">
+            <x-ui-modal model="printModalShow" size="md">
+                <x-slot name="header">
+                    Ticket drucken
+                </x-slot>
 
-            <div class="space-y-4" x-data="{
-                get canPrint() {
-                    return $wire.selectedPrinterId || $wire.selectedPrinterGroupId;
-                }
-            }">
+                <div class="space-y-4">
                 <!-- Auswahl-Typ -->
                 <div class="space-y-2">
                     <label class="font-semibold text-sm">Druckziel wählen:</label>
@@ -611,5 +612,6 @@
                 </div>
             </x-slot>
         </x-ui-modal>
+        </div>
     </div>
 </div>
