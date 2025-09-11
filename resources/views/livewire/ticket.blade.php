@@ -496,7 +496,11 @@
                 Ticket drucken
             </x-slot>
 
-            <div class="space-y-4">
+            <div class="space-y-4" x-data="{
+                get canPrint() {
+                    return $wire.selectedPrinterId || $wire.selectedPrinterGroupId;
+                }
+            }">
                 <!-- Auswahl-Typ -->
                 <div class="space-y-2">
                     <label class="font-semibold text-sm">Druckziel wählen:</label>
@@ -600,7 +604,7 @@
                         type="button" 
                         variant="primary" 
                         wire:click="printTicketConfirm"
-                        :disabled="!selectedPrinterId && !selectedPrinterGroupId"
+                        :disabled="!canPrint"
                     >
                         Drucken
                     </x-ui-button>
