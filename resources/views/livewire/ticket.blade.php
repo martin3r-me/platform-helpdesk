@@ -491,17 +491,12 @@
             @endcan
         </div>
         <!-- Print Modal -->
-        <div x-data="{
-            get canPrint() {
-                return $wire.selectedPrinterId || $wire.selectedPrinterGroupId;
-            }
-        }">
-            <x-ui-modal model="printModalShow" size="md">
-                <x-slot name="header">
-                    Ticket drucken
-                </x-slot>
+        <x-ui-modal model="printModalShow" size="md">
+            <x-slot name="header">
+                Ticket drucken
+            </x-slot>
 
-                <div class="space-y-4">
+            <div class="space-y-4">
                 <!-- Auswahl-Typ -->
                 <div class="space-y-2">
                     <label class="font-semibold text-sm">Druckziel wählen:</label>
@@ -605,13 +600,12 @@
                         type="button" 
                         variant="primary" 
                         wire:click="printTicketConfirm"
-                        :disabled="!canPrint"
+                        :disabled="!$this->canPrint"
                     >
                         Drucken
                     </x-ui-button>
                 </div>
             </x-slot>
         </x-ui-modal>
-        </div>
     </div>
 </div>

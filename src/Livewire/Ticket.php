@@ -15,6 +15,11 @@ class Ticket extends Component
     public $selectedPrinterId = null;
     public $selectedPrinterGroupId = null;
 
+    public function getCanPrintProperty()
+    {
+        return $this->selectedPrinterId || $this->selectedPrinterGroupId;
+    }
+
     protected $rules = [
         'ticket.title' => 'required|string|max:255',
         'ticket.description' => 'nullable|string',
