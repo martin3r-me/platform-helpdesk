@@ -128,11 +128,11 @@ class HelpdeskTicket extends Model
 
     public function isEscalated(): bool
     {
-        return $this->escalation_level->isEscalated();
+        return $this->escalation_level?->isEscalated() ?? false;
     }
 
     public function isCritical(): bool
     {
-        return $this->escalation_level->isCritical();
+        return $this->escalation_level?->isCritical() ?? false;
     }
 }
