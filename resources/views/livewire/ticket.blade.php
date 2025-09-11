@@ -600,7 +600,7 @@
                         type="button" 
                         variant="primary" 
                         wire:click="printTicketConfirm"
-                        :disabled="!$wire.selectedPrinterId && !$wire.selectedPrinterGroupId"
+                        :disabled="!selectedPrinterId && !selectedPrinterGroupId"
                     >
                         Drucken
                     </x-ui-button>
