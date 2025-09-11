@@ -490,50 +490,49 @@
                 </div>
             @endcan
         </div>
+        <!-- Print Modal -->
+        <x-ui-modal model="printModalShow" size="md">
+            <x-slot name="header">
+                Ticket drucken
+            </x-slot>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 gap-4">
+                    <x-ui-input-select
+                        name="selectedPrinterId"
+                        label="Drucker"
+                        :options="$printers"
+                        optionValue="id"
+                        optionLabel="name"
+                        :nullable="true"
+                        nullLabel="– Drucker auswählen –"
+                        wire:model.live="selectedPrinterId"
+                    />
+
+                    <x-ui-input-select
+                        name="selectedPrinterGroupId"
+                        label="Gruppe"
+                        :options="$printerGroups"
+                        optionValue="id"
+                        optionLabel="name"
+                        :nullable="true"
+                        nullLabel="– Gruppe auswählen –"
+                        wire:model.live="selectedPrinterGroupId"
+                    />
+                </div>
+                <div class="text-xs text-muted">Hinweis: Entweder Drucker <em>oder</em> Gruppe auswählen.</div>
+            </div>
+
+            <x-slot name="footer">
+                <div class="d-flex justify-end gap-2">
+                    <x-ui-button type="button" variant="secondary-outline" @click="$wire.closePrintModal()">
+                        Abbrechen
+                    </x-ui-button>
+                    <x-ui-button type="button" variant="primary" wire:click="printTicketConfirm">
+                        Drucken
+                    </x-ui-button>
+                </div>
+            </x-slot>
+        </x-ui-modal>
     </div>
 </div>
-
-<!-- Print Modal -->
-<x-ui-modal model="printModalShow" size="md">
-    <x-slot name="header">
-        Ticket drucken
-    </x-slot>
-
-    <div class="space-y-4">
-        <div class="grid grid-cols-1 gap-4">
-            <x-ui-input-select
-                name="selectedPrinterId"
-                label="Drucker"
-                :options="$printers"
-                optionValue="id"
-                optionLabel="name"
-                :nullable="true"
-                nullLabel="– Drucker auswählen –"
-                wire:model.live="selectedPrinterId"
-            />
-
-            <x-ui-input-select
-                name="selectedPrinterGroupId"
-                label="Gruppe"
-                :options="$printerGroups"
-                optionValue="id"
-                optionLabel="name"
-                :nullable="true"
-                nullLabel="– Gruppe auswählen –"
-                wire:model.live="selectedPrinterGroupId"
-            />
-        </div>
-        <div class="text-xs text-muted">Hinweis: Entweder Drucker <em>oder</em> Gruppe auswählen.</div>
-    </div>
-
-    <x-slot name="footer">
-        <div class="d-flex justify-end gap-2">
-            <x-ui-button type="button" variant="secondary-outline" @click="$wire.closePrintModal()">
-                Abbrechen
-            </x-ui-button>
-            <x-ui-button type="button" variant="primary" wire:click="printTicketConfirm">
-                Drucken
-            </x-ui-button>
-        </div>
-    </x-slot>
-</x-ui-modal>
