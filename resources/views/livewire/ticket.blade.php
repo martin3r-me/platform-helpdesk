@@ -46,145 +46,6 @@
 
         <!-- Haupt-Content (nimmt Restplatz, scrollt) -->
         <div class="flex-grow-1 overflow-y-auto p-4">
-            
-            {{-- SLA Dashboard --}}
-            @if($ticket->sla)
-                <div class="mb-6">
-                    <h3 class="text-lg font-semibold mb-4 text-secondary d-flex items-center gap-2">
-                        @svg('heroicon-o-clock', 'w-5 h-5')
-                        Service Level Agreement
-                    </h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        {{-- SLA Info --}}
-                        <div class="p-4 bg-white border rounded-lg shadow-sm">
-                            <div class="d-flex items-center gap-2 mb-2">
-                                <x-heroicon-o-information-circle class="w-4 h-4 text-primary"/>
-                                <span class="font-medium text-sm">SLA Details</span>
-                            </div>
-                            <div class="space-y-1">
-                                <div class="text-sm">
-                                    <span class="font-medium">{{ $ticket->sla->name }}</span>
-                                </div>
-                                @if($ticket->sla->description)
-                                    <div class="text-xs text-gray-500">{{ Str::limit($ticket->sla->description, 50) }}</div>
-                                @endif
-                                <div class="d-flex items-center gap-1">
-                                    @if($ticket->sla->is_active)
-                                        <div class="w-2 h-2 bg-success rounded-full"></div>
-                                        <span class="text-xs text-success">Aktiv</span>
-                                    @else
-                                        <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
-                                        <span class="text-xs text-gray-500">Inaktiv</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Zeit seit Eingang --}}
-                        <div class="p-4 bg-white border rounded-lg shadow-sm">
-                            <div class="d-flex items-center gap-2 mb-2">
-                                <x-heroicon-o-calendar class="w-4 h-4 text-primary"/>
-                                <span class="font-medium text-sm">Zeit seit Eingang</span>
-                            </div>
-                            <div class="space-y-1">
-                                <div class="text-2xl font-bold text-primary">
-                                    {{ $ticket->created_at->diffForHumans() }}
-                                </div>
-                                <div class="text-xs text-gray-500">
-                                    Erstellt am {{ $ticket->created_at->format('d.m.Y H:i') }}
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Restzeit --}}
-                        <div class="p-4 bg-white border rounded-lg shadow-sm">
-                            <div class="d-flex items-center gap-2 mb-2">
-                                <x-heroicon-o-clock class="w-4 h-4 text-primary"/>
-                                <span class="font-medium text-sm">Restzeit</span>
-                            </div>
-                            <div class="space-y-1">
-                                @php
-                                    $remainingTime = $ticket->sla->getRemainingTime($ticket);
-                                    $isOverdue = $ticket->sla->isOverdue($ticket);
-                                @endphp
-                                
-                                @if($remainingTime !== null)
-                                    @if($isOverdue)
-                                        <div class="text-2xl font-bold text-danger">
-                                            <x-heroicon-o-exclamation-triangle class="w-5 h-5 inline"/>
-                                            Überschritten
-                                        </div>
-                                        <div class="text-xs text-danger">
-                                            {{ abs($remainingTime) }}h überfällig
-                                        </div>
-                                    @else
-                                        <div class="text-2xl font-bold text-success">
-                                            {{ $remainingTime }}h
-                                        </div>
-                                        <div class="text-xs text-success">
-                                            verbleibend
-                                        </div>
-                                    @endif
-                                @else
-                                    <div class="text-2xl font-bold text-gray-400">
-                                        –
-                                    </div>
-                                    <div class="text-xs text-gray-500">
-                                        Keine Zeitvorgabe
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- SLA Zeitvorgaben --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        @if($ticket->sla->response_time_hours)
-                            <div class="p-3 bg-muted-5 rounded-lg">
-                                <div class="d-flex items-center gap-2 mb-1">
-                                    <x-heroicon-o-chat-bubble-left class="w-4 h-4 text-muted"/>
-                                    <span class="text-sm font-medium">Reaktionszeit</span>
-                                </div>
-                                <div class="text-sm">
-                                    <span class="font-bold">{{ $ticket->sla->response_time_hours }} Stunden</span>
-                                    @php
-                                        $responseTime = $ticket->created_at->addHours($ticket->sla->response_time_hours);
-                                        $isResponseOverdue = now()->isAfter($responseTime);
-                                    @endphp
-                                    @if($isResponseOverdue)
-                                        <span class="text-danger">({{ $responseTime->diffForHumans() }} überschritten)</span>
-                                    @else
-                                        <span class="text-success">(bis {{ $responseTime->format('d.m.Y H:i') }})</span>
-                                    @endif
-                                </div>
-                            </div>
-                        @endif
-
-                        @if($ticket->sla->resolution_time_hours && !$ticket->is_done)
-                            <div class="p-3 bg-muted-5 rounded-lg">
-                                <div class="d-flex items-center gap-2 mb-1">
-                                    <x-heroicon-o-check-circle class="w-4 h-4 text-muted"/>
-                                    <span class="text-sm font-medium">Lösungszeit</span>
-                                </div>
-                                <div class="text-sm">
-                                    <span class="font-bold">{{ $ticket->sla->resolution_time_hours }} Stunden</span>
-                                    @php
-                                        $resolutionTime = $ticket->created_at->addHours($ticket->sla->resolution_time_hours);
-                                        $isResolutionOverdue = now()->isAfter($resolutionTime);
-                                    @endphp
-                                    @if($isResolutionOverdue)
-                                        <span class="text-danger">({{ $resolutionTime->diffForHumans() }} überschritten)</span>
-                                    @else
-                                        <span class="text-success">(bis {{ $resolutionTime->format('d.m.Y H:i') }})</span>
-                                    @endif
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            @endif
-
             {{-- Ticket Details --}}
             <div class="mb-6">
                 <h3 class="text-lg font-semibold mb-4 text-secondary">Ticket Details</h3>
@@ -327,6 +188,144 @@
                     </div>
                 </div>
             </div>
+
+            {{-- SLA Dashboard --}}
+            @if($ticket->sla)
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-secondary d-flex items-center gap-2">
+                        @svg('heroicon-o-clock', 'w-5 h-5')
+                        Service Level Agreement
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        {{-- SLA Info --}}
+                        <div class="p-4 bg-white border rounded-lg shadow-sm">
+                            <div class="d-flex items-center gap-2 mb-2">
+                                <x-heroicon-o-information-circle class="w-4 h-4 text-primary"/>
+                                <span class="font-medium text-sm">SLA Details</span>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="text-sm">
+                                    <span class="font-medium">{{ $ticket->sla->name }}</span>
+                                </div>
+                                @if($ticket->sla->description)
+                                    <div class="text-xs text-gray-500">{{ Str::limit($ticket->sla->description, 50) }}</div>
+                                @endif
+                                <div class="d-flex items-center gap-1">
+                                    @if($ticket->sla->is_active)
+                                        <div class="w-2 h-2 bg-success rounded-full"></div>
+                                        <span class="text-xs text-success">Aktiv</span>
+                                    @else
+                                        <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                        <span class="text-xs text-gray-500">Inaktiv</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Zeit seit Eingang --}}
+                        <div class="p-4 bg-white border rounded-lg shadow-sm">
+                            <div class="d-flex items-center gap-2 mb-2">
+                                <x-heroicon-o-calendar class="w-4 h-4 text-primary"/>
+                                <span class="font-medium text-sm">Zeit seit Eingang</span>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="text-2xl font-bold text-primary">
+                                    {{ $ticket->created_at->diffForHumans() }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    Erstellt am {{ $ticket->created_at->format('d.m.Y H:i') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Restzeit --}}
+                        <div class="p-4 bg-white border rounded-lg shadow-sm">
+                            <div class="d-flex items-center gap-2 mb-2">
+                                <x-heroicon-o-clock class="w-4 h-4 text-primary"/>
+                                <span class="font-medium text-sm">Restzeit</span>
+                            </div>
+                            <div class="space-y-1">
+                                @php
+                                    $remainingTime = $ticket->sla->getRemainingTime($ticket);
+                                    $isOverdue = $ticket->sla->isOverdue($ticket);
+                                @endphp
+                                
+                                @if($remainingTime !== null)
+                                    @if($isOverdue)
+                                        <div class="text-2xl font-bold text-danger">
+                                            <x-heroicon-o-exclamation-triangle class="w-5 h-5 inline"/>
+                                            Überschritten
+                                        </div>
+                                        <div class="text-xs text-danger">
+                                            {{ abs($remainingTime) }}h überfällig
+                                        </div>
+                                    @else
+                                        <div class="text-2xl font-bold text-success">
+                                            {{ $remainingTime }}h
+                                        </div>
+                                        <div class="text-xs text-success">
+                                            verbleibend
+                                        </div>
+                                    @endif
+                                @else
+                                    <div class="text-2xl font-bold text-gray-400">
+                                        –
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        Keine Zeitvorgabe
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- SLA Zeitvorgaben --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @if($ticket->sla->response_time_hours)
+                            <div class="p-3 bg-muted-5 rounded-lg">
+                                <div class="d-flex items-center gap-2 mb-1">
+                                    <x-heroicon-o-chat-bubble-left class="w-4 h-4 text-muted"/>
+                                    <span class="text-sm font-medium">Reaktionszeit</span>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="font-bold">{{ $ticket->sla->response_time_hours }} Stunden</span>
+                                    @php
+                                        $responseTime = $ticket->created_at->addHours($ticket->sla->response_time_hours);
+                                        $isResponseOverdue = now()->isAfter($responseTime);
+                                    @endphp
+                                    @if($isResponseOverdue)
+                                        <span class="text-danger">({{ $responseTime->diffForHumans() }} überschritten)</span>
+                                    @else
+                                        <span class="text-success">(bis {{ $responseTime->format('d.m.Y H:i') }})</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($ticket->sla->resolution_time_hours && !$ticket->is_done)
+                            <div class="p-3 bg-muted-5 rounded-lg">
+                                <div class="d-flex items-center gap-2 mb-1">
+                                    <x-heroicon-o-check-circle class="w-4 h-4 text-muted"/>
+                                    <span class="text-sm font-medium">Lösungszeit</span>
+                                </div>
+                                <div class="text-sm">
+                                    <span class="font-bold">{{ $ticket->sla->resolution_time_hours }} Stunden</span>
+                                    @php
+                                        $resolutionTime = $ticket->created_at->addHours($ticket->sla->resolution_time_hours);
+                                        $isResolutionOverdue = now()->isAfter($resolutionTime);
+                                    @endphp
+                                    @if($isResolutionOverdue)
+                                        <span class="text-danger">({{ $resolutionTime->diffForHumans() }} überschritten)</span>
+                                    @else
+                                        <span class="text-success">(bis {{ $resolutionTime->format('d.m.Y H:i') }})</span>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
 
         <!-- Aktivitäten (immer unten) -->
