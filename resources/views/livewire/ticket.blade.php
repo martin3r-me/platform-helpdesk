@@ -467,26 +467,29 @@
 
             <hr>
 
-            {{-- Löschen-Buttons --}}
+            {{-- Löschen --}}
             @can('delete', $ticket)
-                <div class="d-flex flex-col gap-2">
-                    <x-ui-confirm-button 
-                        action="deleteTicketAndReturnToDashboard" 
-                        text="Zu Meinen Tickets" 
-                        confirmText="Löschen?" 
-                        variant="danger-outline"
-                        :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
-                    />
-                    
-                    @if($ticket->helpdeskBoard)
+                <div class="mb-4">
+                    <h4 class="font-semibold mb-2">Löschen</h4>
+                    <div class="d-flex flex-col gap-2">
                         <x-ui-confirm-button 
-                            action="deleteTicketAndReturnToBoard" 
-                            text="Zum Board" 
-                            confirmText="Löschen?" 
+                            action="deleteTicketAndReturnToDashboard" 
+                            text="Löschen (Meine Tickets)" 
+                            confirmText="Ticket wirklich löschen?" 
                             variant="danger-outline"
                             :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
                         />
-                    @endif
+                        
+                        @if($ticket->helpdeskBoard)
+                            <x-ui-confirm-button 
+                                action="deleteTicketAndReturnToBoard" 
+                                text="Löschen (Board)" 
+                                confirmText="Ticket wirklich löschen?" 
+                                variant="danger-outline"
+                                :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
+                            />
+                        @endif
+                    </div>
                 </div>
             @endcan
         </div>
