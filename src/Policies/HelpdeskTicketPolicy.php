@@ -68,8 +68,22 @@ class HelpdeskTicketPolicy
      */
     public function delete(User $user, HelpdeskTicket $ticket): bool
     {
-        // Nur der Ersteller darf löschen!
-        return $ticket->user_id === $user->id;
+        // Persönliches Ticket (Owner)
+        if ($ticket->user_id === $user->id) {
+            return true;
+        }
+
+        // Team-Ticket: User ist im aktuellen Team
+        if (
+            $ticket->team_id &&
+            $user->currentTeam &&
+            $ticket->team_id === $user->currentTeam->id
+        ) {
+            return true;
+        }
+
+        // Kein Zugriff
+        return false;
     }
 
     /**
