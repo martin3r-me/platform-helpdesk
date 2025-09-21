@@ -43,7 +43,7 @@ return [
             'group' => 'Helpdesk Boards',
             'dynamic' => [
                 // Nur Model und Parameter, keine Closures
-                'model'     => Platform\Helpdesk\Models\HelpdeskBoard::class,
+                'model'     => \Platform\Helpdesk\Models\HelpdeskBoard::class,
                 'team_based' => true, // sagt der Sidebar, nach aktuellem Team filtern
                 'order_by'  => 'name',
                 'route'     => 'helpdesk.boards.show', // Basisroute
