@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Symfony\Component\Uid\UuidV7;
 use Illuminate\Support\Facades\Log;
 
-class HelpdeskBoard extends Model
+class Helpdesk extends Model
 {
     protected $fillable = [
         'uuid',
