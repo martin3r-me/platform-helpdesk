@@ -13,67 +13,63 @@
     
     {{-- Abschnitt: Allgemein --}}
     <div>
-        <h4 x-show="!collapsed" class="px-4 py-3 text-xs tracking-wide font-semibold text-[color:var(--ui-muted)] uppercase">Allgemein</h4>
+        <h4 class="px-4 py-3 text-xs tracking-wide font-semibold text-[color:var(--ui-muted)] uppercase">Allgemein</h4>
 
         {{-- Dashboard --}}
         <a href="{{ route('helpdesk.dashboard') }}"
-           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition"
-           :class="[
+           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition gap-3"
+           :class="(
                window.location.pathname === '/' || 
                window.location.pathname.endsWith('/helpdesk') || 
                window.location.pathname.endsWith('/helpdesk/') ||
                (window.location.pathname.split('/').length === 1 && window.location.pathname === '/')
-                   ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
-                   : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]',
-               collapsed ? 'justify-center' : 'gap-3'
-           ]"
+           )
+               ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
+               : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]'"
            wire:navigate>
             <x-heroicon-o-chart-bar class="w-6 h-6 flex-shrink-0"/>
-            <span x-show="!collapsed" class="truncate">Dashboard</span>
+            <span class="truncate">Dashboard</span>
         </a>
 
         {{-- Meine Tickets --}}
         <a href="{{ route('helpdesk.my-tickets') }}"
-           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition"
-           :class="[
+           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition gap-3"
+           :class="(
                window.location.pathname.includes('/my-tickets') || 
                window.location.pathname.endsWith('/my-tickets')
-                   ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
-                   : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]',
-               collapsed ? 'justify-center' : 'gap-3'
-           ]"
+           )
+               ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
+               : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]'"
            wire:navigate>
             <x-heroicon-o-home class="w-6 h-6 flex-shrink-0"/>
-            <span x-show="!collapsed" class="truncate">Meine Tickets</span>
+            <span class="truncate">Meine Tickets</span>
         </a>
 
         {{-- SLA-Verwaltung --}}
         <a href="{{ route('helpdesk.slas.index') }}"
-           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition"
-           :class="[
+           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition gap-3"
+           :class="(
                window.location.pathname.includes('/slas') || 
                window.location.pathname.endsWith('/slas')
-                   ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
-                   : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]',
-               collapsed ? 'justify-center' : 'gap-3'
-           ]"
+           )
+               ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
+               : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]'"
            wire:navigate>
             <x-heroicon-o-clock class="w-6 h-6 flex-shrink-0"/>
-            <span x-show="!collapsed" class="truncate">SLA-Verwaltung</span>
+            <span class="truncate">SLA-Verwaltung</span>
         </a>
 
         {{-- Helpdesk Board anlegen --}}
         <a href="#"
-           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition"
-           :class="collapsed ? 'justify-center' : 'gap-3'"
+           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition gap-3"
            wire:click="createHelpdeskBoard">
             <x-heroicon-o-plus class="w-6 h-6 flex-shrink-0"/>
-            <span x-show="!collapsed" class="truncate">Helpdesk Board anlegen</span>
+            <span class="truncate">Helpdesk Board anlegen</span>
         </a>
     </div>
 
     {{-- Abschnitt: Helpdesk Boards --}}
-    <div x-show="!collapsed">
+    <div>
         <h4 class="px-4 py-3 text-xs tracking-wide font-semibold text-[color:var(--ui-muted)] uppercase">Helpdesk Boards</h4>
 
         @foreach($helpdeskBoards as $board)
