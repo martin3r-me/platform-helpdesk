@@ -81,8 +81,23 @@
 		</x-ui-page-sidebar>
     </x-slot>
 
+    <x-slot name="activity">
+        <x-ui-page-sidebar title="Aktivitäten" width="w-80" defaultOpen="false" storeKey="activityOpen" side="right">
+            <div class="p-4 space-y-4">
+                <div class="text-sm text-[var(--ui-muted)]">Letzte Aktivitäten</div>
+                <div class="space-y-3 text-sm">
+                    @foreach(($activities ?? []) as $activity)
+                        <div class="p-2 rounded border border-[var(--ui-border)]/60 bg-[var(--ui-muted-5)]">
+                            <div class="font-medium text-[var(--ui-secondary)] truncate">{{ $activity['title'] ?? 'Aktivität' }}</div>
+                            <div class="text-[var(--ui-muted)]">{{ $activity['time'] ?? '' }}</div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </x-ui-page-sidebar>
+    </x-slot>
+
     <x-ui-page-container>
-	<div class="h-full d-flex">
 
 	<!-- Kanban-Board (Planner-kompatibel) -->
 	<x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
@@ -131,7 +146,6 @@
 
     <livewire:helpdesk.board-settings-modal/>
     <livewire:helpdesk.board-slot-settings-modal/>
-</div>
     </x-ui-page-container>
 
 </x-ui-page>
