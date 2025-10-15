@@ -62,11 +62,11 @@
     <x-ui-page-container>
 
     <!-- Kanban-Board (Planner-kompatibel) -->
-    <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
+    <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder" wire:key="my-tickets-kanban-container">
         {{-- Inbox (muted, nicht sortierbar als Gruppe) --}}
         @php $inbox = $groups->first(); @endphp
         @if($inbox)
-            <x-ui-kanban-column :title="($inbox->label ?? 'INBOX')" :sortable-id="null" :scrollable="true" :muted="true">
+            <x-ui-kanban-column :title="($inbox->label ?? 'INBOX')" :sortable-id="null" :scrollable="true" :muted="true" wire:key="my-tickets-column-inbox">
                 @foreach ($inbox->tasks as $ticket)
                     <livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
                 @endforeach
@@ -75,7 +75,7 @@
 
         {{-- Mittlere Spalten (scrollable) --}}
         @foreach($groups->filter(fn ($g) => !($g->isInbox || ($g->isDoneGroup ?? false))) as $column)
-            <x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true">
+            <x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true" wire:key="my-tickets-column-{{ $column->id }}">
                 <x-slot name="headerActions">
                     <button 
                         wire:click="createTicket('{{$column->id}}')" 
