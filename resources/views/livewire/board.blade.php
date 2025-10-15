@@ -98,7 +98,7 @@
     </x-slot>
 
     <!-- Kanban-Board (Planner-kompatibel) -->
-    <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
+    <x-ui-kanban-container class="h-full" sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
 		{{-- Mittlere Spalten (scrollable) --}}
 		@foreach($groups->filter(fn ($g) => !($g->isDoneGroup ?? false)) as $column)
 			<x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true">

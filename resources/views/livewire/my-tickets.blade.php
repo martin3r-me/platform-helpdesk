@@ -72,7 +72,7 @@
     </x-slot>
 
     <!-- Kanban-Board (Planner-kompatibel) -->
-    <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
+    <x-ui-kanban-container class="h-full" sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
         {{-- Inbox (muted, nicht sortierbar als Gruppe) --}}
         @php $inbox = $groups->first(); @endphp
         @if($inbox)
