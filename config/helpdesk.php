@@ -12,47 +12,6 @@ return [
         'icon'  => 'heroicon-o-life-ring',
         'order' => 25,
     ],
-
-    'sidebar' => [
-        [
-            'group' => 'Allgemein',
-            'items' => [
-                [
-                    'label' => 'Dashboard',
-                    'route' => 'helpdesk.dashboard',
-                    'icon'  => 'heroicon-o-chart-bar',
-                ],
-                [
-                    'label' => 'Meine Tickets',
-                    'route' => 'helpdesk.my-tickets',
-                    'icon'  => 'heroicon-o-home',
-                ],
-                [
-                    'label' => 'SLA-Verwaltung',
-                    'route' => 'helpdesk.slas.index',
-                    'icon'  => 'heroicon-o-clock',
-                ],
-                [
-                    'label' => 'Helpdesk Board anlegen',
-                    'dispatch' => 'create-helpdesk-board',
-                    'icon'  => 'heroicon-o-plus',
-                ],  
-            ],
-        ],
-        [
-            'group' => 'Helpdesk Boards',
-            'dynamic' => [
-                // Nur Model und Parameter, keine Closures
-                'model'     => \Platform\Helpdesk\Models\HelpdeskBoard::class,
-                'team_based' => true, // sagt der Sidebar, nach aktuellem Team filtern
-                'order_by'  => 'name',
-                'route'     => 'helpdesk.boards.show', // Basisroute
-                'icon'      => 'heroicon-o-folder',
-                'label_key' => 'name', // Feldname, das als Label genutzt wird
-            ],
-        ],
-
-    ],
     'billables' => [
         [
             // Pflicht: Das zu überwachende Model
