@@ -1,3 +1,20 @@
+<x-ui-page>
+    <x-slot name="navbar">
+        <x-ui-page-navbar title="Meine Tickets" icon="heroicon-o-ticket">
+            <div class="flex items-center gap-2">
+                <x-ui-button variant="success" size="sm" wire:click="createTicket()">+ Neues Ticket</x-ui-button>
+                <x-ui-button variant="primary-outline" size="sm" wire:click="createTicketGroup">+ Neue Spalte</x-ui-button>
+            </div>
+        </x-ui-page-navbar>
+    </x-slot>
+
+    <x-slot name="sidebar">
+        <x-ui-page-sidebar title="Helpdesk" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
+            @include('helpdesk::livewire.sidebar')
+        </x-ui-page-sidebar>
+    </x-slot>
+
+    <x-ui-page-container>
 <div class="h-full d-flex">
     <!-- Info-Bereich (fixe Breite) -->
     <div class="w-80 border-r border-muted p-4 flex-shrink-0">
@@ -142,3 +159,6 @@
 
     <livewire:helpdesk.ticket-group-settings-modal/>
 </div>
+    </x-ui-page-container>
+
+</x-ui-page>

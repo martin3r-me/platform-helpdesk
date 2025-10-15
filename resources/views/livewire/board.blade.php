@@ -1,3 +1,30 @@
+<x-ui-page>
+    <x-slot name="navbar">
+        <x-ui-page-navbar title="{{ $helpdeskBoard->name }}" icon="heroicon-o-folder">
+            <div class="flex items-center gap-2">
+                <x-ui-button variant="secondary" size="sm" :href="route('helpdesk.dashboard')" wire:navigate>
+                    <div class="flex items-center gap-2">
+                        @svg('heroicon-o-arrow-left', 'w-4 h-4')
+                        Zur Übersicht
+                    </div>
+                </x-ui-button>
+                <x-ui-button variant="info" size="sm" @click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })">
+                    <div class="flex items-center gap-2">
+                        @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
+                        Board-Einstellungen
+                    </div>
+                </x-ui-button>
+            </div>
+        </x-ui-page-navbar>
+    </x-slot>
+
+    <x-slot name="sidebar">
+        <x-ui-page-sidebar title="Helpdesk" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
+            @include('helpdesk::livewire.sidebar')
+        </x-ui-page-sidebar>
+    </x-slot>
+
+    <x-ui-page-container>
 <div class="h-full d-flex">
     <!-- Info-Bereich (fixe Breite) -->
     <div class="w-80 border-r border-muted p-4 flex-shrink-0">
@@ -168,4 +195,9 @@
 
     <livewire:helpdesk.board-settings-modal/>
     <livewire:helpdesk.board-slot-settings-modal/>
+    <livewire:helpdesk.board-settings-modal/>
+    <livewire:helpdesk.board-slot-settings-modal/>
 </div>
+    </x-ui-page-container>
+
+</x-ui-page>
