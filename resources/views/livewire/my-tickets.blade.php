@@ -45,21 +45,34 @@
     </x-ui-page-container>
 
     <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Schnellstatistiken" width="w-80" :defaultOpen="true">
-            <div class="p-6 space-y-6">
-                @php
-                    $doneGroup = $groups->first(fn($g) => ($g->isDoneGroup ?? false));
-                    $openTickets = $groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks);
-                    $completedTickets = $doneGroup?->tasks ?? collect();
-                    $openStoryPoints = $openTickets->sum(fn($t) => $t->story_points?->points() ?? 0);
-                    $completedStoryPoints = $completedTickets->sum(fn($t) => $t->story_points?->points() ?? 0);
-                    $groupCount = $groups->filter(fn($g)=>!($g->isInbox ?? false) && !($g->isDoneGroup ?? false))->count();
-                @endphp
-                <div class="grid grid-cols-1 gap-3">
-                    <x-ui-dashboard-tile title="Offene Tickets" :count="$openTickets->count()" subtitle="gesamt" icon="clock" variant="secondary" size="lg" />
-                    <x-ui-dashboard-tile title="Erledigte Tickets" :count="$completedTickets->count()" subtitle="diesen Monat" icon="check-circle" variant="secondary" size="lg" />
-                    <x-ui-dashboard-tile title="Story Points" :count="$openStoryPoints" subtitle="erledigt: {{ $completedStoryPoints }}" icon="chart-bar" variant="secondary" size="lg" />
-                    <x-ui-dashboard-tile title="Gruppen" :count="$groupCount" subtitle="inkl. Inbox/Done separat" icon="folder" variant="secondary" size="lg" />
+        <x-ui-page-sidebar title="Übersicht" width="w-80" :defaultOpen="true">
+            <div class="p-4 space-y-4">
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-muted)] mb-3">Statistiken</h3>
+                    <div class="space-y-2">
+                        @php 
+                            $stats = [
+                                ['title' => 'Story Points (offen)', 'count' => $groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0), 'icon' => 'chart-bar', 'variant' => 'warning'],
+                                ['title' => 'Story Points (erledigt)', 'count' => ($groups->first(fn($g)=>($g->isDoneGroup ?? false))?->tasks ?? collect())->sum(fn($t) => $t->story_points?->points() ?? 0), 'icon' => 'check-circle', 'variant' => 'success'],
+                                ['title' => 'Offen', 'count' => $groups->filter(fn($g) => !($g->isDoneGroup ?? false))->sum(fn($g) => $g->tasks->count()), 'icon' => 'clock', 'variant' => 'warning'],
+                                ['title' => 'Gesamt', 'count' => $groups->flatMap(fn($g) => $g->tasks)->count(), 'icon' => 'document-text', 'variant' => 'secondary'],
+                                ['title' => 'Erledigt', 'count' => ($groups->first(fn($g)=>($g->isDoneGroup ?? false))?->tasks ?? collect())->count(), 'icon' => 'check-circle', 'variant' => 'success'],
+                                ['title' => 'Ohne Fälligkeit', 'count' => $groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => !$t->due_date)->count(), 'icon' => 'calendar', 'variant' => 'neutral'],
+                                ['title' => 'Überfällig', 'count' => $groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->is_done)->count(), 'icon' => 'exclamation-circle', 'variant' => 'danger'],
+                            ];
+                        @endphp
+                        @foreach($stats as $stat)
+                            <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40">
+                                <div class="flex items-center gap-2">
+                                    @svg('heroicon-o-' . $stat['icon'], 'w-4 h-4 text-[var(--ui-' . $stat['variant'] . ')]')
+                                    <span class="text-sm text-[var(--ui-secondary)]">{{ $stat['title'] }}</span>
+                                </div>
+                                <span class="text-sm font-semibold text-[var(--ui-' . $stat['variant'] . ')]">
+                                    {{ $stat['count'] }}
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </x-ui-page-sidebar>
