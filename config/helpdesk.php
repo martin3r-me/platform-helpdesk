@@ -9,7 +9,7 @@ return [
 
     'navigation' => [
         'route' => 'helpdesk.dashboard',
-        'icon'  => 'heroicon-o-life-ring',
+		'icon'  => 'heroicon-o-lifebuoy',
         'order' => 25,
     ],
     'billables' => [

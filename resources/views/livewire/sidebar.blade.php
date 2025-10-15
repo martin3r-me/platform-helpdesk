@@ -5,18 +5,18 @@
     
     {{-- Abschnitt: Allgemein --}}
     <div>
-        <h4 x-show="!collapsed" class="p-3 text-sm italic text-secondary uppercase">Allgemein</h4>
+        <h4 x-show="!collapsed" class="px-4 py-3 text-xs tracking-wide font-semibold text-[color:var(--ui-muted)] uppercase">Allgemein</h4>
 
         {{-- Dashboard --}}
         <a href="{{ route('helpdesk.dashboard') }}"
-           class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition"
+           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition"
            :class="[
                window.location.pathname === '/' || 
                window.location.pathname.endsWith('/helpdesk') || 
                window.location.pathname.endsWith('/helpdesk/') ||
                (window.location.pathname.split('/').length === 1 && window.location.pathname === '/')
-                   ? 'bg-primary text-on-primary shadow-md'
-                   : 'text-black hover:bg-primary-10 hover:text-primary hover:shadow-md',
+                   ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
+                   : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]',
                collapsed ? 'justify-center' : 'gap-3'
            ]"
            wire:navigate>
@@ -26,12 +26,12 @@
 
         {{-- Meine Tickets --}}
         <a href="{{ route('helpdesk.my-tickets') }}"
-           class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition"
+           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition"
            :class="[
                window.location.pathname.includes('/my-tickets') || 
                window.location.pathname.endsWith('/my-tickets')
-                   ? 'bg-primary text-on-primary shadow-md'
-                   : 'text-black hover:bg-primary-10 hover:text-primary hover:shadow-md',
+                   ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
+                   : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]',
                collapsed ? 'justify-center' : 'gap-3'
            ]"
            wire:navigate>
@@ -41,12 +41,12 @@
 
         {{-- SLA-Verwaltung --}}
         <a href="{{ route('helpdesk.slas.index') }}"
-           class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition"
+           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition"
            :class="[
                window.location.pathname.includes('/slas') || 
                window.location.pathname.endsWith('/slas')
-                   ? 'bg-primary text-on-primary shadow-md'
-                   : 'text-black hover:bg-primary-10 hover:text-primary hover:shadow-md',
+                   ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
+                   : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]',
                collapsed ? 'justify-center' : 'gap-3'
            ]"
            wire:navigate>
@@ -56,7 +56,7 @@
 
         {{-- Helpdesk Board anlegen --}}
         <a href="#"
-           class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition"
+           class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition"
            :class="collapsed ? 'justify-center' : 'gap-3'"
            wire:click="createHelpdeskBoard">
             <x-heroicon-o-plus class="w-6 h-6 flex-shrink-0"/>
@@ -66,11 +66,11 @@
 
     {{-- Abschnitt: Helpdesk Boards --}}
     <div x-show="!collapsed">
-        <h4 class="p-3 text-sm italic text-secondary uppercase">Helpdesk Boards</h4>
+        <h4 class="px-4 py-3 text-xs tracking-wide font-semibold text-[color:var(--ui-muted)] uppercase">Helpdesk Boards</h4>
 
         @foreach($helpdeskBoards as $board)
             <a href="{{ route('helpdesk.boards.show', ['helpdeskBoard' => $board]) }}"
-               class="relative d-flex items-center p-2 my-1 rounded-md font-medium transition gap-3"
+               class="relative flex items-center px-3 py-2 my-1 rounded-md font-medium transition gap-3"
                :class="[
                    window.location.pathname.includes('/boards/{{ $board->id }}/') || 
                    window.location.pathname.includes('/boards/{{ $board->uuid }}/') ||
@@ -78,8 +78,8 @@
                    window.location.pathname.endsWith('/boards/{{ $board->uuid }}') ||
                    (window.location.pathname.split('/').length === 2 && window.location.pathname.endsWith('/{{ $board->id }}')) ||
                    (window.location.pathname.split('/').length === 2 && window.location.pathname.endsWith('/{{ $board->uuid }}'))
-                       ? 'bg-primary text-on-primary shadow-md'
-                       : 'text-black hover:bg-primary-10 hover:text-primary hover:shadow-md'
+                       ? 'bg-[color:var(--ui-primary)] text-[color:var(--ui-on-primary)] shadow'
+                       : 'text-[color:var(--ui-secondary)] hover:bg-[color:var(--ui-primary-5)] hover:text-[color:var(--ui-primary)]'
                ]"
                wire:navigate>
                 <x-heroicon-o-folder class="w-6 h-6 flex-shrink-0"/>
