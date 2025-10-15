@@ -120,10 +120,7 @@
 				</x-slot>
 
 				@foreach($column->tasks as $ticket)
-					<livewire:helpdesk.ticket-preview-card 
-						:ticket="$ticket"
-						wire:key="ticket-preview-{{ $ticket->uuid }}"
-					/>
+					<livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
 				@endforeach
 			</x-ui-kanban-column>
 		@endforeach
@@ -133,16 +130,13 @@
 		@if($doneGroup)
 			<x-ui-kanban-column :title="($doneGroup->label ?? 'Erledigt')" :sortable-id="null" :scrollable="true" :muted="true">
 				@foreach($doneGroup->tasks as $ticket)
-					<livewire:helpdesk.ticket-preview-card 
-						:ticket="$ticket"
-						wire:key="ticket-preview-{{ $ticket->uuid }}"
-					/>
+					<livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
 				@endforeach
 			</x-ui-kanban-column>
 		@endif
     </x-ui-kanban-container>
 
-    <livewire:helpdesk.board-settings-modal/>
-    <livewire:helpdesk.board-slot-settings-modal/>
+    <livewire:helpdesk.board-settings-modal wire:key="helpdesk-board-settings-modal"/>
+    <livewire:helpdesk.board-slot-settings-modal wire:key="helpdesk-board-slot-settings-modal"/>
 
 </x-ui-page>

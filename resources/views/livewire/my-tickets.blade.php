@@ -84,10 +84,7 @@
         @if($inbox)
             <x-ui-kanban-column :title="($inbox->label ?? 'INBOX')" :sortable-id="null" :scrollable="true" :muted="true">
                 @foreach ($inbox->tasks as $ticket)
-                    <livewire:helpdesk.ticket-preview-card 
-                        :ticket="$ticket"
-                        wire:key="ticket-preview-{{ $ticket->uuid }}"
-                    />
+                    <livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
                 @endforeach
             </x-ui-kanban-column>
         @endif
@@ -111,16 +108,13 @@
                 </x-slot>
 
                 @foreach($column->tasks as $ticket)
-                    <livewire:helpdesk.ticket-preview-card 
-                        :ticket="$ticket"
-                        wire:key="ticket-preview-{{ $ticket->uuid }}"
-                    />
+                    <livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
                 @endforeach
             </x-ui-kanban-column>
         @endforeach
     </x-ui-kanban-container>
 
-    <livewire:helpdesk.ticket-group-settings-modal/>
+    <livewire:helpdesk.ticket-group-settings-modal wire:key="helpdesk-ticket-group-settings-modal"/>
 
     </x-ui-page-container>
 
