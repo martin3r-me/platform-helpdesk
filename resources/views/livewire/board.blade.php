@@ -97,8 +97,6 @@
         </x-ui-page-sidebar>
     </x-slot>
 
-    <x-ui-page-container>
-
     <!-- Kanban-Board (Planner-kompatibel) -->
     <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
 		{{-- Mittlere Spalten (scrollable) --}}
@@ -146,6 +144,5 @@
 
     <livewire:helpdesk.board-settings-modal/>
     <livewire:helpdesk.board-slot-settings-modal/>
-    </x-ui-page-container>
 
 </x-ui-page>
