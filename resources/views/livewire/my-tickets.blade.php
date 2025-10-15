@@ -58,10 +58,8 @@
         </x-ui-page-sidebar>
     </x-slot>
 
-</x-ui-page>
-
-<!-- Kanban-Board außerhalb des Page-Containers für volle Höhe -->
-<x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder" wire:key="my-tickets-kanban-container">
+    <!-- Kanban-Board: volle Höhe wie im Planner (außerhalb des Page-Containers, aber innerhalb der Seite) -->
+    <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder" wire:key="my-tickets-kanban-container">
     @php $inbox = $groups->first(); @endphp
     @if($inbox)
         <x-ui-kanban-column :title="($inbox->label ?? 'INBOX')" :sortable-id="null" :scrollable="true" :muted="true" wire:key="my-tickets-column-inbox">
@@ -70,6 +68,6 @@
             @endforeach
         </x-ui-kanban-column>
     @endif
-</x-ui-kanban-container>
+    </x-ui-kanban-container>
 
 </x-ui-page>
