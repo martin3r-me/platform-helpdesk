@@ -7,7 +7,7 @@
             : collect();
     }
 @endphp
-<div>
+<div x-data="{ collapsed: false }">
     {{-- Modul Header (ohne Alpine collapsed-Abhängigkeit) --}}
     <div class="p-3 text-sm italic text-[color:var(--ui-secondary)] uppercase border-b border-[color:var(--ui-border)] mb-2">
         Helpdesk
