@@ -22,12 +22,7 @@
             $completedStoryPoints = $completedTickets->sum(fn($t) => $t->story_points?->points() ?? 0);
         @endphp
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <x-ui-dashboard-tile title="Offene Tickets" :count="$openTickets->count()" subtitle="gesamt" icon="clock" variant="secondary" size="lg" />
-            <x-ui-dashboard-tile title="Erledigte Tickets" :count="$completedTickets->count()" subtitle="diesen Monat" icon="check-circle" variant="secondary" size="lg" />
-            <x-ui-dashboard-tile title="Story Points" :count="$openStoryPoints" subtitle="erledigt: {{ $completedStoryPoints }}" icon="chart-bar" variant="secondary" size="lg" />
-            <x-ui-dashboard-tile title="Gruppen" :count="$groups->filter(fn($g)=>!($g->isInbox ?? false) && !($g->isDoneGroup ?? false))->count()" subtitle="inkl. Inbox/Done separat" icon="folder" variant="secondary" size="lg" />
-        </div>
+        
 
         <x-ui-detail-stats-grid cols="2" gap="6">
             <x-slot:left>
@@ -50,30 +45,21 @@
     </x-ui-page-container>
 
     <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Schnellzugriff" width="w-80" :defaultOpen="true">
+        <x-ui-page-sidebar title="Schnellstatistiken" width="w-80" :defaultOpen="true">
             <div class="p-6 space-y-6">
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Aktionen</h3>
-                    <div class="space-y-2">
-                        <x-ui-button variant="secondary-outline" size="sm" :href="route('helpdesk.dashboard')" wire:navigate class="w-full">
-                            <span class="flex items-center gap-2">
-                                @svg('heroicon-o-home', 'w-4 h-4')
-                                Zum Dashboard
-                            </span>
-                        </x-ui-button>
-                        <x-ui-button variant="success-outline" size="sm" class="w-full" wire:click="createTicket()">
-                            <span class="flex items-center gap-2">
-                                @svg('heroicon-o-plus', 'w-4 h-4')
-                                Neues Ticket
-                            </span>
-                        </x-ui-button>
-                        <x-ui-button variant="primary-outline" size="sm" class="w-full" wire:click="createTicketGroup">
-                            <span class="flex items-center gap-2">
-                                @svg('heroicon-o-square-2-stack', 'w-4 h-4')
-                                Neue Spalte
-                            </span>
-                        </x-ui-button>
-                    </div>
+                @php
+                    $doneGroup = $groups->first(fn($g) => ($g->isDoneGroup ?? false));
+                    $openTickets = $groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks);
+                    $completedTickets = $doneGroup?->tasks ?? collect();
+                    $openStoryPoints = $openTickets->sum(fn($t) => $t->story_points?->points() ?? 0);
+                    $completedStoryPoints = $completedTickets->sum(fn($t) => $t->story_points?->points() ?? 0);
+                    $groupCount = $groups->filter(fn($g)=>!($g->isInbox ?? false) && !($g->isDoneGroup ?? false))->count();
+                @endphp
+                <div class="grid grid-cols-1 gap-3">
+                    <x-ui-dashboard-tile title="Offene Tickets" :count="$openTickets->count()" subtitle="gesamt" icon="clock" variant="secondary" size="lg" />
+                    <x-ui-dashboard-tile title="Erledigte Tickets" :count="$completedTickets->count()" subtitle="diesen Monat" icon="check-circle" variant="secondary" size="lg" />
+                    <x-ui-dashboard-tile title="Story Points" :count="$openStoryPoints" subtitle="erledigt: {{ $completedStoryPoints }}" icon="chart-bar" variant="secondary" size="lg" />
+                    <x-ui-dashboard-tile title="Gruppen" :count="$groupCount" subtitle="inkl. Inbox/Done separat" icon="folder" variant="secondary" size="lg" />
                 </div>
             </div>
         </x-ui-page-sidebar>
