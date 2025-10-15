@@ -1,4 +1,12 @@
 {{-- resources/views/vendor/helpdesk/livewire/sidebar-content.blade.php --}}
+@php
+    if (!isset($helpdeskBoards)) {
+        $teamId = auth()->user()?->currentTeam?->id;
+        $helpdeskBoards = $teamId
+            ? \Platform\Helpdesk\Models\HelpdeskBoard::where('team_id', $teamId)->orderBy('name')->get()
+            : collect();
+    }
+@endphp
 <div>
     {{-- Modul Header --}}
     <x-sidebar-module-header module-name="Helpdesk" />
