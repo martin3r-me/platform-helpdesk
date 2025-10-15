@@ -7,41 +7,49 @@
     </x-slot>
 
     <x-ui-page-container>
-        <x-ui-info-banner 
-            icon="heroicon-o-user"
-            title="Persönliche Übersicht"
-            message="Deine persönlichen Helpdesk-Tickets und zuständigen Board-Tickets."
-            variant="secondary"
-        />
+        <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder" wire:key="my-tickets-kanban-container">
+            @php $inbox = $groups->first(); @endphp
+            @if($inbox)
+                <x-ui-kanban-column :title="($inbox->label ?? 'INBOX')" :sortable-id="null" :scrollable="true" :muted="true" wire:key="my-tickets-column-inbox">
+                    @foreach ($inbox->tasks as $ticket)
+                        <livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
+                    @endforeach
+                </x-ui-kanban-column>
+            @endif
 
-        @php
-            $doneGroup = $groups->first(fn($g) => ($g->isDoneGroup ?? false));
-            $openTickets = $groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks);
-            $completedTickets = $doneGroup?->tasks ?? collect();
-            $openStoryPoints = $openTickets->sum(fn($t) => $t->story_points?->points() ?? 0);
-            $completedStoryPoints = $completedTickets->sum(fn($t) => $t->story_points?->points() ?? 0);
-        @endphp
+            @foreach($groups->filter(fn ($g) => !($g->isInbox || ($g->isDoneGroup ?? false))) as $column)
+                <x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true" wire:key="my-tickets-column-{{ $column->id }}">
+                    <x-slot name="headerActions">
+                        <button 
+                            wire:click="createTicket('{{$column->id}}')" 
+                            class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors"
+                            title="Neues Ticket">
+                            @svg('heroicon-o-plus-circle', 'w-4 h-4')
+                        </button>
+                        <button 
+                            @click="$dispatch('open-modal-ticket-group-settings', { ticketGroupId: {{ $column->id }} })"
+                            class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors"
+                            title="Einstellungen">
+                            @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
+                        </button>
+                    </x-slot>
+                    @foreach($column->tasks as $ticket)
+                        <livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
+                    @endforeach
+                </x-ui-kanban-column>
+            @endforeach
 
-        
+            @php $done = $groups->first(fn($g) => ($g->isDoneGroup ?? false)); @endphp
+            @if($done)
+                <x-ui-kanban-column :title="($done->label ?? 'Erledigt')" :sortable-id="null" :scrollable="true" :muted="true" wire:key="my-tickets-column-done">
+                    @foreach($done->tasks as $ticket)
+                        <livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
+                    @endforeach
+                </x-ui-kanban-column>
+            @endif
+        </x-ui-kanban-container>
 
-        <x-ui-detail-stats-grid cols="2" gap="6">
-            <x-slot:left>
-                <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Übersicht</h3>
-                <x-ui-form-grid :cols="2" :gap="3">
-                    <x-ui-dashboard-tile title="Inbox" :count="$groups->first()?->tasks?->count() ?? 0" icon="inbox" variant="neutral" size="sm" />
-                    <x-ui-dashboard-tile title="Erledigt" :count="$completedTickets->count()" icon="check-circle" variant="success" size="sm" />
-                    <x-ui-dashboard-tile title="Ohne Fälligkeit" :count="$openTickets->filter(fn($t)=>!$t->due_date)->count()" icon="calendar" variant="neutral" size="sm" />
-                    <x-ui-dashboard-tile title="Überfällig" :count="$openTickets->filter(fn($t)=>$t->due_date && $t->due_date->isPast())->count()" icon="exclamation-circle" variant="danger" size="sm" />
-                </x-ui-form-grid>
-            </x-slot:left>
-            <x-slot:right>
-                <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Story Points</h3>
-                <x-ui-form-grid :cols="2" :gap="3">
-                    <x-ui-dashboard-tile title="Offen" :count="$openStoryPoints" icon="clock" variant="warning" size="sm" />
-                    <x-ui-dashboard-tile title="Erledigt" :count="$completedStoryPoints" icon="check-circle" variant="success" size="sm" />
-                </x-ui-form-grid>
-            </x-slot:right>
-        </x-ui-detail-stats-grid>
+        <livewire:helpdesk.ticket-group-settings-modal wire:key="helpdesk-ticket-group-settings-modal"/>
     </x-ui-page-container>
 
     <x-slot name="sidebar">
