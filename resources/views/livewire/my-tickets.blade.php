@@ -56,7 +56,6 @@
     </x-slot>
 
     <x-ui-page-container>
-<div class="h-full d-flex">
     <!-- Info-Bereich (fixe Breite) -->
     <div class="w-80 border-r border-muted p-4 flex-shrink-0">
         <!-- Dashboard-Info -->

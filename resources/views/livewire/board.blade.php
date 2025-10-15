@@ -99,8 +99,8 @@
 
     <x-ui-page-container>
 
-	<!-- Kanban-Board (Planner-kompatibel) -->
-	<x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
+    <!-- Kanban-Board (Planner-kompatibel) -->
+    <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
 		{{-- Mittlere Spalten (scrollable) --}}
 		@foreach($groups->filter(fn ($g) => !($g->isDoneGroup ?? false)) as $column)
 			<x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true">
@@ -142,7 +142,7 @@
 				@endforeach
 			</x-ui-kanban-column>
 		@endif
-	</x-ui-kanban-container>
+    </x-ui-kanban-container>
 
     <livewire:helpdesk.board-settings-modal/>
     <livewire:helpdesk.board-slot-settings-modal/>
