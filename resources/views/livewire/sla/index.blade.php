@@ -1,18 +1,27 @@
-<div class="p-3">
-    <h1 class="text-2xl font-bold mb-4">SLA-Verwaltung</h1>
+<x-ui-page>
+    <x-slot name="navbar">
+        <x-ui-page-navbar title="SLA-Verwaltung" icon="heroicon-o-clock">
+            <div class="flex items-center gap-2">
+                <x-ui-input-text 
+                    name="search" 
+                    placeholder="Suche SLAs..." 
+                    wire:model.live.debounce.300ms="search"
+                    class="w-64"
+                />
+                <x-ui-button variant="primary" wire:click="openCreateModal">
+                    Neues SLA
+                </x-ui-button>
+            </div>
+        </x-ui-page-navbar>
+    </x-slot>
 
-    <div class="d-flex justify-between mb-4">
-        <x-ui-input-text 
-            name="search" 
-            placeholder="Suche SLAs..." 
-            wire:model.live.debounce.300ms="search"
-            class="w-64"
-        />
-        <x-ui-button variant="primary" wire:click="openCreateModal">
-            Neues SLA
-        </x-ui-button>
-    </div>
-    
+    <x-slot name="sidebar">
+        <x-ui-page-sidebar title="Helpdesk" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
+            @include('helpdesk::livewire.sidebar')
+        </x-ui-page-sidebar>
+    </x-slot>
+
+    <x-ui-page-container>
     <x-ui-table compact="true">
         <x-ui-table-header>
             <x-ui-table-header-cell compact="true" sortable="true" sortField="name" :currentSort="$sortField" :sortDirection="$sortDirection" wire:click="sortBy('name')">Name</x-ui-table-header-cell>
@@ -73,6 +82,8 @@
             @endforeach
         </x-ui-table-body>
     </x-ui-table>
+
+    </x-ui-page-container>
 
     <!-- Create SLA Modal -->
     <x-ui-modal
@@ -154,4 +165,5 @@
             </div>
         </x-slot>
     </x-ui-modal>
-</div>
+
+</x-ui-page>

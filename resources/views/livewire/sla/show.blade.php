@@ -1,34 +1,133 @@
-<div class="d-flex h-full">
-    <!-- Linke Spalte -->
-    <div class="flex-grow-1 d-flex flex-col">
-        <!-- Header oben (fix) -->
-        <div class="border-top-1 border-bottom-1 border-muted border-top-solid border-bottom-solid p-2 flex-shrink-0">
-            <div class="d-flex gap-1">
-                <div class="d-flex">
-                    <a href="{{ route('helpdesk.slas.index') }}" class="d-flex px-3 border-right-solid border-right-1 border-right-muted underline" wire:navigate>
-                        SLAs
-                    </a>
+<x-ui-page>
+    <x-slot name="navbar">
+        <x-ui-page-navbar title="{{ $sla->name }}" icon="heroicon-o-clock">
+            <div class="flex items-center gap-2">
+                <x-ui-button 
+                    variant="secondary" 
+                    size="sm"
+                    :href="route('helpdesk.slas.index')"
+                    wire:navigate
+                >
+                    <div class="flex items-center gap-2">
+                        @svg('heroicon-o-arrow-left', 'w-4 h-4')
+                        Zurück
+                    </div>
+                </x-ui-button>
+                @if($this->isDirty)
+                    <x-ui-button 
+                        variant="primary" 
+                        size="sm"
+                        wire:click="save"
+                    >
+                        <div class="flex items-center gap-2">
+                            @svg('heroicon-o-check', 'w-4 h-4')
+                            Speichern
+                        </div>
+                    </x-ui-button>
+                @endif
+            </div>
+        </x-ui-page-navbar>
+    </x-slot>
+
+    <x-slot name="sidebar">
+        <x-ui-page-sidebar title="Helpdesk" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
+            @include('helpdesk::livewire.sidebar')
+        </x-ui-page-sidebar>
+    </x-slot>
+
+    <x-slot name="activity">
+        <x-ui-page-sidebar title="Einstellungen" width="w-80" defaultOpen="false" storeKey="activityOpen" side="right">
+            <div class="p-4">
+                {{-- Navigation Buttons --}}
+                <div class="flex flex-col gap-2 mb-4">
+                    <x-ui-button 
+                        variant="secondary-outline" 
+                        size="md" 
+                        :href="route('helpdesk.slas.index')" 
+                        wire:navigate
+                        class="w-full"
+                    >
+                        <div class="flex items-center gap-2">
+                            @svg('heroicon-o-arrow-left', 'w-4 h-4')
+                            Zurück zu SLAs
+                        </div>
+                    </x-ui-button>
                 </div>
-                <div class="flex-grow-1 text-right d-flex items-center justify-end gap-2">
-                    <span>{{ $sla->name }}</span>
-                    @if($this->isDirty)
-                        <x-ui-button 
-                            variant="primary" 
-                            size="sm"
-                            wire:click="save"
-                        >
-                            <div class="d-flex items-center gap-2">
-                                @svg('heroicon-o-check', 'w-4 h-4')
-                                Speichern
+
+                {{-- Kurze Übersicht --}}
+                <div class="mb-4 p-3 bg-[color:var(--ui-muted-5)] rounded-lg">
+                    <h4 class="font-semibold mb-2 text-[color:var(--ui-secondary)]">SLA-Übersicht</h4>
+                    <div class="space-y-1 text-sm">
+                        <div><strong>Name:</strong> {{ $sla->name }}</div>
+                        @if($sla->description)
+                            <div><strong>Beschreibung:</strong> {{ Str::limit($sla->description, 50) }}</div>
+                        @endif
+                        <div><strong>Status:</strong> 
+                            @if($sla->is_active)
+                                <span class="text-[color:var(--ui-success)]">Aktiv</span>
+                            @else
+                                <span class="text-[color:var(--ui-muted)]">Inaktiv</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Zeitvorgaben --}}
+                <div class="mb-4">
+                    <h4 class="font-semibold mb-2">Zeitvorgaben</h4>
+                    <div class="space-y-2">
+                        @if($sla->response_time_hours)
+                            <div class="flex items-center gap-2 p-2 bg-[color:var(--ui-muted-5)] rounded">
+                                <x-heroicon-o-clock class="w-4 h-4 text-[color:var(--ui-muted)]"/>
+                                <span class="text-sm">Reaktionszeit: {{ $sla->response_time_hours }} Stunden</span>
                             </div>
-                        </x-ui-button>
-                    @endif
+                        @endif
+                        @if($sla->resolution_time_hours)
+                            <div class="flex items-center gap-2 p-2 bg-[color:var(--ui-muted-5)] rounded">
+                                <x-heroicon-o-check-circle class="w-4 h-4 text-[color:var(--ui-muted)]"/>
+                                <span class="text-sm">Lösungszeit: {{ $sla->resolution_time_hours }} Stunden</span>
+                            </div>
+                        @endif
+                        @if(!$sla->response_time_hours && !$sla->resolution_time_hours)
+                            <p class="text-sm text-[color:var(--ui-muted)]">Keine Zeitvorgaben definiert</p>
+                        @endif
+                    </div>
+                </div>
+
+                <hr>
+
+                {{-- Statistiken --}}
+                <div class="mb-4">
+                    <h4 class="font-semibold mb-2">Statistiken</h4>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 p-2 bg-[color:var(--ui-muted-5)] rounded">
+                            <x-heroicon-o-folder class="w-4 h-4 text-[color:var(--ui-muted)]"/>
+                            <span class="text-sm">{{ $boardsUsingThisSla->count() }} Boards verwenden dieses SLA</span>
+                        </div>
+                        <div class="flex items-center gap-2 p-2 bg-[color:var(--ui-muted-5)] rounded">
+                            <x-heroicon-o-ticket class="w-4 h-4 text-[color:var(--ui-muted)]"/>
+                            <span class="text-sm">{{ $ticketsUsingThisSla->count() }} Tickets in der Vorschau</span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                {{-- Löschen --}}
+                <div class="mb-4">
+                    <x-ui-confirm-button 
+                        action="deleteSla" 
+                        text="SLA löschen" 
+                        confirmText="Wirklich löschen? Dieses SLA wird von allen Boards entfernt." 
+                        variant="danger-outline"
+                        class="w-full"
+                    />
                 </div>
             </div>
-        </div>
+        </x-ui-page-sidebar>
+    </x-slot>
 
-        <!-- Haupt-Content (nimmt Restplatz, scrollt) -->
-        <div class="flex-grow-1 overflow-y-auto p-4">
+    <x-ui-page-container>
             
             {{-- SLA Grunddaten --}}
             <div class="mb-6">
@@ -170,101 +269,6 @@
                 </div>
             </div>
         </div>
-    </div>
+    </x-ui-page-container>
 
-    <!-- Rechte Spalte -->
-    <div class="min-w-80 w-80 d-flex flex-col border-left-1 border-left-solid border-left-muted">
-        <div class="d-flex gap-2 border-top-1 border-bottom-1 border-muted border-top-solid border-bottom-solid p-2 flex-shrink-0">
-            <x-heroicon-o-cog-6-tooth class="w-6 h-6"/>
-            Einstellungen
-        </div>
-        <div class="flex-grow-1 overflow-y-auto p-4">
-
-            {{-- Navigation Buttons --}}
-            <div class="d-flex flex-col gap-2 mb-4">
-                <x-ui-button 
-                    variant="secondary-outline" 
-                    size="md" 
-                    :href="route('helpdesk.slas.index')" 
-                    wire:navigate
-                    class="w-full"
-                >
-                    <div class="d-flex items-center gap-2">
-                        @svg('heroicon-o-arrow-left', 'w-4 h-4')
-                        Zurück zu SLAs
-                    </div>
-                </x-ui-button>
-            </div>
-
-            {{-- Kurze Übersicht --}}
-            <div class="mb-4 p-3 bg-muted-5 rounded-lg">
-                <h4 class="font-semibold mb-2 text-secondary">SLA-Übersicht</h4>
-                <div class="space-y-1 text-sm">
-                    <div><strong>Name:</strong> {{ $sla->name }}</div>
-                    @if($sla->description)
-                        <div><strong>Beschreibung:</strong> {{ Str::limit($sla->description, 50) }}</div>
-                    @endif
-                    <div><strong>Status:</strong> 
-                        @if($sla->is_active)
-                            <span class="text-success">Aktiv</span>
-                        @else
-                            <span class="text-muted">Inaktiv</span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            {{-- Zeitvorgaben --}}
-            <div class="mb-4">
-                <h4 class="font-semibold mb-2">Zeitvorgaben</h4>
-                <div class="space-y-2">
-                    @if($sla->response_time_hours)
-                        <div class="d-flex items-center gap-2 p-2 bg-muted-5 rounded">
-                            <x-heroicon-o-clock class="w-4 h-4 text-muted"/>
-                            <span class="text-sm">Reaktionszeit: {{ $sla->response_time_hours }} Stunden</span>
-                        </div>
-                    @endif
-                    @if($sla->resolution_time_hours)
-                        <div class="d-flex items-center gap-2 p-2 bg-muted-5 rounded">
-                            <x-heroicon-o-check-circle class="w-4 h-4 text-muted"/>
-                            <span class="text-sm">Lösungszeit: {{ $sla->resolution_time_hours }} Stunden</span>
-                        </div>
-                    @endif
-                    @if(!$sla->response_time_hours && !$sla->resolution_time_hours)
-                        <p class="text-sm text-muted">Keine Zeitvorgaben definiert</p>
-                    @endif
-                </div>
-            </div>
-
-            <hr>
-
-            {{-- Statistiken --}}
-            <div class="mb-4">
-                <h4 class="font-semibold mb-2">Statistiken</h4>
-                <div class="space-y-2">
-                    <div class="d-flex items-center gap-2 p-2 bg-muted-5 rounded">
-                        <x-heroicon-o-folder class="w-4 h-4 text-muted"/>
-                        <span class="text-sm">{{ $boardsUsingThisSla->count() }} Boards verwenden dieses SLA</span>
-                    </div>
-                    <div class="d-flex items-center gap-2 p-2 bg-muted-5 rounded">
-                        <x-heroicon-o-ticket class="w-4 h-4 text-muted"/>
-                        <span class="text-sm">{{ $ticketsUsingThisSla->count() }} Tickets in der Vorschau</span>
-                    </div>
-                </div>
-            </div>
-
-            <hr>
-
-            {{-- Löschen --}}
-            <div class="mb-4">
-                <x-ui-confirm-button 
-                    action="deleteSla" 
-                    text="SLA löschen" 
-                    confirmText="Wirklich löschen? Dieses SLA wird von allen Boards entfernt." 
-                    variant="danger-outline"
-                    class="w-full"
-                />
-            </div>
-        </div>
-    </div>
-</div>
+</x-ui-page>

@@ -1,43 +1,46 @@
-<div class="h-full overflow-y-auto p-6">
-    <!-- Header mit Datum und Perspektive-Toggle -->
-    <div class="mb-6">
-        <div class="d-flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Helpdesk Dashboard</h1>
-                <p class="text-gray-600">{{ $currentDay }}, {{ $currentDate }}</p>
-            </div>
-            <div class="d-flex items-center gap-4">
-                <!-- Perspektive-Toggle -->
-                <div class="d-flex bg-gray-100 rounded-lg p-1">
+<x-ui-page>
+    <x-slot name="navbar">
+        <x-ui-page-navbar title="Helpdesk Dashboard" icon="heroicon-o-lifebuoy">
+            <div class="flex items-center gap-4">
+                <div class="text-sm text-[color:var(--ui-muted)]">{{ $currentDay }}, {{ $currentDate }}</div>
+                <div class="flex bg-gray-100 rounded-lg p-1">
                     <button 
                         wire:click="$set('perspective', 'personal')"
-                        class="px-4 py-2 rounded-md text-sm font-medium transition"
+                        class="px-3 py-1.5 rounded-md text-sm font-medium transition"
                         :class="'{{ $perspective }}' === 'personal' 
-                            ? 'bg-success text-on-success shadow-sm' 
-                            : 'text-gray-600 hover:text-gray-900'"
+                            ? 'bg-[color:var(--ui-success)] text-[color:var(--ui-on-success)] shadow' 
+                            : 'text-[color:var(--ui-secondary)] hover:text-[color:var(--ui-primary)]'"
                     >
-                        <div class="d-flex items-center gap-2">
+                        <div class="flex items-center gap-2">
                             @svg('heroicon-o-user', 'w-4 h-4')
                             <span>Persönlich</span>
                         </div>
                     </button>
                     <button 
                         wire:click="$set('perspective', 'team')"
-                        class="px-4 py-2 rounded-md text-sm font-medium transition"
+                        class="px-3 py-1.5 rounded-md text-sm font-medium transition"
                         :class="'{{ $perspective }}' === 'team' 
-                            ? 'bg-success text-on-success shadow-sm' 
-                            : 'text-gray-600 hover:text-gray-900'"
+                            ? 'bg-[color:var(--ui-success)] text-[color:var(--ui-on-success)] shadow' 
+                            : 'text-[color:var(--ui-secondary)] hover:text-[color:var(--ui-primary)]'"
                     >
-                        <div class="d-flex items-center gap-2">
+                        <div class="flex items-center gap-2">
                             @svg('heroicon-o-users', 'w-4 h-4')
                             <span>Team</span>
                         </div>
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
+        </x-ui-page-navbar>
+    </x-slot>
 
+    <x-slot name="sidebar">
+        <x-ui-page-sidebar title="Helpdesk" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
+            @include('helpdesk::livewire.sidebar')
+        </x-ui-page-sidebar>
+    </x-slot>
+
+    <x-ui-page-container>
+    
     <!-- Perspektive-spezifische Statistiken -->
     @if($perspective === 'personal')
         <!-- Persönliche Perspektive -->
@@ -296,4 +299,6 @@
             @endif
         </div>
     </div>
-</div>
+
+    </x-ui-page-container>
+</x-ui-page>
