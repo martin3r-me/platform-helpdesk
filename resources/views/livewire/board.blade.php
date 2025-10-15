@@ -142,59 +142,51 @@
         @endif
     </div>
 
-    <!-- Kanban-Board (scrollbar) -->
-    <div class="flex-grow overflow-x-auto">
-        <x-ui-kanban-board wire:sortable="updateTicketGroupOrder" wire:sortable-group="updateTicketOrder">
+	<!-- Kanban-Board (Planner-kompatibel) -->
+	<x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
+		{{-- Mittlere Spalten (scrollable) --}}
+		@foreach($groups->filter(fn ($g) => !($g->isDoneGroup ?? false)) as $column)
+			<x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true">
+				<x-slot name="headerActions">
+					@can('update', $helpdeskBoard)
+						<button 
+							wire:click="createTicket('{{ $column->id }}')" 
+							class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
+							title="Neues Ticket">
+							@svg('heroicon-o-plus-circle', 'w-4 h-4')
+						</button>
+						<button 
+							@click="$dispatch('open-modal-board-slot-settings', { boardSlotId: {{ $column->id }} })" 
+							class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
+							title="Einstellungen">
+							@svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
+						</button>
+					@endcan
+				</x-slot>
 
-            {{-- Mittlere Spalten --}}
-            @foreach($groups->filter(fn ($g) => !($g->isDoneGroup ?? false)) as $column)
-                <x-ui-kanban-column
-                    :title="$column->label"
-                    :sortable-id="$column->id">
+				@foreach($column->tasks as $ticket)
+					<livewire:helpdesk.ticket-preview-card 
+						:ticket="$ticket"
+						wire:key="ticket-preview-{{ $ticket->uuid }}"
+					/>
+				@endforeach
+			</x-ui-kanban-column>
+		@endforeach
 
-                    <x-slot name="extra">
-                        <div class="d-flex gap-1">
-                            @can('update', $helpdeskBoard)
-                                <x-ui-button variant="success-outline" size="sm" class="w-full" wire:click="createTicket('{{ $column->id }}')">
-                                    + Neues Ticket
-                                </x-ui-button>
-                                <x-ui-button variant="primary-outline" size="sm" class="w-full" @click="$dispatch('open-modal-board-slot-settings', { boardSlotId: {{ $column->id }} })">Settings</x-ui-button>
-                            @endcan
-                        </div>
-                    </x-slot>
+		{{-- ERLEDIGT Spalte (muted, nicht sortierbar als Gruppe) --}}
+		@php $doneGroup = $groups->first(fn($g) => ($g->isDoneGroup ?? false)); @endphp
+		@if($doneGroup)
+			<x-ui-kanban-column :title="($doneGroup->label ?? 'Erledigt')" :sortable-id="null" :scrollable="true" :muted="true">
+				@foreach($doneGroup->tasks as $ticket)
+					<livewire:helpdesk.ticket-preview-card 
+						:ticket="$ticket"
+						wire:key="ticket-preview-{{ $ticket->uuid }}"
+					/>
+				@endforeach
+			</x-ui-kanban-column>
+		@endif
+	</x-ui-kanban-container>
 
-                    @foreach($column->tasks as $ticket)
-                        <livewire:helpdesk.ticket-preview-card 
-                            :ticket="$ticket"
-                            wire:key="ticket-preview-{{ $ticket->uuid }}"
-                        />
-                    @endforeach
-
-                </x-ui-kanban-column>
-            @endforeach
-
-            {{-- ERLEDIGT Spalte --}}
-            @php $doneGroup = $groups->filter(fn($g) => $g->isDoneGroup ?? false)->first(); @endphp
-            @if($doneGroup)
-                <x-ui-kanban-column
-                    title="ERLEDIGT"
-                    :sortable-id="$doneGroup->id">
-
-                    @foreach($doneGroup->tasks as $ticket)
-                        <livewire:helpdesk.ticket-preview-card 
-                            :ticket="$ticket"
-                            wire:key="ticket-preview-{{ $ticket->uuid }}"
-                        />
-                    @endforeach
-
-                </x-ui-kanban-column>
-            @endif
-
-        </x-ui-kanban-board>
-    </div>
-
-    <livewire:helpdesk.board-settings-modal/>
-    <livewire:helpdesk.board-slot-settings-modal/>
     <livewire:helpdesk.board-settings-modal/>
     <livewire:helpdesk.board-slot-settings-modal/>
 </div>

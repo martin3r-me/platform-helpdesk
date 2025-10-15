@@ -122,40 +122,48 @@
         @endif
     </div>
 
-    <!-- Kanban-Board (scrollbar) -->
-    <div class="flex-grow overflow-x-auto">
-        <x-ui-kanban-board wire:sortable="updateTicketGroupOrder" wire:sortable-group="updateTicketOrder">
-            <x-ui-kanban-column :title="'INBOX'">
-                @foreach ($groups->first()->tasks as $ticket)
+    <!-- Kanban-Board (Planner-kompatibel) -->
+    <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
+        {{-- Inbox (muted, nicht sortierbar als Gruppe) --}}
+        @php $inbox = $groups->first(); @endphp
+        @if($inbox)
+            <x-ui-kanban-column :title="($inbox->label ?? 'INBOX')" :sortable-id="null" :scrollable="true" :muted="true">
+                @foreach ($inbox->tasks as $ticket)
                     <livewire:helpdesk.ticket-preview-card 
                         :ticket="$ticket"
                         wire:key="ticket-preview-{{ $ticket->uuid }}"
                     />
                 @endforeach
             </x-ui-kanban-column>
+        @endif
 
-            @foreach($groups->filter(fn ($g) => !($g->isInbox || ($g->isDoneGroup ?? false))) as $column)
-                <x-ui-kanban-column
-                    :title="$column->label"
-                    :sortable-id="$column->id"
-                >
-                    <x-slot name="extra">
-                        <div class="d-flex gap-1">
-                            <x-ui-button variant="success-outline" size="sm" class="w-full" wire:click="createTicket('{{$column->id}}')">+ Neues Ticket</x-ui-button>
-                            <x-ui-button variant="primary-outline" size="sm" class="w-full" @click="$dispatch('open-modal-ticket-group-settings', { ticketGroupId: {{ $column->id }} })">Settings</x-ui-button>
-                        </div>
-                    </x-slot>
+        {{-- Mittlere Spalten (scrollable) --}}
+        @foreach($groups->filter(fn ($g) => !($g->isInbox || ($g->isDoneGroup ?? false))) as $column)
+            <x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true">
+                <x-slot name="headerActions">
+                    <button 
+                        wire:click="createTicket('{{$column->id}}')" 
+                        class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors"
+                        title="Neues Ticket">
+                        @svg('heroicon-o-plus-circle', 'w-4 h-4')
+                    </button>
+                    <button 
+                        @click="$dispatch('open-modal-ticket-group-settings', { ticketGroupId: {{ $column->id }} })"
+                        class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors"
+                        title="Einstellungen">
+                        @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
+                    </button>
+                </x-slot>
 
-                    @foreach($column->tasks as $ticket)
-                        <livewire:helpdesk.ticket-preview-card 
-                            :ticket="$ticket"
-                            wire:key="ticket-preview-{{ $ticket->uuid }}"
-                        />
-                    @endforeach
-                </x-ui-kanban-column>
-            @endforeach
-        </x-ui-kanban-board>
-    </div>
+                @foreach($column->tasks as $ticket)
+                    <livewire:helpdesk.ticket-preview-card 
+                        :ticket="$ticket"
+                        wire:key="ticket-preview-{{ $ticket->uuid }}"
+                    />
+                @endforeach
+            </x-ui-kanban-column>
+        @endforeach
+    </x-ui-kanban-container>
 
     <livewire:helpdesk.ticket-group-settings-modal/>
 </div>
