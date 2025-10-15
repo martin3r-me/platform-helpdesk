@@ -19,128 +19,70 @@
     </x-slot>
 
     <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Helpdesk" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
-            @include('helpdesk::livewire.sidebar')
-        </x-ui-page-sidebar>
+		<x-ui-page-sidebar title="Board-Übersicht" width="w-80" defaultOpen="true" storeKey="sidebarOpen" side="left">
+			<div class="p-4">
+				{{-- Board-Info --}}
+				<div class="mb-6">
+					<div class="d-flex justify-between items-start mb-2">
+						<h3 class="text-lg font-semibold">{{ $helpdeskBoard->name }}</h3>
+						<x-ui-button variant="info" size="sm" @click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })">
+							<div class="d-flex items-center gap-2">
+								@svg('heroicon-o-information-circle', 'w-4 h-4')
+								Info
+							</div>
+						</x-ui-button>
+					</div>
+					<div class="text-sm text-gray-600 mb-4">{{ $helpdeskBoard->description ?? 'Keine Beschreibung' }}</div>
+				</div>
+
+				{{-- Statistiken --}}
+				<div class="grid grid-cols-2 gap-2 mb-4">
+					<x-ui-dashboard-tile title="Story Points (offen)" :count="$groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0)" icon="chart-bar" variant="warning" size="sm" />
+					<x-ui-dashboard-tile title="Story Points (erledigt)" :count="$groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0)" icon="check-circle" variant="success" size="sm" />
+					<x-ui-dashboard-tile title="Offen" :count="$groups->filter(fn($g) => !($g->isDoneGroup ?? false))->sum(fn($g) => $g->tasks->count())" icon="clock" variant="warning" size="sm" />
+					<x-ui-dashboard-tile title="Gesamt" :count="$groups->flatMap(fn($g) => $g->tasks)->count()" icon="document-text" variant="secondary" size="sm" />
+					<x-ui-dashboard-tile title="Erledigt" :count="$groups->filter(fn($g) => $g->isDoneGroup ?? false)->sum(fn($g) => $g->tasks->count())" icon="check-circle" variant="success" size="sm" />
+					<x-ui-dashboard-tile title="Ohne Fälligkeit" :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => !$t->due_date)->count()" icon="calendar" variant="neutral" size="sm" />
+					<x-ui-dashboard-tile title="Frösche" :count="0" icon="exclamation-triangle" variant="danger" size="sm" />
+					<x-ui-dashboard-tile title="Überfällig" :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->is_done)->count()" icon="exclamation-circle" variant="danger" size="sm" />
+				</div>
+
+				{{-- Aktionen --}}
+				@can('update', $helpdeskBoard)
+					<div class="d-flex flex-col gap-2 mb-4">
+						<x-ui-button variant="success-outline" size="sm" wire:click="createTicket()">+ Neues Ticket</x-ui-button>
+						<x-ui-button variant="primary-outline" size="sm" wire:click="createBoardSlot">+ Neue Spalte</x-ui-button>
+					</div>
+				@endcan
+
+				{{-- Erledigte Tickets --}}
+				@php $completedTickets = $groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks); @endphp
+				@if($completedTickets->count() > 0)
+					<div>
+						<h4 class="font-medium mb-3">Erledigte Tickets ({{ $completedTickets->count() }})</h4>
+						<div class="space-y-1 max-h-60 overflow-y-auto">
+							@foreach($completedTickets->take(10) as $ticket)
+								<a href="{{ route('helpdesk.tickets.show', $ticket) }}" class="block p-2 bg-gray-50 rounded text-sm hover:bg-gray-100 transition" wire:navigate>
+									<div class="d-flex items-center gap-2">
+										<x-heroicon-o-check-circle class="w-4 h-4 text-green-500"/>
+										<span class="truncate">{{ $ticket->title }}</span>
+									</div>
+								</a>
+							@endforeach
+							@if($completedTickets->count() > 10)
+								<div class="text-xs text-gray-500 italic text-center">+{{ $completedTickets->count() - 10 }} weitere</div>
+							@endif
+						</div>
+					</div>
+				@else
+					<div class="text-sm text-gray-500 italic">Noch keine erledigten Tickets</div>
+				@endif
+			</div>
+		</x-ui-page-sidebar>
     </x-slot>
 
     <x-ui-page-container>
-<div class="h-full d-flex">
-    <!-- Info-Bereich (fixe Breite) -->
-    <div class="w-80 border-r border-muted p-4 flex-shrink-0">
-        <!-- Board-Info -->
-        <div class="mb-6">
-            <div class="d-flex justify-between items-start mb-2">
-                <h3 class="text-lg font-semibold">{{ $helpdeskBoard->name }}</h3>
-                <x-ui-button variant="info" size="sm" @click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })">
-                    <div class="d-flex items-center gap-2">
-                        @svg('heroicon-o-information-circle', 'w-4 h-4')
-                        Info
-                    </div>
-                </x-ui-button>
-            </div>
-            <div class="text-sm text-gray-600 mb-4">{{ $helpdeskBoard->description ?? 'Keine Beschreibung' }}</div>
-            
-            <!-- Statistiken mit Dashboard-Tiles in 2-spaltigem Grid -->
-            <div class="grid grid-cols-2 gap-2 mb-4">
-                <x-ui-dashboard-tile
-                    title="Story Points (offen)"
-                    :count="$groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0)"
-                    icon="chart-bar"
-                    variant="warning"
-                    size="sm"
-                />
-                <x-ui-dashboard-tile
-                    title="Story Points (erledigt)"
-                    :count="$groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0)"
-                    icon="check-circle"
-                    variant="success"
-                    size="sm"
-                />
-                <x-ui-dashboard-tile
-                    title="Offen"
-                    :count="$groups->filter(fn($g) => !($g->isDoneGroup ?? false))->sum(fn($g) => $g->tasks->count())"
-                    icon="clock"
-                    variant="warning"
-                    size="sm"
-                />
-                <x-ui-dashboard-tile
-                    title="Gesamt"
-                    :count="$groups->flatMap(fn($g) => $g->tasks)->count()"
-                    icon="document-text"
-                    variant="secondary"
-                    size="sm"
-                />
-                <x-ui-dashboard-tile
-                    title="Erledigt"
-                    :count="$groups->filter(fn($g) => $g->isDoneGroup ?? false)->sum(fn($g) => $g->tasks->count())"
-                    icon="check-circle"
-                    variant="success"
-                    size="sm"
-                />
-                <x-ui-dashboard-tile
-                    title="Ohne Fälligkeit"
-                    :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => !$t->due_date)->count()"
-                    icon="calendar"
-                    variant="neutral"
-                    size="sm"
-                />
-                <x-ui-dashboard-tile
-                    title="Frösche"
-                    :count="0"
-                    icon="exclamation-triangle"
-                    variant="danger"
-                    size="sm"
-                />
-                <x-ui-dashboard-tile
-                    title="Überfällig"
-                    :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->is_done)->count()"
-                    icon="exclamation-circle"
-                    variant="danger"
-                    size="sm"
-                />
-            </div>
-
-            <!-- Aktionen -->
-            @can('update', $helpdeskBoard)
-                <div class="d-flex flex-col gap-2 mb-4">
-                    <x-ui-button variant="success-outline" size="sm" wire:click="createTicket()">
-                        + Neues Ticket
-                    </x-ui-button>
-                    <x-ui-button variant="primary-outline" size="sm" wire:click="createBoardSlot">
-                        + Neue Spalte
-                    </x-ui-button>
-                </div>
-            @endcan
-        </div>
-
-        <!-- Erledigte Tickets -->
-        @php $completedTickets = $groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks); @endphp
-        @if($completedTickets->count() > 0)
-            <div>
-                <h4 class="font-medium mb-3">Erledigte Tickets ({{ $completedTickets->count() }})</h4>
-                <div class="space-y-1 max-h-60 overflow-y-auto">
-                    @foreach($completedTickets->take(10) as $ticket)
-                        <a href="{{ route('helpdesk.tickets.show', $ticket) }}" 
-                           class="block p-2 bg-gray-50 rounded text-sm hover:bg-gray-100 transition"
-                           wire:navigate>
-                            <div class="d-flex items-center gap-2">
-                                <x-heroicon-o-check-circle class="w-4 h-4 text-green-500"/>
-                                <span class="truncate">{{ $ticket->title }}</span>
-                            </div>
-                        </a>
-                    @endforeach
-                    @if($completedTickets->count() > 10)
-                        <div class="text-xs text-gray-500 italic text-center">
-                            +{{ $completedTickets->count() - 10 }} weitere
-                        </div>
-                    @endif
-                </div>
-            </div>
-        @else
-            <div class="text-sm text-gray-500 italic">Noch keine erledigten Tickets</div>
-        @endif
-    </div>
+	<div class="h-full d-flex">
 
 	<!-- Kanban-Board (Planner-kompatibel) -->
 	<x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
