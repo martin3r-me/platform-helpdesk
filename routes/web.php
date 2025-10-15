@@ -19,3 +19,8 @@ Route::get('/tickets/{helpdeskTicket}', Ticket::class)
 
 Route::get('/slas', SlaIndex::class)->name('helpdesk.slas.index');
 Route::get('/slas/{helpdeskBoardSla}', SlaShow::class)->name('helpdesk.slas.show');
+
+// Embedded Teams Config (Helpdesk) – Platzhalter
+Route::get('/embedded/teams/config', function() {
+    return view('helpdesk::embedded.teams-config');
+})->name('helpdesk.embedded.teams.config');
