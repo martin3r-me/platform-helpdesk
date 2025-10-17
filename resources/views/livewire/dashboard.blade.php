@@ -1,36 +1,6 @@
 <x-ui-page>
     <x-slot name="navbar">
-        <x-ui-page-navbar title="Helpdesk Dashboard" icon="heroicon-o-lifebuoy">
-            <div class="flex items-center gap-4">
-                <div class="text-sm text-[color:var(--ui-muted)]">{{ $currentDay }}, {{ $currentDate }}</div>
-                <div class="flex bg-gray-100 rounded-lg p-1">
-                    <button 
-                        wire:click="$set('perspective', 'personal')"
-                        class="px-3 py-1.5 rounded-md text-sm font-medium transition"
-                        :class="'{{ $perspective }}' === 'personal' 
-                            ? 'bg-[color:var(--ui-success)] text-[color:var(--ui-on-success)] shadow' 
-                            : 'text-[color:var(--ui-secondary)] hover:text-[color:var(--ui-primary)]'"
-                    >
-                        <div class="flex items-center gap-2">
-                            @svg('heroicon-o-user', 'w-4 h-4')
-                            <span>Persönlich</span>
-                        </div>
-                    </button>
-                    <button 
-                        wire:click="$set('perspective', 'team')"
-                        class="px-3 py-1.5 rounded-md text-sm font-medium transition"
-                        :class="'{{ $perspective }}' === 'team' 
-                            ? 'bg-[color:var(--ui-success)] text-[color:var(--ui-on-success)] shadow' 
-                            : 'text-[color:var(--ui-secondary)] hover:text-[color:var(--ui-primary)]'"
-                    >
-                        <div class="flex items-center gap-2">
-                            @svg('heroicon-o-users', 'w-4 h-4')
-                            <span>Team</span>
-                        </div>
-                    </button>
-                </div>
-            </div>
-        </x-ui-page-navbar>
+        <x-ui-page-navbar title="Helpdesk" />
     </x-slot>
 
     <x-slot name="sidebar">
@@ -87,86 +57,23 @@
 
     <x-ui-page-container>
     
-    <!-- Perspektive-spezifische Statistiken -->
-    @if($perspective === 'personal')
-        <!-- Persönliche Perspektive -->
-        <div class="mb-4">
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div class="d-flex items-center gap-2 mb-2">
-                    @svg('heroicon-o-user', 'w-5 h-5 text-blue-600')
-                    <h3 class="text-lg font-semibold text-blue-900">Persönliche Übersicht</h3>
-                </div>
-                <p class="text-blue-700 text-sm">Deine persönlichen Helpdesk-Tickets und zuständigen Support-Anfragen.</p>
-            </div>
-        </div>
-    @else
-        <!-- Team-Perspektive -->
-        <div class="mb-4">
-            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div class="d-flex items-center gap-2 mb-2">
-                    @svg('heroicon-o-users', 'w-5 h-5 text-green-600')
-                    <h3 class="text-lg font-semibold text-green-900">Team-Übersicht</h3>
-                </div>
-                <p class="text-green-700 text-sm">Alle Helpdesk-Tickets des Teams in allen aktiven Boards.</p>
-            </div>
-        </div>
-    @endif
-
-    <!-- SLA & Eskalationen (2er Grid) -->
-    <div class="grid grid-cols-2 gap-4 mb-8">
-        <!-- SLA-Überschreitungen -->
-        <x-ui-dashboard-tile
-            title="SLA-Überschreitungen"
-            :count="$slaOverdueTickets"
-            subtitle="gefährdet: {{ $slaAtRiskTickets }}"
-            icon="exclamation-triangle"
-            variant="danger"
-            size="lg"
-        />
-        
-        <!-- Eskalierte Tickets -->
-        <x-ui-dashboard-tile
-            title="Eskalierte Tickets"
-            :count="$escalatedTickets"
-            subtitle="kritisch: {{ $criticalEscalations }}"
-            icon="fire"
-            variant="danger"
-            size="lg"
-        />
+    <!-- Haupt-Kacheln (schlank, Planner-Stil) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <x-ui-dashboard-tile title="Offene Tickets" :count="$openTickets" icon="clock" variant="warning" size="lg" />
+        <x-ui-dashboard-tile title="Eskalationen" :count="$escalatedTickets" icon="fire" variant="danger" size="lg" />
+        <x-ui-dashboard-tile title="Aktive Boards" :count="$activeBoards" icon="folder" variant="secondary" size="lg" />
+        <x-ui-dashboard-tile title="SLA überfällig" :count="$slaOverdueTickets" icon="exclamation-triangle" variant="danger" size="lg" />
     </div>
 
-    <!-- Allgemeine Statistiken (3er Grid) -->
-    <div class="grid grid-cols-3 gap-4 mb-8">
-        <!-- Boards -->
-        <x-ui-dashboard-tile
-            title="Aktive Boards"
-            :count="$activeBoards"
-            subtitle="Helpdesk Boards"
-            icon="folder"
-            variant="primary"
-            size="lg"
-        />
-        
-        <!-- Tickets -->
-        <x-ui-dashboard-tile
-            title="Offene Tickets"
-            :count="$openTickets"
-            subtitle="von {{ $totalTickets }}"
-            icon="clock"
-            variant="warning"
-            size="lg"
-        />
-        
-        <!-- Erledigte Tickets -->
-        <x-ui-dashboard-tile
-            title="Erledigte Tickets"
-            :count="$completedTickets"
-            subtitle="diesen Monat: {{ $monthlyCompletedTickets }}"
-            icon="check-circle"
-            variant="success"
-            size="lg"
-        />
+    <!-- Sekundäre Kennzahlen (kompakt) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <x-ui-dashboard-tile title="SLA gefährdet" :count="$slaAtRiskTickets" icon="clock" variant="warning" size="md" />
+        <x-ui-dashboard-tile title="Erledigt (Monat)" :count="$monthlyCompletedTickets" icon="check-circle" variant="success" size="md" />
+        <x-ui-dashboard-tile title="Überfällig" :count="$overdueTickets" icon="exclamation-circle" variant="danger" size="md" />
+        <x-ui-dashboard-tile title="Tickets gesamt" :count="$totalTickets" icon="document-text" variant="neutral" size="md" />
     </div>
+
+    <!-- Eskalations-Übersicht (optional) -->
 
     <!-- Eskalations-Übersicht -->
     @if($escalatedTickets > 0)
@@ -218,11 +125,11 @@
         </div>
     @endif
 
-    <!-- Detaillierte Statistiken (2x3 Grid) -->
-    <div class="grid grid-cols-2 gap-6 mb-8">
+    <!-- Detaillierte Statistiken (2 Spalten) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <!-- Linke Spalte: Ticket-Details -->
         <div class="space-y-4">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Ticket-Übersicht</h3>
+            <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Ticket-Übersicht</h3>
             
             <div class="grid grid-cols-2 gap-3">
                 <x-ui-dashboard-tile
@@ -261,7 +168,7 @@
 
         <!-- Rechte Spalte: SLA Performance -->
         <div class="space-y-4">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">SLA Performance</h3>
+            <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">SLA Performance</h3>
             
             <div class="grid grid-cols-2 gap-3">
                 <x-ui-dashboard-tile
@@ -300,24 +207,24 @@
     </div>
 
     <!-- Board-Übersicht -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Meine aktiven Helpdesk Boards</h3>
-            <p class="text-sm text-gray-600 mt-1">Top 5 Boards nach offenen Tickets</p>
+    <div class="bg-[var(--ui-surface)] rounded-lg border border-[var(--ui-border)]/60">
+        <div class="p-6 border-b border-[var(--ui-border)]/60">
+            <h3 class="text-lg font-semibold text-[var(--ui-secondary)]">Meine aktiven Helpdesk Boards</h3>
+            <p class="text-sm text-[var(--ui-muted)] mt-1">Top 5 Boards nach offenen Tickets</p>
         </div>
         
         <div class="p-6">
             @if($activeBoardsList->count() > 0)
                 <div class="space-y-4">
                     @foreach($activeBoardsList as $board)
-                        <div class="d-flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                        <div class="d-flex items-center justify-between p-4 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/60 hover:bg-[var(--ui-primary-5)] hover:border-[var(--ui-primary)]/60 transition">
                             <div class="d-flex items-center gap-4">
-                                <div class="w-10 h-10 bg-primary text-on-primary rounded-lg d-flex items-center justify-center">
+                                <div class="w-10 h-10 rounded-lg d-flex items-center justify-center bg-[var(--ui-primary-5)] text-[var(--ui-primary)]">
                                     <x-heroicon-o-folder class="w-5 h-5"/>
                                 </div>
                                 <div>
-                                    <h4 class="font-medium text-gray-900">{{ $board['name'] }}</h4>
-                                    <p class="text-sm text-gray-600">
+                                    <h4 class="font-medium text-[var(--ui-secondary)]">{{ $board['name'] }}</h4>
+                                    <p class="text-sm text-[var(--ui-muted)]">
                                         {{ $board['open_tickets'] }} offene von {{ $board['total_tickets'] }} Tickets
                                         @if($board['high_priority'] > 0)
                                             • {{ $board['high_priority'] }} hohe Priorität
@@ -326,7 +233,7 @@
                                 </div>
                             </div>
                             <a href="{{ route('helpdesk.boards.show', $board['id']) }}" 
-                               class="inline-flex items-center gap-2 px-3 py-2 bg-primary text-on-primary rounded-md hover:bg-primary-dark transition text-sm"
+                               class="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-[var(--ui-primary)] text-[var(--ui-primary)] bg-[var(--ui-primary-5)] hover:bg-[var(--ui-primary-10)] transition text-sm"
                                wire:navigate>
                                 <div class="d-flex items-center gap-2">
                                     @svg('heroicon-o-arrow-right', 'w-4 h-4')
@@ -338,9 +245,9 @@
                 </div>
             @else
                 <div class="text-center py-8">
-                    <x-heroicon-o-folder class="w-12 h-12 text-gray-400 mx-auto mb-4"/>
-                    <h4 class="text-lg font-medium text-gray-900 mb-2">Keine aktiven Boards</h4>
-                    <p class="text-gray-600">Du hast noch keine Helpdesk Boards oder bist in keinem Board zuständig.</p>
+                    <x-heroicon-o-folder class="w-12 h-12 text-[var(--ui-muted)] mx-auto mb-4"/>
+                    <h4 class="text-lg font-medium text-[var(--ui-secondary)] mb-2">Keine aktiven Boards</h4>
+                    <p class="text-[var(--ui-muted)]">Du hast noch keine Helpdesk Boards oder bist in keinem Board zuständig.</p>
                 </div>
             @endif
         </div>
