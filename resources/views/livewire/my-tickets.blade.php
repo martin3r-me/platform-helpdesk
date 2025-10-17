@@ -6,24 +6,6 @@
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Übersicht" width="w-80" :defaultOpen="true">
             <div class="p-4 space-y-4">
-                {{-- Quick Actions verschoben aus Navbar --}}
-                <div>
-                    <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-muted)] mb-3">Aktionen</h3>
-                    <div class="flex items-center gap-2">
-                        <x-ui-button variant="secondary" size="sm" wire:click="createTicketGroup">
-                            <span class="inline-flex items-center gap-2">
-                                @svg('heroicon-o-square-2-stack','w-4 h-4 inline-block align-middle')
-                                <span class="hidden sm:inline">Spalte</span>
-                            </span>
-                        </x-ui-button>
-                        <x-ui-button variant="secondary" size="sm" wire:click="createTicket()">
-                            <span class="inline-flex items-center gap-2">
-                                @svg('heroicon-o-plus','w-4 h-4 inline-block align-middle')
-                                <span class="hidden sm:inline">Ticket</span>
-                            </span>
-                        </x-ui-button>
-                    </div>
-                </div>
                 <div>
                     <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-muted)] mb-3">Statistiken</h3>
                     <div class="space-y-2">
@@ -93,13 +75,6 @@
         @foreach($groups->filter(fn ($g) => !($g->isDoneGroup ?? false) && !($g->isInbox ?? false)) as $column)
             <x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true">
                 <x-slot name="headerActions">
-                    <button 
-                        wire:click="createTicket('{{ $column->id }}')" 
-                        class="text-[var(--ui-muted)] hover:text-[var(--ui-primary)] transition-colors"
-                        title="Neues Ticket"
-                    >
-                        @svg('heroicon-o-plus-circle', 'w-4 h-4')
-                    </button>
                     <button 
                         @click="$dispatch('open-modal-ticket-group-settings', { ticketGroupId: {{ $column->id }} })"
                         class="text-[var(--ui-muted)] hover:text-[var(--ui-primary)] transition-colors"
@@ -259,5 +234,7 @@
     @endif
 
     </x-ui-kanban-container>
+
+    <livewire:helpdesk.ticket-group-settings-modal/>
 
 </x-ui-page>

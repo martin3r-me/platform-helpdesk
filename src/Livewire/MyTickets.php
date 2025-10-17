@@ -28,6 +28,12 @@ class MyTickets extends Component
         // Optional: neu rendern bei Event
     }
 
+    #[On('open-modal-ticket-group-settings')]
+    public function openModalTicketGroupSettings($ticketGroupId)
+    {
+        $this->dispatch('open-modal-ticket-group-settings', ticketGroupId: $ticketGroupId);
+    }
+
     public function render()
     {
         $user = Auth::user();
