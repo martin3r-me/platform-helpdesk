@@ -101,6 +101,6 @@ class Ticket extends Component
 
         return view('helpdesk::livewire.ticket', [
             'teamUsers' => $teamUsers,
-        ]);
+        ])->layout('platform::layouts.app');
     }
 }
