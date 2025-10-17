@@ -26,7 +26,6 @@ class TicketGroupSettingsModal extends Component
     {
         $this->ticketGroup = HelpdeskTicketGroup::findOrFail($ticketGroupId);
         $this->modalShow = true;
-        $this->dispatch('$refresh');
     }
 
     public function mount()
@@ -36,7 +35,6 @@ class TicketGroupSettingsModal extends Component
 
     public function save()
     {
-        $this->validate();
         $this->ticketGroup->save();
         $this->reset('ticketGroup');
         $this->dispatch('ticketGroupUpdated');
