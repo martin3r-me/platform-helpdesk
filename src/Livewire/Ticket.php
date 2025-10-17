@@ -5,20 +5,10 @@ namespace Platform\Helpdesk\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Platform\Helpdesk\Models\HelpdeskTicket;
-use Platform\Printing\Contracts\PrintingServiceInterface;
 
 class Ticket extends Component
 {
     public $ticket;
-    public $printModalShow = false;
-    public $printTarget = 'printer'; // 'printer' oder 'group'
-    public $selectedPrinterId = null;
-    public $selectedPrinterGroupId = null;
-
-    public function getCanPrintProperty()
-    {
-        return $this->selectedPrinterId || $this->selectedPrinterGroupId;
-    }
 
     protected $rules = [
         'ticket.title' => 'required|string|max:255',
@@ -66,83 +56,38 @@ class Ticket extends Component
 
     public function deleteTicket()
     {
-        $this->ticket->delete();
-        return $this->redirect('/', navigate: true);
-    }
-
-    public function deleteTicketAndReturnToDashboard()
-    {
         $this->authorize('delete', $this->ticket);
         $this->ticket->delete();
         return $this->redirect(route('helpdesk.my-tickets'), navigate: true);
     }
 
-    public function deleteTicketAndReturnToBoard()
+    public function toggleDone()
     {
-        $this->authorize('delete', $this->ticket);
+        $this->ticket->is_done = !$this->ticket->is_done;
+        $this->ticket->done_at = $this->ticket->is_done ? now() : null;
+        $this->ticket->save();
+    }
+
+    public function toggleFrog()
+    {
+        $this->ticket->is_frog = !$this->ticket->is_frog;
+        $this->ticket->save();
+    }
+
+    public function save()
+    {
+        $this->validate();
+        $this->ticket->save();
         
-        if (!$this->ticket->helpdeskBoard) {
-            // Fallback zu MyTickets wenn kein Board vorhanden
-            $this->ticket->delete();
-            return $this->redirect(route('helpdesk.my-tickets'), navigate: true);
-        }
-        
-        $this->ticket->delete();
-        return $this->redirect(route('helpdesk.boards.show', $this->ticket->helpdeskBoard), navigate: true);
-    }
-
-    public function printTicket()
-    {
-        $this->printModalShow = true;
-    }
-
-    public function closePrintModal()
-    {
-        $this->printModalShow = false;
-        $this->resetPrintSelection();
-    }
-
-    public function updatedPrintTarget()
-    {
-        // Reset Auswahl wenn Typ gewechselt wird
-        $this->resetPrintSelection();
-    }
-
-    private function resetPrintSelection()
-    {
-        $this->selectedPrinterId = null;
-        $this->selectedPrinterGroupId = null;
-    }
-
-    public function printTicketConfirm()
-    {
-        if (!$this->selectedPrinterId && !$this->selectedPrinterGroupId) {
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Bitte wählen Sie einen Drucker oder eine Gruppe',
-            ]);
-            return;
-        }
-
-        /** @var PrintingServiceInterface $printing */
-        $printing = app(PrintingServiceInterface::class);
-
-        $printing->createJob(
-            printable: $this->ticket,
-            // template: null, // Automatische Template-Auswahl: helpdesk-ticket
-            data: [
-                'requested_by' => Auth::user()?->name,
-            ],
-            printerId: $this->selectedPrinterId ? (int) $this->selectedPrinterId : null,
-            printerGroupId: $this->selectedPrinterGroupId ? (int) $this->selectedPrinterGroupId : null,
-        );
-
-        $this->closePrintModal();
-
         $this->dispatch('notify', [
             'type' => 'success',
-            'message' => 'Druckauftrag wurde erstellt',
+            'message' => 'Ticket gespeichert',
         ]);
+    }
+
+    public function isDirty()
+    {
+        return $this->ticket->isDirty();
     }
 
     public function render()
@@ -153,17 +98,9 @@ class Ticket extends Component
             ->users()
             ->orderBy('name')
             ->get();
-            
-        /** @var PrintingServiceInterface $printing */
-        $printing = app(PrintingServiceInterface::class);
-
-        $printers = $printing->listPrinters();
-        $groups   = $printing->listPrinterGroups();
 
         return view('helpdesk::livewire.ticket', [
             'teamUsers' => $teamUsers,
-            'printers' => $printers,
-            'printerGroups' => $groups,
-        ])->layout('platform::layouts.app');
+        ]);
     }
 }
