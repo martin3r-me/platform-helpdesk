@@ -55,16 +55,21 @@
         </x-ui-page-sidebar>
     </x-slot>
 
-    <!-- Kanban-Board: volle Höhe wie im Planner (außerhalb des Page-Containers, aber innerhalb der Seite) -->
+    <!-- Kanban-Board: volle Höhe wie im Planner -->
     <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder" wire:key="my-tickets-kanban-container">
-    @php $inbox = $groups->first(); @endphp
-    @if($inbox)
-        <x-ui-kanban-column :title="($inbox->label ?? 'INBOX')" :sortable-id="null" :scrollable="true" :muted="true" wire:key="my-tickets-column-inbox">
-            @foreach ($inbox->tasks as $ticket)
-                <livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
-            @endforeach
-        </x-ui-kanban-column>
-    @endif
+        @foreach($groups as $group)
+            <x-ui-kanban-column 
+                :title="$group->label" 
+                :sortable-id="$group->id" 
+                :scrollable="true" 
+                :muted="$group->isInbox ?? false"
+                wire:key="my-tickets-column-{{ $group->id ?? 'inbox' }}"
+            >
+                @foreach ($group->tasks as $ticket)
+                    <livewire:helpdesk.ticket-preview-card :ticket="$ticket" wire:key="ticket-preview-{{ $ticket->id ?? $ticket->uuid }}" />
+                @endforeach
+            </x-ui-kanban-column>
+        @endforeach
     </x-ui-kanban-container>
 
 </x-ui-page>
