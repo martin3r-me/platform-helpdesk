@@ -12,6 +12,6 @@ class TicketPreviewCard extends Component
 
     public function render()
     {   
-        return view('helpdesk::livewire.ticket-preview-card')->layout('platform::layouts.app');
+        return view('helpdesk::livewire.ticket-preview-card');
     }
 }
