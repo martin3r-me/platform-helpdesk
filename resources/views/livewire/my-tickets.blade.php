@@ -3,10 +3,6 @@
         <x-ui-page-navbar title="Meine Tickets" />
     </x-slot>
 
-    <x-ui-page-container>
-        <!-- Optional: Platz für Filterchips/Info -->
-    </x-ui-page-container>
-
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Übersicht" width="w-80" :defaultOpen="true">
             <div class="p-6 space-y-6">
@@ -55,8 +51,9 @@
         </x-ui-page-sidebar>
     </x-slot>
 
-    <!-- Kanban-Board: volle Höhe wie im Planner -->
-    <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder" wire:key="my-tickets-kanban-container">
+    <x-ui-page-container>
+        <!-- Kanban-Board: volle Höhe wie im Planner -->
+        <x-ui-kanban-container sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder" wire:key="my-tickets-kanban-container">
         @foreach($groups as $group)
             <x-ui-kanban-column 
                 :title="$group->label" 
@@ -137,6 +134,7 @@
                 @endforeach
             </x-ui-kanban-column>
         @endforeach
-    </x-ui-kanban-container>
+        </x-ui-kanban-container>
+    </x-ui-page-container>
 
 </x-ui-page>
