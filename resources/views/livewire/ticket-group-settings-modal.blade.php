@@ -21,7 +21,7 @@
                 <x-ui-input-text 
                     name="ticketGroup.name"
                     label="Gruppenname"
-                    wire:model.live="ticketGroup.name"
+                    wire:model.blur="ticketGroup.name"
                     placeholder="z.B. Dringend, Wartend, In Bearbeitung"
                     required
                     :errorKey="'ticketGroup.name'"
