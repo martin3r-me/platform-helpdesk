@@ -1,274 +1,236 @@
 <x-ui-page>
     <x-slot name="navbar">
-        <x-ui-page-navbar title="{{ $sla->name }}" icon="heroicon-o-clock">
-            <div class="flex items-center gap-2">
-                <x-ui-button 
-                    variant="secondary" 
-                    size="sm"
-                    :href="route('helpdesk.slas.index')"
-                    wire:navigate
-                >
-                    <div class="flex items-center gap-2">
-                        @svg('heroicon-o-arrow-left', 'w-4 h-4')
-                        Zurück
-                    </div>
-                </x-ui-button>
-                @if($this->isDirty)
-                    <x-ui-button 
-                        variant="primary" 
-                        size="sm"
-                        wire:click="save"
-                    >
-                        <div class="flex items-center gap-2">
-                            @svg('heroicon-o-check', 'w-4 h-4')
-                            Speichern
-                        </div>
-                    </x-ui-button>
-                @endif
-            </div>
-        </x-ui-page-navbar>
+        <x-ui-page-navbar title="{{ $sla->name }}" icon="heroicon-o-clock" />
     </x-slot>
 
     <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Helpdesk" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
-            @include('helpdesk::livewire.sidebar')
+        <x-ui-page-sidebar title="Übersicht" width="w-80" defaultOpen="true" storeKey="sidebarOpen" side="left">
+            <div class="p-6 space-y-6">
+                {{-- Navigation Buttons --}}
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Navigation</h3>
+                    <div class="space-y-2">
+                        <x-ui-button
+                            variant="secondary-outline"
+                            size="sm"
+                            :href="route('helpdesk.slas.index')"
+                            wire:navigate
+                            class="w-full"
+                        >
+                            <span class="flex items-center gap-2">
+                                @svg('heroicon-o-arrow-left', 'w-4 h-4')
+                                Zurück zu SLAs
+                            </span>
+                        </x-ui-button>
+                    </div>
+                </div>
+
+                {{-- Quick Actions --}}
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Aktionen</h3>
+                    <div class="space-y-2">
+                        @if($this->isDirty)
+                            <x-ui-button x-transition.opacity variant="primary" size="sm" wire:click="save" class="w-full">
+                                <span class="inline-flex items-center gap-2">
+                                    @svg('heroicon-o-check','w-4 h-4')
+                                    Speichern
+                                </span>
+                            </x-ui-button>
+                        @endif
+                        <x-ui-confirm-button
+                            action="deleteSla"
+                            text="SLA löschen"
+                            confirmText="Wirklich löschen?"
+                            variant="danger"
+                            size="sm"
+                            :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
+                            class="w-full"
+                        />
+                    </div>
+                </div>
+
+                {{-- SLA Info --}}
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">SLA Info</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-[var(--ui-muted)]">Status:</span>
+                            <span class="font-medium text-[var(--ui-secondary)]">
+                                @if($sla->is_active)
+                                    <x-ui-badge variant="success" size="xs">Aktiv</x-ui-badge>
+                                @else
+                                    <x-ui-badge variant="secondary" size="xs">Inaktiv</x-ui-badge>
+                                @endif
+                            </span>
+                        </div>
+                        @if($sla->response_time_hours)
+                            <div class="flex justify-between">
+                                <span class="text-[var(--ui-muted)]">Reaktionszeit:</span>
+                                <span class="font-medium text-[var(--ui-secondary)]">{{ $sla->response_time_hours }}h</span>
+                            </div>
+                        @endif
+                        @if($sla->resolution_time_hours)
+                            <div class="flex justify-between">
+                                <span class="text-[var(--ui-muted)]">Lösungszeit:</span>
+                                <span class="font-medium text-[var(--ui-secondary)]">{{ $sla->resolution_time_hours }}h</span>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </x-ui-page-sidebar>
     </x-slot>
 
     <x-slot name="activity">
-        <x-ui-page-sidebar title="Einstellungen" width="w-80" defaultOpen="false" storeKey="activityOpen" side="right">
-            <div class="p-4">
-                {{-- Navigation Buttons --}}
-                <div class="flex flex-col gap-2 mb-4">
-                    <x-ui-button 
-                        variant="secondary-outline" 
-                        size="md" 
-                        :href="route('helpdesk.slas.index')" 
-                        wire:navigate
-                        class="w-full"
-                    >
-                        <div class="flex items-center gap-2">
-                            @svg('heroicon-o-arrow-left', 'w-4 h-4')
-                            Zurück zu SLAs
-                        </div>
-                    </x-ui-button>
-                </div>
-
-                {{-- Kurze Übersicht --}}
-                <div class="mb-4 p-3 bg-[color:var(--ui-muted-5)] rounded-lg">
-                    <h4 class="font-semibold mb-2 text-[color:var(--ui-secondary)]">SLA-Übersicht</h4>
-                    <div class="space-y-1 text-sm">
-                        <div><strong>Name:</strong> {{ $sla->name }}</div>
-                        @if($sla->description)
-                            <div><strong>Beschreibung:</strong> {{ Str::limit($sla->description, 50) }}</div>
-                        @endif
-                        <div><strong>Status:</strong> 
-                            @if($sla->is_active)
-                                <span class="text-[color:var(--ui-success)]">Aktiv</span>
-                            @else
-                                <span class="text-[color:var(--ui-muted)]">Inaktiv</span>
-                            @endif
-                        </div>
+        <x-ui-page-sidebar title="Aktivitäten" width="w-80" defaultOpen="false" storeKey="activityOpen" side="right">
+            <div class="p-4 space-y-4">
+                <div class="text-sm text-[var(--ui-muted)]">Letzte Aktivitäten</div>
+                <div class="space-y-3 text-sm">
+                    <div class="p-2 rounded border border-[var(--ui-border)]/60 bg-[var(--ui-muted-5)]">
+                        <div class="font-medium text-[var(--ui-secondary)] truncate">SLA geladen</div>
+                        <div class="text-[var(--ui-muted)]">gerade eben</div>
                     </div>
-                </div>
-
-                {{-- Zeitvorgaben --}}
-                <div class="mb-4">
-                    <h4 class="font-semibold mb-2">Zeitvorgaben</h4>
-                    <div class="space-y-2">
-                        @if($sla->response_time_hours)
-                            <div class="flex items-center gap-2 p-2 bg-[color:var(--ui-muted-5)] rounded">
-                                <x-heroicon-o-clock class="w-4 h-4 text-[color:var(--ui-muted)]"/>
-                                <span class="text-sm">Reaktionszeit: {{ $sla->response_time_hours }} Stunden</span>
-                            </div>
-                        @endif
-                        @if($sla->resolution_time_hours)
-                            <div class="flex items-center gap-2 p-2 bg-[color:var(--ui-muted-5)] rounded">
-                                <x-heroicon-o-check-circle class="w-4 h-4 text-[color:var(--ui-muted)]"/>
-                                <span class="text-sm">Lösungszeit: {{ $sla->resolution_time_hours }} Stunden</span>
-                            </div>
-                        @endif
-                        @if(!$sla->response_time_hours && !$sla->resolution_time_hours)
-                            <p class="text-sm text-[color:var(--ui-muted)]">Keine Zeitvorgaben definiert</p>
-                        @endif
-                    </div>
-                </div>
-
-                <hr>
-
-                {{-- Statistiken --}}
-                <div class="mb-4">
-                    <h4 class="font-semibold mb-2">Statistiken</h4>
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2 p-2 bg-[color:var(--ui-muted-5)] rounded">
-                            <x-heroicon-o-folder class="w-4 h-4 text-[color:var(--ui-muted)]"/>
-                            <span class="text-sm">{{ $boardsUsingThisSla->count() }} Boards verwenden dieses SLA</span>
-                        </div>
-                        <div class="flex items-center gap-2 p-2 bg-[color:var(--ui-muted-5)] rounded">
-                            <x-heroicon-o-ticket class="w-4 h-4 text-[color:var(--ui-muted)]"/>
-                            <span class="text-sm">{{ $ticketsUsingThisSla->count() }} Tickets in der Vorschau</span>
-                        </div>
-                    </div>
-                </div>
-
-                <hr>
-
-                {{-- Löschen --}}
-                <div class="mb-4">
-                    <x-ui-confirm-button 
-                        action="deleteSla" 
-                        text="SLA löschen" 
-                        confirmText="Wirklich löschen? Dieses SLA wird von allen Boards entfernt." 
-                        variant="danger-outline"
-                        class="w-full"
-                    />
                 </div>
             </div>
         </x-ui-page-sidebar>
     </x-slot>
 
-    <x-ui-page-container>
-            
-            {{-- SLA Grunddaten --}}
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold mb-4 text-secondary">SLA-Details</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <x-ui-input-text 
-                        name="sla.name"
-                        label="SLA-Name"
-                        wire:model.live.debounce.500ms="sla.name"
-                        placeholder="z.B. Standard, Kritisch, Express"
-                        required
-                        :errorKey="'sla.name'"
+    <x-ui-page-container spacing="space-y-8">
+        {{-- SLA Grunddaten --}}
+        <x-ui-panel title="SLA-Details">
+            <x-ui-form-grid :cols="2" :gap="6">
+                <x-ui-input-text 
+                    name="sla.name"
+                    label="SLA-Name"
+                    wire:model.live.debounce.500ms="sla.name"
+                    placeholder="z.B. Standard, Kritisch, Express"
+                    required
+                    :errorKey="'sla.name'"
+                />
+                <div class="flex items-center">
+                    <x-ui-input-checkbox
+                        model="sla.is_active"
+                        checked-label="SLA ist aktiv"
+                        unchecked-label="SLA ist inaktiv"
+                        size="md"
+                        block="true"
                     />
-                    <div class="d-flex items-center">
-                        <x-ui-input-checkbox
-                            model="sla.is_active"
-                            checked-label="SLA ist aktiv"
-                            unchecked-label="SLA ist inaktiv"
-                            size="md"
-                            block="true"
-                        />
+                </div>
+            </x-ui-form-grid>
+            <div class="mt-6">
+                <x-ui-input-textarea 
+                    name="sla.description"
+                    label="Beschreibung"
+                    wire:model.live.debounce.500ms="sla.description"
+                    placeholder="Beschreibung des SLAs (optional)"
+                    rows="3"
+                    :errorKey="'sla.description'"
+                />
+            </div>
+        </x-ui-panel>
+
+        {{-- SLA-Zeiten --}}
+        <x-ui-panel title="Zeitvorgaben">
+            <x-ui-form-grid :cols="2" :gap="6">
+                <x-ui-input-number
+                    name="sla.response_time_hours"
+                    label="Reaktionszeit (Stunden)"
+                    wire:model.live.debounce.500ms="sla.response_time_hours"
+                    placeholder="z.B. 4"
+                    :nullable="true"
+                    min="1"
+                    :errorKey="'sla.response_time_hours'"
+                />
+                <x-ui-input-number
+                    name="sla.resolution_time_hours"
+                    label="Lösungszeit (Stunden)"
+                    wire:model.live.debounce.500ms="sla.resolution_time_hours"
+                    placeholder="z.B. 24"
+                    :nullable="true"
+                    min="1"
+                    :errorKey="'sla.resolution_time_hours'"
+                />
+            </x-ui-form-grid>
+        </x-ui-panel>
+
+        {{-- Verwendung --}}
+        <x-ui-panel title="Verwendung">
+            {{-- Boards die dieses SLA verwenden --}}
+            <div class="mb-6">
+                <h4 class="font-medium mb-3 text-[var(--ui-secondary)]">Boards mit diesem SLA</h4>
+                @if($boardsUsingThisSla->count() > 0)
+                    <div class="space-y-3">
+                        @foreach($boardsUsingThisSla as $board)
+                            <div class="flex items-center justify-between p-3 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/60">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-[var(--ui-primary)] text-[var(--ui-primary-foreground)] rounded-lg flex items-center justify-center">
+                                        @svg('heroicon-o-folder', 'w-4 h-4')
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-[var(--ui-secondary)]">{{ $board->name }}</div>
+                                        <div class="text-sm text-[var(--ui-muted)]">{{ $board->team->name }}</div>
+                                    </div>
+                                </div>
+                                <a href="{{ route('helpdesk.boards.show', $board->id) }}" 
+                                   class="text-[var(--ui-primary)] hover:underline text-sm"
+                                   wire:navigate>
+                                    Board öffnen
+                                </a>
+                            </div>
+                        @endforeach
                     </div>
-                </div>
-                <div class="mt-4">
-                    <x-ui-input-textarea 
-                        name="sla.description"
-                        label="Beschreibung"
-                        wire:model.live.debounce.500ms="sla.description"
-                        placeholder="Beschreibung des SLAs (optional)"
-                        rows="3"
-                        :errorKey="'sla.description'"
-                    />
-                </div>
+                @else
+                    <div class="text-center py-4 text-[var(--ui-muted)]">
+                        Keine Boards verwenden dieses SLA
+                    </div>
+                @endif
             </div>
 
-            {{-- SLA-Zeiten --}}
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold mb-4 text-secondary">Zeitvorgaben</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <x-ui-input-number
-                        name="sla.response_time_hours"
-                        label="Reaktionszeit (Stunden)"
-                        wire:model.live.debounce.500ms="sla.response_time_hours"
-                        placeholder="z.B. 4"
-                        :nullable="true"
-                        min="1"
-                        :errorKey="'sla.response_time_hours'"
-                    />
-                    <x-ui-input-number
-                        name="sla.resolution_time_hours"
-                        label="Lösungszeit (Stunden)"
-                        wire:model.live.debounce.500ms="sla.resolution_time_hours"
-                        placeholder="z.B. 24"
-                        :nullable="true"
-                        min="1"
-                        :errorKey="'sla.resolution_time_hours'"
-                    />
-                </div>
-            </div>
-
-            {{-- Verwendung --}}
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold mb-4 text-secondary">Verwendung</h3>
-                
-                {{-- Boards die dieses SLA verwenden --}}
-                <div class="mb-4">
-                    <h4 class="font-medium mb-2">Boards mit diesem SLA</h4>
-                    @if($boardsUsingThisSla->count() > 0)
-                        <div class="space-y-2">
-                            @foreach($boardsUsingThisSla as $board)
-                                <div class="d-flex items-center justify-between p-3 bg-white border rounded-lg">
-                                    <div class="d-flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-primary text-on-primary rounded-lg d-flex items-center justify-center">
-                                            <x-heroicon-o-folder class="w-4 h-4"/>
-                                        </div>
-                                        <div>
-                                            <div class="font-medium">{{ $board->name }}</div>
-                                            <div class="text-sm text-gray-500">{{ $board->team->name }}</div>
+            {{-- Letzte Tickets mit diesem SLA --}}
+            <div>
+                <h4 class="font-medium mb-3 text-[var(--ui-secondary)]">Letzte Tickets mit diesem SLA</h4>
+                @if($ticketsUsingThisSla->count() > 0)
+                    <div class="space-y-3">
+                        @foreach($ticketsUsingThisSla as $ticket)
+                            <div class="flex items-center justify-between p-3 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/60">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 bg-[var(--ui-warning)] text-[var(--ui-warning-foreground)] rounded-lg flex items-center justify-center">
+                                        @svg('heroicon-o-ticket', 'w-4 h-4')
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-[var(--ui-secondary)]">{{ $ticket->title }}</div>
+                                        <div class="text-sm text-[var(--ui-muted)]">
+                                            {{ $ticket->helpdeskBoard->name }} • 
+                                            @if($ticket->userInCharge)
+                                                {{ $ticket->userInCharge->name }}
+                                            @else
+                                                Nicht zugewiesen
+                                            @endif
                                         </div>
                                     </div>
-                                    <a href="{{ route('helpdesk.boards.show', $board->id) }}" 
-                                       class="text-primary hover:underline text-sm"
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    @if($ticket->is_done)
+                                        <x-ui-badge variant="success" size="xs">Erledigt</x-ui-badge>
+                                    @else
+                                        <x-ui-badge variant="warning" size="xs">Offen</x-ui-badge>
+                                    @endif
+                                    <a href="{{ route('helpdesk.tickets.show', $ticket->id) }}" 
+                                       class="text-[var(--ui-primary)] hover:underline text-sm"
                                        wire:navigate>
-                                        Board öffnen
+                                        Ticket öffnen
                                     </a>
                                 </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="text-center py-4 text-gray-500">
-                            Keine Boards verwenden dieses SLA
-                        </div>
-                    @endif
-                </div>
-
-                {{-- Letzte Tickets mit diesem SLA --}}
-                <div>
-                    <h4 class="font-medium mb-2">Letzte Tickets mit diesem SLA</h4>
-                    @if($ticketsUsingThisSla->count() > 0)
-                        <div class="space-y-2">
-                            @foreach($ticketsUsingThisSla as $ticket)
-                                <div class="d-flex items-center justify-between p-3 bg-white border rounded-lg">
-                                    <div class="d-flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-warning text-on-warning rounded-lg d-flex items-center justify-center">
-                                            <x-heroicon-o-ticket class="w-4 h-4"/>
-                                        </div>
-                                        <div>
-                                            <div class="font-medium">{{ $ticket->title }}</div>
-                                            <div class="text-sm text-gray-500">
-                                                {{ $ticket->helpdeskBoard->name }} • 
-                                                @if($ticket->userInCharge)
-                                                    {{ $ticket->userInCharge->name }}
-                                                @else
-                                                    Nicht zugewiesen
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex items-center gap-2">
-                                        @if($ticket->is_done)
-                                            <x-ui-badge variant="success" size="xs">Erledigt</x-ui-badge>
-                                        @else
-                                            <x-ui-badge variant="warning" size="xs">Offen</x-ui-badge>
-                                        @endif
-                                        <a href="{{ route('helpdesk.tickets.show', $ticket->id) }}" 
-                                           class="text-primary hover:underline text-sm"
-                                           wire:navigate>
-                                            Ticket öffnen
-                                        </a>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="text-center py-4 text-gray-500">
-                            Keine Tickets mit diesem SLA gefunden
-                        </div>
-                    @endif
-                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-4 text-[var(--ui-muted)]">
+                        Keine Tickets mit diesem SLA gefunden
+                    </div>
+                @endif
             </div>
-        </div>
+        </x-ui-panel>
     </x-ui-page-container>
 
 </x-ui-page>

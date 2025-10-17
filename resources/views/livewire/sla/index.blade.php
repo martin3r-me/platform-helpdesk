@@ -1,93 +1,105 @@
 <x-ui-page>
     <x-slot name="navbar">
-        <x-ui-page-navbar title="SLA-Verwaltung" icon="heroicon-o-clock">
-            <div class="flex items-center gap-2">
-                <x-ui-input-text 
-                    name="search" 
-                    placeholder="Suche SLAs..." 
-                    wire:model.live.debounce.300ms="search"
-                    class="w-64"
-                />
-                <x-ui-button variant="primary" wire:click="openCreateModal">
-                    Neues SLA
-                </x-ui-button>
-            </div>
-        </x-ui-page-navbar>
+        <x-ui-page-navbar title="SLA-Verwaltung" icon="heroicon-o-clock" />
     </x-slot>
 
     <x-slot name="sidebar">
-        <x-ui-page-sidebar title="Helpdesk" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
-            @include('helpdesk::livewire.sidebar')
+        <x-ui-page-sidebar title="Übersicht" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
+            <div class="p-4 space-y-4">
+                @php $total = method_exists($slas, 'total') ? $slas->total() : $slas->count(); @endphp
+
+                <div class="p-3 bg-[color:var(--ui-muted-5)] rounded-lg">
+                    <h4 class="text-sm font-semibold text-[color:var(--ui-secondary)] mb-1">Statistik</h4>
+                    <div class="text-sm text-[color:var(--ui-secondary)]">Gefundene SLAs: <strong>{{ $total }}</strong></div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-semibold text-[color:var(--ui-secondary)] mb-2">Aktionen</h4>
+                    <x-ui-button variant="primary" size="sm" wire:click="openCreateModal" class="w-full">
+                        @svg('heroicon-o-plus', 'w-4 h-4 mr-2') Neues SLA
+                    </x-ui-button>
+                </div>
+            </div>
+        </x-ui-page-sidebar>
+    </x-slot>
+
+    <x-slot name="activity">
+        <x-ui-page-sidebar title="Aktivitäten" width="w-80" defaultOpen="false" storeKey="activityOpen" side="right">
+            <div class="p-4">
+                <p class="text-sm text-[color:var(--ui-muted)]">Aktivitäten werden hier angezeigt...</p>
+            </div>
         </x-ui-page-sidebar>
     </x-slot>
 
     <x-ui-page-container>
-    <x-ui-table compact="true">
-        <x-ui-table-header>
-            <x-ui-table-header-cell compact="true" sortable="true" sortField="name" :currentSort="$sortField" :sortDirection="$sortDirection" wire:click="sortBy('name')">Name</x-ui-table-header-cell>
-            <x-ui-table-header-cell compact="true">Beschreibung</x-ui-table-header-cell>
-            <x-ui-table-header-cell compact="true">Reaktionszeit</x-ui-table-header-cell>
-            <x-ui-table-header-cell compact="true">Lösungszeit</x-ui-table-header-cell>
-            <x-ui-table-header-cell compact="true" sortable="true" sortField="is_active" :currentSort="$sortField" :sortDirection="$sortDirection" wire:click="sortBy('is_active')">Status</x-ui-table-header-cell>
-            <x-ui-table-header-cell compact="true" align="right">Aktionen</x-ui-table-header-cell>
-        </x-ui-table-header>
-        
-        <x-ui-table-body>
-            @foreach($slas as $sla)
-                <x-ui-table-row compact="true">
-                    <x-ui-table-cell compact="true">
-                        <div class="font-medium">{{ $sla->name }}</div>
-                    </x-ui-table-cell>
-                    <x-ui-table-cell compact="true">
-                        <div class="text-sm text-muted">
-                            {{ Str::limit($sla->description, 50) ?: '–' }}
-                        </div>
-                    </x-ui-table-cell>
-                    <x-ui-table-cell compact="true">
-                        @if($sla->response_time_hours)
-                            <div class="text-sm">
-                                {{ $sla->response_time_hours }} Stunden
-                            </div>
-                        @else
-                            <span class="text-xs text-muted">–</span>
-                        @endif
-                    </x-ui-table-cell>
-                    <x-ui-table-cell compact="true">
-                        @if($sla->resolution_time_hours)
-                            <div class="text-sm">
-                                {{ $sla->resolution_time_hours }} Stunden
-                            </div>
-                        @else
-                            <span class="text-xs text-muted">–</span>
-                        @endif
-                    </x-ui-table-cell>
-                    <x-ui-table-cell compact="true">
-                        @if($sla->is_active)
-                            <x-ui-badge variant="success" size="sm">Aktiv</x-ui-badge>
-                        @else
-                            <x-ui-badge variant="secondary" size="sm">Inaktiv</x-ui-badge>
-                        @endif
-                    </x-ui-table-cell>
-                    <x-ui-table-cell compact="true" align="right">
-                        <x-ui-button 
-                            size="sm" 
-                            variant="secondary" 
-                            :href="route('helpdesk.slas.show', $sla->id)"
-                            wire:navigate
-                        >
-                            Bearbeiten
-                        </x-ui-button>
-                    </x-ui-table-cell>
-                </x-ui-table-row>
-            @endforeach
-        </x-ui-table-body>
-    </x-ui-table>
+        <div class="mb-6 flex items-center justify-between">
+            <x-ui-input-text
+                name="search"
+                placeholder="Suche SLAs..."
+                class="w-64"
+                wire:model.live.debounce.300ms="search"
+            />
+        </div>
 
+        <x-ui-table compact="true">
+            <x-ui-table-header>
+                <x-ui-table-header-cell compact="true" sortable="true" sortField="name" :currentSort="$sortField" :sortDirection="$sortDirection">Name</x-ui-table-header-cell>
+                <x-ui-table-header-cell compact="true">Beschreibung</x-ui-table-header-cell>
+                <x-ui-table-header-cell compact="true">Reaktionszeit</x-ui-table-header-cell>
+                <x-ui-table-header-cell compact="true">Lösungszeit</x-ui-table-header-cell>
+                <x-ui-table-header-cell compact="true" sortable="true" sortField="is_active" :currentSort="$sortField" :sortDirection="$sortDirection">Status</x-ui-table-header-cell>
+            </x-ui-table-header>
+            
+            <x-ui-table-body>
+                @foreach($slas as $sla)
+                    <x-ui-table-row
+                        compact="true"
+                        clickable="true"
+                        :href="route('helpdesk.slas.show', $sla->id)"
+                        wire:navigate
+                    >
+                        <x-ui-table-cell compact="true">
+                            <div class="font-medium">{{ $sla->name }}</div>
+                        </x-ui-table-cell>
+                        <x-ui-table-cell compact="true">
+                            <div class="text-sm text-[color:var(--ui-muted)]">
+                                {{ Str::limit($sla->description, 50) ?: '–' }}
+                            </div>
+                        </x-ui-table-cell>
+                        <x-ui-table-cell compact="true">
+                            @if($sla->response_time_hours)
+                                <div class="text-sm">
+                                    {{ $sla->response_time_hours }} Stunden
+                                </div>
+                            @else
+                                <span class="text-xs text-[color:var(--ui-muted)]">–</span>
+                            @endif
+                        </x-ui-table-cell>
+                        <x-ui-table-cell compact="true">
+                            @if($sla->resolution_time_hours)
+                                <div class="text-sm">
+                                    {{ $sla->resolution_time_hours }} Stunden
+                                </div>
+                            @else
+                                <span class="text-xs text-[color:var(--ui-muted)]">–</span>
+                            @endif
+                        </x-ui-table-cell>
+                        <x-ui-table-cell compact="true">
+                            @if($sla->is_active)
+                                <x-ui-badge variant="success" size="sm">Aktiv</x-ui-badge>
+                            @else
+                                <x-ui-badge variant="secondary" size="sm">Inaktiv</x-ui-badge>
+                            @endif
+                        </x-ui-table-cell>
+                    </x-ui-table-row>
+                @endforeach
+            </x-ui-table-body>
+        </x-ui-table>
     </x-ui-page-container>
 
     <!-- Create SLA Modal -->
     <x-ui-modal
-        wire:model="modalShow"
+        model="modalShow"
         size="lg"
     >
         <x-slot name="header">
@@ -151,7 +163,7 @@
         </div>
 
         <x-slot name="footer">
-            <div class="d-flex justify-end gap-2">
+            <div class="flex justify-end gap-2">
                 <x-ui-button 
                     type="button" 
                     variant="secondary-outline" 

@@ -1,51 +1,49 @@
-<div class="d-flex h-full">
-    <!-- Linke Spalte -->
-    <div class="flex-grow-1 d-flex flex-col">
-        <!-- Header oben (fix) -->
-        <div class="border-top-1 border-bottom-1 border-muted border-top-solid border-bottom-solid p-2 flex-shrink-0">
-            <div class="d-flex gap-1">
-                <div class="d-flex">
-                    @if($ticket->helpdeskBoard)
-                        @can('view', $ticket->helpdeskBoard)
-                            <a href="{{ route('helpdesk.boards.show', $ticket->helpdeskBoard) }}" class="px-3 underline" wire:navigate>
-                                Board: {{ $ticket->helpdeskBoard?->name }}
-                            </a>
-                        @else
-                            <span class="px-3 text-gray-400" title="Kein Zugriff auf das Board">
-                                Board: {{ $ticket->helpdeskBoard?->name }} <span class="italic">(kein Zugriff)</span>
-                            </span>
-                        @endcan
-                    @endif
+<x-ui-page>
+    <x-slot name="navbar">
+        <x-ui-page-navbar title="" />
+    </x-slot>
 
-                    <a href="{{ route('helpdesk.my-tickets') }}" class="d-flex px-3 border-right-solid border-right-1 border-right-muted underline" wire:navigate>
-                        Meine Tickets
-                    </a>
+    <x-ui-page-container spacing="space-y-8">
+        <div class="bg-white rounded-lg border border-[var(--ui-border)]/60 p-8">
+            <div class="flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                    <h1 class="text-3xl font-bold text-[var(--ui-secondary)] mb-4 tracking-tight">{{ $ticket->title }}</h1>
+                    <div class="flex items-center gap-6 text-sm text-[var(--ui-muted)]">
+                        @if($ticket->helpdeskBoard)
+                            <span class="flex items-center gap-2">
+                                @svg('heroicon-o-rectangle-stack', 'w-4 h-4')
+                                {{ $ticket->helpdeskBoard->name }}
+                            </span>
+                        @endif
+                        @if($ticket->userInCharge)
+                            <span class="flex items-center gap-2">
+                                @svg('heroicon-o-user', 'w-4 h-4')
+                                {{ $ticket->userInCharge->name }}
+                            </span>
+                        @endif
+                        @if($ticket->due_date)
+                            <span class="flex items-center gap-2">
+                                @svg('heroicon-o-calendar', 'w-4 h-4')
+                                {{ $ticket->due_date->format('d.m.Y H:i') }}
+                            </span>
+                        @endif
+                        @if($ticket->story_points)
+                            <span class="flex items-center gap-2">
+                                @svg('heroicon-o-sparkles', 'w-4 h-4')
+                                {{ $ticket->story_points->points() ?? $ticket->story_points }} SP
+                            </span>
+                        @endif
+                    </div>
                 </div>
-                <div class="flex-grow-1 text-right d-flex items-center justify-end gap-2">
-                    <span>{{ $ticket->title }}</span>
-                    <x-ui-button 
-                        variant="secondary" 
-                        size="sm"
-                        wire:click="printTicket"
-                        title="Ticket drucken"
-                    >
-                        <div class="d-flex items-center gap-2">
-                            @svg('heroicon-o-printer', 'w-4 h-4')
-                            Drucken
-                        </div>
-                    </x-ui-button>
+                <div class="flex items-center gap-3">
                     @if($ticket->is_done)
-                        <x-ui-badge variant="success" size="sm">
-                            @svg('heroicon-o-check-circle', 'w-3 h-3')
-                            Erledigt
-                        </x-ui-badge>
+                        <x-ui-badge variant="success" size="lg">Erledigt</x-ui-badge>
                     @endif
                 </div>
             </div>
         </div>
 
-        <!-- Haupt-Content (nimmt Restplatz, scrollt) -->
-        <div class="flex-grow-1 overflow-y-auto p-4">
+        <div class="bg-white rounded-lg border border-[var(--ui-border)]/60 p-8">
             {{-- Ticket Details --}}
             <div class="mb-6">
                 <h3 class="text-lg font-semibold mb-4 text-secondary">Ticket Details</h3>
@@ -187,9 +185,9 @@
                         @endcan
                     </div>
                 </div>
-            </div>
+        </div>
 
-            {{-- SLA Dashboard --}}
+        {{-- SLA Dashboard --}}
             @if($ticket->sla)
                 <div class="mb-6">
                     <h3 class="text-lg font-semibold mb-4 text-secondary d-flex items-center gap-2">
@@ -327,117 +325,49 @@
                 </div>
             @endif
         </div>
+    </x-ui-page-container>
 
-        <!-- Aktivitäten (immer unten) -->
-        <div x-data="{ open: false }" class="flex-shrink-0 border-t border-muted">
-            <div 
-                @click="open = !open" 
-                class="cursor-pointer border-top-1 border-top-solid border-top-muted border-bottom-1 border-bottom-solid border-bottom-muted p-2 text-center d-flex items-center justify-center gap-1 mx-2 shadow-lg"
-            >
-                AKTIVITÄTEN 
-                <span class="text-xs">
-                    {{$ticket->activities->count()}}
-                </span>
-                <x-heroicon-o-chevron-double-down 
-                    class="w-3 h-3" 
-                    x-show="!open"
-                />
-                <x-heroicon-o-chevron-double-up 
-                    class="w-3 h-3" 
-                    x-show="open"
-                />
-            </div>
-            <div x-show="open" class="p-2 max-h-xs overflow-y-auto">
-                <livewire:activity-log.index
-                    :model="$ticket"
-                    :key="get_class($ticket) . '_' . $ticket->id"
-                />
-            </div>
-        </div>
-    </div>
-
-    <!-- Rechte Spalte -->
-    <div class="min-w-80 w-80 d-flex flex-col border-left-1 border-left-solid border-left-muted">
-
-        <div class="d-flex gap-2 border-top-1 border-bottom-1 border-muted border-top-solid border-bottom-solid p-2 flex-shrink-0">
-            <x-heroicon-o-cog-6-tooth class="w-6 h-6"/>
-            Einstellungen
-        </div>
-        <div class="flex-grow-1 overflow-y-auto p-4">
+    <x-slot name="sidebar">
+        <x-ui-page-sidebar title="Übersicht" width="w-80" :defaultOpen="true">
+            <div class="p-6 space-y-6">
+                {{-- Navigation --}}
+                <div class="space-y-2">
+                    @if($ticket->helpdeskBoard)
+                        <x-ui-button variant="secondary-outline" size="sm" :href="route('helpdesk.boards.show', $ticket->helpdeskBoard)" wire:navigate class="w-full">
+                            <span class="flex items-center gap-2">@svg('heroicon-o-rectangle-stack','w-4 h-4') Zum Board</span>
+                        </x-ui-button>
+                    @endif
+                    <x-ui-button variant="secondary-outline" size="sm" :href="route('helpdesk.my-tickets')" wire:navigate class="w-full">
+                        <span class="flex items-center gap-2">@svg('heroicon-o-clipboard-document-list','w-4 h-4') Zu meinen Tickets</span>
+                    </x-ui-button>
+                </div>
 
             {{-- Navigation Buttons --}}
-            <div class="d-flex flex-col gap-2 mb-4">
-                @if($ticket->helpdeskBoard)
-                    @can('view', $ticket->helpdeskBoard)
-                        <x-ui-button 
-                            variant="secondary-outline" 
-                            size="md" 
-                            :href="route('helpdesk.boards.show', $ticket->helpdeskBoard)" 
-                            wire:navigate
-                            class="w-full d-flex"
-                        >
-                            <div class="d-flex items-center gap-2">
-                                @svg('heroicon-o-arrow-left', 'w-4 h-4')
-                                Board: {{ $ticket->helpdeskBoard?->name }}
-                            </div>
-                        </x-ui-button>
-                    @else
-                        <x-ui-button 
-                            variant="secondary-outline" 
-                            size="md" 
-                            disabled="true"
-                            title="Kein Zugriff auf das Board"
-                            class="w-full d-flex"
-                        >
-                            <div class="d-flex items-center gap-2">
-                                @svg('heroicon-o-arrow-left', 'w-4 h-4')
-                                Board: {{ $ticket->helpdeskBoard?->name }}
-                            </div>
-                        </x-ui-button>
-                    @endcan
-                @endif
-                <x-ui-button 
-                    variant="secondary-outline" 
-                    size="md" 
-                    :href="route('helpdesk.my-tickets')" 
-                    wire:navigate
-                    class="w-full d-flex"
-                >
-                    <div class="d-flex items-center gap-2">
-                        @svg('heroicon-o-arrow-left', 'w-4 h-4')
-                        Meine Tickets
+                {{-- Status --}}
+                <div>
+                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Status</h3>
+                    <div class="space-y-3">
+                        @can('update', $ticket)
+                            <button type="button" wire:click="$set('ticket.is_done', !($ticket->is_done))"
+                                class="w-full flex items-center justify-between py-3 px-4 rounded-lg border transition-colors"
+                                :class="{
+                                    'border-[var(--ui-success)] bg-[var(--ui-success-5)] hover:bg-[var(--ui-success-10)]': {{ $ticket->is_done ? 'true' : 'false' }},
+                                    'border-[var(--ui-border)]/40 bg-[var(--ui-muted-5)] hover:bg-[var(--ui-primary-5)]': !({{ $ticket->is_done ? 'true' : 'false' }})
+                                }">
+                                <span class="text-sm font-medium" :class="{ 'text-[var(--ui-success)]': {{ $ticket->is_done ? 'true' : 'false' }}, 'text-[var(--ui-secondary)]': !({{ $ticket->is_done ? 'true' : 'false' }}) }">Erledigt</span>
+                                @if($ticket->is_done)
+                                    @svg('heroicon-o-check-circle', 'w-5 h-5 text-[var(--ui-success)]')
+                                @else
+                                    @svg('heroicon-o-circle-stack', 'w-5 h-5 text-[var(--ui-muted)]')
+                                @endif
+                            </button>
+                        @else
+                            <x-ui-badge variant="{{ $ticket->is_done ? 'success' : 'secondary' }}" size="sm">{{ $ticket->is_done ? 'Erledigt' : 'Offen' }}</x-ui-badge>
+                        @endcan
                     </div>
-                </x-ui-button>
-            </div>
-
-            {{-- Quick Actions --}}
-            <div class="mb-4">
-                <h4 class="font-semibold mb-2 text-secondary">Quick Actions</h4>
+                </div>
                 
-                {{-- Erledigt-Checkbox --}}
-                @can('update', $ticket)
-                    <x-ui-input-checkbox
-                        model="ticket.is_done"
-                        checked-label="Erledigt"
-                        unchecked-label="Als erledigt markieren"
-                        size="md"
-                        block="true"
-                        variant="success"
-                        :icon="@svg('heroicon-o-check-circle', 'w-4 h-4')->toHtml()"
-                    />
-                @else
-                    <div class="mb-2">
-                        <x-ui-badge variant="{{ $ticket->is_done ? 'success' : 'gray' }}">
-                            @svg('heroicon-o-check-circle', 'w-4 h-4')
-                            {{ $ticket->is_done ? 'Erledigt' : 'Offen' }}
-                        </x-ui-badge>
-                    </div>
-                @endcan
-
-
-            </div>
-
-            <hr>
+                <hr>
 
             {{-- Ticket Info --}}
             <div class="mb-4">
@@ -466,34 +396,18 @@
 
             <hr>
 
-            {{-- Löschen --}}
-            @can('delete', $ticket)
-                <div class="mb-4">
-                    <h4 class="font-semibold mb-2">Löschen</h4>
-                    <div class="d-flex flex-col gap-2">
-                        <x-ui-confirm-button 
-                            action="deleteTicketAndReturnToDashboard" 
-                            text="Löschen (Meine Tickets)" 
-                            confirmText="Ticket wirklich löschen?" 
-                            variant="danger-outline"
-                            :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
-                        />
-                        
-                        @if($ticket->helpdeskBoard)
-                            <x-ui-confirm-button 
-                                action="deleteTicketAndReturnToBoard" 
-                                text="Löschen (Board)" 
-                                confirmText="Ticket wirklich löschen?" 
-                                variant="danger-outline"
-                                :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
-                            />
-                        @endif
-                    </div>
-                </div>
-            @endcan
-        </div>
-        <!-- Print Modal -->
-        <x-ui-modal model="printModalShow" size="md">
+            {{-- Aktionen --}}
+            <div class="space-y-2">
+                <x-ui-button variant="secondary-outline" size="sm" wire:click="printTicket" class="w-full">
+                    <span class="inline-flex items-center gap-2">@svg('heroicon-o-printer','w-4 h-4') Drucken</span>
+                </x-ui-button>
+                @can('delete', $ticket)
+                    <x-ui-confirm-button action="deleteTicketAndReturnToDashboard" text="Löschen" confirmText="Ticket wirklich löschen?" variant="danger" :icon="@svg('heroicon-o-trash','w-4 h-4')->toHtml()" />
+                @endcan
+            </div>
+
+            <!-- Print Modal -->
+            <x-ui-modal model="printModalShow" size="md">
             <x-slot name="header">
                 Ticket drucken
             </x-slot>
@@ -607,6 +521,19 @@
                     </x-ui-button>
                 </div>
             </x-slot>
-        </x-ui-modal>
-    </div>
-</div>
+            </x-ui-modal>
+            </div>
+        </x-ui-page-sidebar>
+    </x-slot>
+
+    <x-slot name="activity">
+        <x-ui-page-sidebar title="Aktivitäten" width="w-80" :defaultOpen="false" storeKey="activityOpen" side="right">
+            <div class="p-6 space-y-4">
+                <div class="text-sm text-[var(--ui-muted)]">Letzte Aktivitäten</div>
+                <div class="space-y-3 text-sm">
+                    <livewire:activity-log.index :model="$ticket" :key="get_class($ticket) . '_' . $ticket->id" />
+                </div>
+            </div>
+        </x-ui-page-sidebar>
+    </x-slot>
+</x-ui-page>

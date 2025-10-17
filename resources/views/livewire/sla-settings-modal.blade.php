@@ -1,4 +1,4 @@
-<x-ui-modal size="md" wire:model="modalShow">
+<x-ui-modal size="md" model="modalShow">
     <x-slot name="header">
         SLA-Einstellungen
     </x-slot>
@@ -49,11 +49,14 @@
             block="true"
         />
         
-        <x-ui-confirm-button action="deleteSla" text="SLA löschen" confirmText="Wirklich löschen?" />
+        <x-ui-confirm-button action="deleteSla" text="SLA löschen" confirmText="Wirklich löschen?" variant="danger" />
     </div>
     @endif
     
     <x-slot name="footer">
-        <x-ui-button variant="success" wire:click="save">Speichern</x-ui-button>
+        <div class="flex justify-end gap-2">
+            <x-ui-button variant="secondary-outline" wire:click="closeModal">Abbrechen</x-ui-button>
+            <x-ui-button variant="primary" wire:click="save">Speichern</x-ui-button>
+        </div>
     </x-slot>
 </x-ui-modal>

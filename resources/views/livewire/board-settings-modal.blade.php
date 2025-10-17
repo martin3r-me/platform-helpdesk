@@ -1,4 +1,4 @@
-<x-ui-modal size="lg" wire:model="modalShow">
+<x-ui-modal size="lg" model="modalShow">
     <x-slot name="header">
         Board-Einstellungen: {{ $board->name ?? '' }}
     </x-slot>
@@ -8,11 +8,11 @@
 
             {{-- Board Grunddaten --}}
             <div class="space-y-4">
-                <h3 class="text-lg font-medium text-gray-900">Grunddaten</h3>
+                <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Grunddaten</h3>
                 
                 <div class="space-y-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Board Name</label>
+                        <label class="block text-sm font-medium text-[var(--ui-secondary)]">Board Name</label>
                         <input type="text" wire:model="board.name"
                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                placeholder="z. B. IT Support, Buchhaltung">
@@ -20,7 +20,7 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Beschreibung</label>
+                        <label class="block text-sm font-medium text-[var(--ui-secondary)]">Beschreibung</label>
                         <textarea wire:model="board.description" rows="3"
                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                   placeholder="Beschreibung des Helpdesk Boards..."></textarea>
@@ -32,24 +32,24 @@
             {{-- Service-Zeiten --}}
             <div class="space-y-4">
                 <div class="d-flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-900">Service Hours</h3>
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Service Hours</h3>
                     <x-ui-button variant="primary-outline" size="sm" wire:click="toggleServiceHoursForm">
                         {{ $showServiceHoursForm ? 'Abbrechen' : '+ Service Hours hinzufügen' }}
                     </x-ui-button>
                 </div>
 
                 @if($showServiceHoursForm)
-                    <div class="bg-gray-50 p-4 rounded-lg space-y-4">
+                    <div class="bg-[var(--ui-muted-5)] p-4 rounded-lg space-y-4 border border-[var(--ui-border)]/60">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Name</label>
+                                <label class="block text-sm font-medium text-[var(--ui-secondary)]">Name</label>
                                 <input type="text" wire:model="newServiceZeit.name"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="z. B. Mo-Fr 9-17 Uhr">
                                 @error('newServiceZeit.name') <span class="text-sm text-red-500">{{ $message }}</span> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Beschreibung</label>
+                                <label class="block text-sm font-medium text-[var(--ui-secondary)]">Beschreibung</label>
                                 <input type="text" wire:model="newServiceZeit.description"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Optionale Beschreibung">
@@ -69,13 +69,13 @@
 
                         {{-- Service Hours Zeitplan --}}
                         <div class="space-y-3">
-                            <h4 class="text-sm font-medium text-gray-900">Öffnungszeiten</h4>
+                            <h4 class="text-sm font-medium text-[var(--ui-secondary)]">Öffnungszeiten</h4>
                             <div class="space-y-2">
                                 @foreach(['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] as $index => $dayName)
                                     @php
                                         $dayIndex = $index === 6 ? 0 : $index + 1; // Sonntag = 0
                                     @endphp
-                                    <div class="d-flex items-center justify-between p-3 bg-white rounded border">
+                                    <div class="d-flex items-center justify-between p-3 bg-[var(--ui-surface)] rounded border border-[var(--ui-border)]/60">
                                         <div class="d-flex items-center gap-3">
                                             <label class="d-flex items-center">
                                                 <input type="checkbox" 

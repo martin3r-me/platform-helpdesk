@@ -1,18 +1,15 @@
 <x-ui-page>
     <x-slot name="navbar">
-        <x-ui-page-navbar title="Meine Tickets" icon="heroicon-o-ticket">
-            <x-slot name="titleActions"></x-slot>
-            <div class="text-sm text-[var(--ui-muted)]">{{ now()->format('l') }}, {{ now()->format('d.m.Y') }}</div>
-        </x-ui-page-navbar>
+        <x-ui-page-navbar title="Meine Tickets" />
     </x-slot>
 
     <x-ui-page-container>
-        
+        <!-- Optional: Platz für Filterchips/Info -->
     </x-ui-page-container>
 
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Übersicht" width="w-80" :defaultOpen="true">
-            <div class="p-4 space-y-4">
+            <div class="p-6 space-y-6">
                 <div>
                     <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ui-muted)] mb-3">Statistiken</h3>
                     <div class="space-y-2">
