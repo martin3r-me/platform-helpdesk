@@ -1,4 +1,4 @@
-<x-ui-modal size="md" model="modalShow" header="Ticket-Gruppe bearbeiten">
+<x-ui-modal size="md" model="modalShow" header="Ticket-Gruppe Settings">
 
     @if($ticketGroup)
     <div class="p-4">

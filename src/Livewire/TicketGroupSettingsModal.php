@@ -3,10 +3,7 @@
 namespace Platform\Helpdesk\Livewire;
 
 use Livewire\Component;
-use Platform\Core\PlatformCore;
-use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskTicketGroup;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On; 
 
 class TicketGroupSettingsModal extends Component
