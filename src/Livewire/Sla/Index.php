@@ -95,6 +95,9 @@ class Index extends Component
     public function render()
     {
         $slas = HelpdeskBoardSla::query()
+            ->when(Auth::check() && Auth::user()->currentTeam, function ($query) {
+                $query->where('team_id', Auth::user()->currentTeam->id);
+            })
             ->when($this->search, function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
                       ->orWhere('description', 'like', '%' . $this->search . '%');

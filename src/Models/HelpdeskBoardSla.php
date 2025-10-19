@@ -18,6 +18,7 @@ class HelpdeskBoardSla extends Model
         'response_time_hours',
         'resolution_time_hours',
         'order',
+        'team_id',
     ];
 
     protected $casts = [
@@ -31,6 +32,12 @@ class HelpdeskBoardSla extends Model
     {
         Log::info('HelpdeskBoardSla Model: booted() called!');
         
+        static::addGlobalScope('team', function ($builder) {
+            if (\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->currentTeam) {
+                $builder->where('team_id', \Illuminate\Support\Facades\Auth::user()->currentTeam->id);
+            }
+        });
+
         static::creating(function (self $model) {
             
             do {
@@ -38,12 +45,21 @@ class HelpdeskBoardSla extends Model
             } while (self::where('uuid', $uuid)->exists());
 
             $model->uuid = $uuid;
+
+            if (! $model->team_id && \Illuminate\Support\Facades\Auth::check()) {
+                $model->team_id = \Illuminate\Support\Facades\Auth::user()->currentTeam->id ?? null;
+            }
         });
     }
 
     public function helpdeskBoards(): HasMany
     {
         return $this->hasMany(HelpdeskBoard::class, 'helpdesk_board_sla_id');
+    }
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(\Platform\Core\Models\Team::class);
     }
 
     /**

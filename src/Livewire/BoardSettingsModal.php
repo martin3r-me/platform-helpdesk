@@ -61,8 +61,14 @@ class BoardSettingsModal extends Component
         // Service-Zeiten laden
         $this->serviceHours = $this->board->serviceHours()->orderBy('order')->get();
         
-        // Verfügbare SLAs laden
-        $this->availableSlas = HelpdeskBoardSla::where('is_active', true)->orderBy('name')->get();
+        // Verfügbare SLAs laden (team-scoped)
+        $this->availableSlas = HelpdeskBoardSla::query()
+            ->where('is_active', true)
+            ->when(Auth::check() && Auth::user()->currentTeam, function ($query) {
+                $query->where('team_id', Auth::user()->currentTeam->id);
+            })
+            ->orderBy('name')
+            ->get();
 
         $this->modalShow = true;
     }
