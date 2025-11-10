@@ -27,6 +27,7 @@ class Ticket extends Component
     {
         $this->authorize('view', $helpdeskTicket);
         $this->ticket = $helpdeskTicket;
+        $this->ticket->load('helpdeskBoard');
     }
 
     public function rendered()
@@ -45,6 +46,16 @@ class Ticket extends Component
                 'due_date' => $this->ticket->due_date,
                 'story_points' => $this->ticket->story_points,
             ],
+        ]);
+
+        // Organization-Kontext setzen - nur Zeiten erlauben, keine Entity-Verknüpfung (analog zu Task)
+        $this->dispatch('organization', [
+            'context_type' => get_class($this->ticket),
+            'context_id' => $this->ticket->id,
+            'linked_contexts' => $this->ticket->helpdeskBoard ? [['type' => get_class($this->ticket->helpdeskBoard), 'id' => $this->ticket->helpdeskBoard->id]] : [],
+            'allow_time_entry' => true,
+            'allow_context_management' => false,
+            'can_link_to_entity' => false,
         ]);
     }
 

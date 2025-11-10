@@ -20,6 +20,33 @@ class Board extends Component
         $this->loadGroups();
     }
 
+    public function rendered()
+    {
+        $this->dispatch('comms', [
+            'model' => get_class($this->helpdeskBoard),
+            'modelId' => $this->helpdeskBoard->id,
+            'subject' => $this->helpdeskBoard->name,
+            'description' => $this->helpdeskBoard->description ?? '',
+            'url' => route('helpdesk.boards.show', $this->helpdeskBoard),
+            'source' => 'helpdesk.board.view',
+            'recipients' => [],
+            'meta' => [
+                'team_id' => $this->helpdeskBoard->team_id ?? null,
+            ],
+        ]);
+
+        // Organization-Kontext setzen - beides erlauben: Zeiten + Entity-Verknüpfung (analog zu Project)
+        $this->dispatch('organization', [
+            'context_type' => get_class($this->helpdeskBoard),
+            'context_id' => $this->helpdeskBoard->id,
+            'allow_time_entry' => true,
+            'allow_context_management' => true,
+            'can_link_to_entity' => true,
+            // Verfügbare Relations für Children-Cascade (z.B. Tickets mit/ohne Slots)
+            'include_children_relations' => ['tickets', 'slots.tickets'],
+        ]);
+    }
+
     public function loadGroups()
     {
         // Lade alle Slots des Boards

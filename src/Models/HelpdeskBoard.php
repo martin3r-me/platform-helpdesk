@@ -2,13 +2,14 @@
 
 namespace Platform\Helpdesk\Models;
 
+use Platform\Core\Contracts\HasDisplayName;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Symfony\Component\Uid\UuidV7;
 use Illuminate\Support\Facades\Log;
 
-class HelpdeskBoard extends Model
+class HelpdeskBoard extends Model implements HasDisplayName
 {
     protected $fillable = [
         'uuid',
@@ -67,5 +68,15 @@ class HelpdeskBoard extends Model
     public function team(): BelongsTo
     {
         return $this->belongsTo(\Platform\Core\Models\Team::class);
+    }
+
+    /**
+     * Gibt den anzeigbaren Namen des Boards zurück.
+     * 
+     * @return string|null
+     */
+    public function getDisplayName(): ?string
+    {
+        return $this->name;
     }
 }

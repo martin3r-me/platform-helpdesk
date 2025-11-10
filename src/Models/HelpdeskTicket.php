@@ -7,6 +7,7 @@ use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Enums\TicketEscalationLevel;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
+use Platform\Core\Contracts\HasDisplayName;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Symfony\Component\Uid\UuidV7;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use Platform\ActivityLog\Traits\LogsActivity;
 
-class HelpdeskTicket extends Model
+class HelpdeskTicket extends Model implements HasDisplayName
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
@@ -134,5 +135,15 @@ class HelpdeskTicket extends Model
     public function isCritical(): bool
     {
         return $this->escalation_level?->isCritical() ?? false;
+    }
+
+    /**
+     * Gibt den anzeigbaren Namen des Tickets zurück.
+     * 
+     * @return string|null
+     */
+    public function getDisplayName(): ?string
+    {
+        return $this->title;
     }
 }
