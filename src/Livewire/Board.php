@@ -56,6 +56,7 @@ class Board extends Component
         $this->groups = $slots->map(function ($slot) {
             $slot->label = $slot->name;
             $slot->tasks = $slot->tickets()
+                ->where('is_done', false)
                 ->orderBy('slot_order')
                 ->orderBy('order')
                 ->get();
