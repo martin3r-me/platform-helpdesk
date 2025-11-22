@@ -57,6 +57,11 @@ class HelpdeskServiceProvider extends ServiceProvider
             ModuleRouter::group('helpdesk', function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
             });
+
+            // API-Routen registrieren
+            ModuleRouter::apiGroup('helpdesk', function () {
+                $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
+            });
         }
 
         // Config veröffentlichen & zusammenführen
