@@ -419,5 +419,61 @@ class TicketDatawarehouseController extends ApiController
         $count = $query->count();
         return $this->success(['count' => $count], 'Anzahl Tickets');
     }
+
+    /**
+     * Health Check Endpoint
+     * Gibt einen Beispiel-Datensatz zurück für Tests
+     */
+    public function health(Request $request)
+    {
+        try {
+            $example = HelpdeskTicket::with('helpdeskBoard:id,name', 'team:id,name', 'userInCharge:id,name,email')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$example) {
+                return $this->success([
+                    'status' => 'ok',
+                    'message' => 'API ist erreichbar, aber keine Tickets vorhanden',
+                    'example' => null,
+                    'timestamp' => now()->toIso8601String(),
+                ], 'Health Check');
+            }
+
+            $exampleData = [
+                'id' => $example->id,
+                'uuid' => $example->uuid,
+                'title' => $example->title,
+                'description' => $example->description,
+                'team_id' => $example->team_id,
+                'team_name' => $example->team?->name,
+                'user_id' => $example->user_id,
+                'user_in_charge_id' => $example->user_in_charge_id,
+                'user_in_charge_name' => $example->userInCharge?->name,
+                'helpdesk_board_id' => $example->helpdesk_board_id,
+                'helpdesk_board_name' => $example->helpdeskBoard?->name,
+                'is_done' => $example->is_done,
+                'done_at' => $example->done_at?->toIso8601String(),
+                'due_date' => $example->due_date?->format('Y-m-d'),
+                'story_points' => $example->story_points?->value,
+                'story_points_numeric' => $example->story_points?->points(),
+                'priority' => $example->priority?->value,
+                'status' => $example->status?->value,
+                'escalation_level' => $example->escalation_level?->value,
+                'created_at' => $example->created_at->toIso8601String(),
+                'updated_at' => $example->updated_at->toIso8601String(),
+            ];
+
+            return $this->success([
+                'status' => 'ok',
+                'message' => 'API ist erreichbar',
+                'example' => $exampleData,
+                'timestamp' => now()->toIso8601String(),
+            ], 'Health Check');
+
+        } catch (\Exception $e) {
+            return $this->error('Health Check fehlgeschlagen: ' . $e->getMessage(), 500);
+        }
+    }
 }
 

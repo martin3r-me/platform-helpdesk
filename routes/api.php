@@ -10,5 +10,7 @@ use Platform\Helpdesk\Http\Controllers\Api\BoardDatawarehouseController;
  * Datawarehouse-Endpunkte für Tickets und Boards
  */
 Route::get('/tickets/datawarehouse', [TicketDatawarehouseController::class, 'index']);
+Route::get('/tickets/datawarehouse/health', [TicketDatawarehouseController::class, 'health']);
 Route::get('/boards/datawarehouse', [BoardDatawarehouseController::class, 'index']);
+Route::get('/boards/datawarehouse/health', [BoardDatawarehouseController::class, 'health']);
 

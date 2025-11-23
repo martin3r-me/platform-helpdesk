@@ -126,5 +126,52 @@ class BoardDatawarehouseController extends ApiController
             $query->where('name', 'like', '%' . $request->name . '%');
         }
     }
+
+    /**
+     * Health Check Endpoint
+     * Gibt einen Beispiel-Datensatz zurück für Tests
+     */
+    public function health(Request $request)
+    {
+        try {
+            $example = HelpdeskBoard::with('team:id,name', 'user:id,name,email')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if (!$example) {
+                return $this->success([
+                    'status' => 'ok',
+                    'message' => 'API ist erreichbar, aber keine Boards vorhanden',
+                    'example' => null,
+                    'timestamp' => now()->toIso8601String(),
+                ], 'Health Check');
+            }
+
+            $exampleData = [
+                'id' => $example->id,
+                'uuid' => $example->uuid,
+                'name' => $example->name,
+                'description' => $example->description,
+                'team_id' => $example->team_id,
+                'team_name' => $example->team?->name,
+                'user_id' => $example->user_id,
+                'user_name' => $example->user?->name,
+                'user_email' => $example->user?->email,
+                'order' => $example->order,
+                'created_at' => $example->created_at->toIso8601String(),
+                'updated_at' => $example->updated_at->toIso8601String(),
+            ];
+
+            return $this->success([
+                'status' => 'ok',
+                'message' => 'API ist erreichbar',
+                'example' => $exampleData,
+                'timestamp' => now()->toIso8601String(),
+            ], 'Health Check');
+
+        } catch (\Exception $e) {
+            return $this->error('Health Check fehlgeschlagen: ' . $e->getMessage(), 500);
+        }
+    }
 }
 
