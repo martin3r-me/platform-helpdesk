@@ -18,6 +18,7 @@ class HelpdeskBoard extends Model implements HasDisplayName
         'order',
         'user_id',
         'team_id',
+        'comms_channel_id',
     ];
 
     protected $casts = [

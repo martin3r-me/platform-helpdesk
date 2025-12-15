@@ -39,6 +39,7 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors
         'helpdesk_board_id',
         'helpdesk_board_slot_id',
         'helpdesk_ticket_group_id',
+        'comms_channel_id',
         'escalation_level',
         'escalated_at',
         'escalation_count',

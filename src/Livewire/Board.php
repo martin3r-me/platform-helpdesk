@@ -30,6 +30,7 @@ class Board extends Component
             'url' => route('helpdesk.boards.show', $this->helpdeskBoard),
             'source' => 'helpdesk.board.view',
             'recipients' => [],
+            'preferred_channel_id' => $this->helpdeskBoard->comms_channel_id ?? null,
             'meta' => [
                 'team_id' => $this->helpdeskBoard->team_id ?? null,
             ],

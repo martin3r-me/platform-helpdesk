@@ -49,6 +49,9 @@ class Ticket extends Component
             'url' => route('helpdesk.tickets.show', $this->ticket),            // absolute URL zum Ticket
             'source' => 'helpdesk.ticket.view',                                // eindeutiger Quell-Identifier (frei wählbar)
             'recipients' => [$this->ticket->user_in_charge_id],                // falls vorhanden, sonst leer
+            'preferred_channel_id' => $this->ticket->comms_channel_id
+                ?? $this->ticket->helpdeskBoard?->comms_channel_id
+                ?? null,
             'meta' => [
                 'priority' => $this->ticket->priority,
                 'status' => $this->ticket->status,
