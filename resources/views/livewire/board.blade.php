@@ -90,21 +90,31 @@
     <x-ui-kanban-container class="h-full" sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
 		{{-- Mittlere Spalten (scrollable) --}}
 		@foreach($groups->filter(fn ($g) => !($g->isDoneGroup ?? false)) as $column)
+            @php $isBacklog = $column->isBacklog ?? false; @endphp
 			<x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true">
 				<x-slot name="headerActions">
 					@can('update', $helpdeskBoard)
-						<button 
-							wire:click="createTicket('{{ $column->id }}')" 
-							class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
-							title="Neues Ticket">
-							@svg('heroicon-o-plus-circle', 'w-4 h-4')
-						</button>
-						<button 
-							@click="$dispatch('open-modal-board-slot-settings', { boardSlotId: {{ $column->id }} })" 
-							class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
-							title="Einstellungen">
-							@svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
-						</button>
+                        @if(!$isBacklog)
+                            <button 
+                                wire:click="createTicket('{{ $column->id }}')" 
+                                class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
+                                title="Neues Ticket">
+                                @svg('heroicon-o-plus-circle', 'w-4 h-4')
+                            </button>
+                            <button 
+                                @click="$dispatch('open-modal-board-slot-settings', { boardSlotId: {{ $column->id }} })" 
+                                class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
+                                title="Einstellungen">
+                                @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
+                            </button>
+                        @else
+                            <button 
+                                wire:click="createTicket(null)" 
+                                class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
+                                title="Ticket in Backlog erstellen">
+                                @svg('heroicon-o-plus-circle', 'w-4 h-4')
+                            </button>
+                        @endif
 					@endcan
 				</x-slot>
 

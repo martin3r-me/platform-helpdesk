@@ -50,18 +50,34 @@ class Board extends Component
 
     public function loadGroups()
     {
+        $this->groups = collect();
+
+        // Backlog/Inbox (Tickets ohne Slot, nicht erledigt)
+        $backlog = new HelpdeskBoardSlot();
+        $backlog->id = 'backlog';
+        $backlog->name = 'BACKLOG';
+        $backlog->label = 'BACKLOG / Inbox';
+        $backlog->isBacklog = true;
+        $backlog->tasks = $this->helpdeskBoard->tickets()
+            ->whereNull('helpdesk_board_slot_id')
+            ->where('is_done', false)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $this->groups->push($backlog);
+
         // Lade alle Slots des Boards
         $slots = $this->helpdeskBoard->slots()->orderBy('order')->get();
         
         // Erstelle Gruppen für jedes Slot
-        $this->groups = $slots->map(function ($slot) {
+        $slots->each(function ($slot) {
             $slot->label = $slot->name;
+            $slot->isBacklog = false;
             $slot->tasks = $slot->tickets()
                 ->where('is_done', false)
                 ->orderBy('slot_order')
                 ->orderBy('order')
                 ->get();
-            return $slot;
+            $this->groups->push($slot);
         });
 
         // Füge eine "Erledigt" Gruppe hinzu
