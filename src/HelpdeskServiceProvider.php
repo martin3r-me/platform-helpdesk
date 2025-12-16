@@ -18,6 +18,8 @@ use Platform\Helpdesk\Policies\HelpdeskBoardPolicy;
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use Platform\Comms\Registry\ContextPresenterRegistry;
+use Platform\Helpdesk\Comms\HelpdeskContextPresenter;
 
 class HelpdeskServiceProvider extends ServiceProvider
 {
@@ -62,6 +64,11 @@ class HelpdeskServiceProvider extends ServiceProvider
             ModuleRouter::apiGroup('helpdesk', function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
             });
+        }
+
+        // Comms: Kontext-Resolver registrieren (Inbox / Badges)
+        if (class_exists(ContextPresenterRegistry::class) && class_exists(HelpdeskContextPresenter::class)) {
+            ContextPresenterRegistry::add(HelpdeskContextPresenter::class);
         }
 
         // Config veröffentlichen & zusammenführen
