@@ -52,6 +52,10 @@ class Ticket extends Component
             'preferred_channel_id' => $this->ticket->comms_channel_id
                 ?? $this->ticket->helpdeskBoard?->comms_channel_id
                 ?? null,
+            'capabilities' => [
+                'manage_channels' => false,
+                'threads' => true,
+            ],
             'meta' => [
                 'priority' => $this->ticket->priority,
                 'status' => $this->ticket->status,

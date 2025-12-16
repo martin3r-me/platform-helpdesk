@@ -31,6 +31,10 @@ class Board extends Component
             'source' => 'helpdesk.board.view',
             'recipients' => [],
             'preferred_channel_id' => $this->helpdeskBoard->comms_channel_id ?? null,
+            'capabilities' => [
+                'manage_channels' => true,
+                'threads' => false,
+            ],
             'meta' => [
                 'team_id' => $this->helpdeskBoard->team_id ?? null,
             ],
