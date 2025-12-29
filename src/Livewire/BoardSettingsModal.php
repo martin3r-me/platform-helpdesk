@@ -43,6 +43,18 @@ class BoardSettingsModal extends Component
             'newServiceZeit.description' => 'nullable|string',
             'newServiceZeit.auto_message_inside' => 'nullable|string',
             'newServiceZeit.auto_message_outside' => 'nullable|string',
+            // AI Settings Rules
+            'aiSettings.auto_response_enabled' => 'nullable|boolean',
+            'aiSettings.auto_response_timing_minutes' => 'nullable|integer|min:1|max:1440',
+            'aiSettings.auto_response_immediate_enabled' => 'nullable|boolean',
+            'aiSettings.auto_response_confidence_threshold' => 'nullable|numeric|min:0|max:1',
+            'aiSettings.auto_assignment_enabled' => 'nullable|boolean',
+            'aiSettings.auto_assignment_confidence_threshold' => 'nullable|numeric|min:0|max:1',
+            'aiSettings.ai_model' => 'nullable|string|max:50',
+            'aiSettings.human_in_loop_enabled' => 'nullable|boolean',
+            'aiSettings.human_in_loop_threshold' => 'nullable|numeric|min:0|max:1',
+            'aiSettings.ai_enabled_for_escalated' => 'nullable|boolean',
+            'aiSettings.knowledge_base_categories' => 'nullable|array',
         ];
     }
 
