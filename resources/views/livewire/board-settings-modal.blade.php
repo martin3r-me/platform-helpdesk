@@ -4,8 +4,47 @@
     </x-slot>
 
     @if($board)
-        <div class="flex-grow-1 overflow-y-auto p-4 space-y-6">
+        <div class="flex-grow-1 overflow-y-auto">
+            {{-- Tabs --}}
+            <div class="border-b border-[var(--ui-border)]/40 mb-6 px-4 pt-4">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button
+                        @click="$wire.set('activeTab', 'general')"
+                        :class="$wire.activeTab === 'general' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        wire:click="$set('activeTab', 'general')"
+                    >
+                        Allgemein
+                    </button>
+                    <button
+                        @click="$wire.set('activeTab', 'ai')"
+                        :class="$wire.activeTab === 'ai' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        wire:click="$set('activeTab', 'ai')"
+                    >
+                        KI-Einstellungen
+                    </button>
+                    <button
+                        @click="$wire.set('activeTab', 'service-hours')"
+                        :class="$wire.activeTab === 'service-hours' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        wire:click="$set('activeTab', 'service-hours')"
+                    >
+                        Service Hours
+                    </button>
+                    <button
+                        @click="$wire.set('activeTab', 'sla')"
+                        :class="$wire.activeTab === 'sla' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        wire:click="$set('activeTab', 'sla')"
+                    >
+                        SLA
+                    </button>
+                </nav>
+            </div>
 
+            <div class="p-4 space-y-6">
+            @if($activeTab === 'general')
             {{-- Board Grunddaten --}}
             <div class="space-y-4">
                 <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Grunddaten</h3>
@@ -29,6 +68,117 @@
                 </div>
             </div>
 
+            @elseif($activeTab === 'ai' && $aiSettings)
+            {{-- KI-Einstellungen --}}
+            <div class="space-y-6">
+                {{-- Allgemeine KI-Einstellungen --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Allgemein</h3>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" wire:model="aiSettings.auto_response_enabled" class="rounded border-gray-300">
+                            <span class="text-sm text-[var(--ui-secondary)]">KI-Auto-Response aktivieren</span>
+                        </label>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">AI-Modell</label>
+                            <select wire:model="aiSettings.ai_model" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                @foreach($availableModels as $model)
+                                    <option value="{{ $model }}">{{ $model }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Auto-Response Einstellungen --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Auto-Response</h3>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" wire:model="aiSettings.auto_response_immediate_enabled" class="rounded border-gray-300">
+                            <span class="text-sm text-[var(--ui-secondary)]">Sofortige Bestätigung aktivieren</span>
+                        </label>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
+                                Timing (Minuten)
+                            </label>
+                            <input type="number" wire:model="aiSettings.auto_response_timing_minutes" min="1" max="1440"
+                                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <p class="mt-1 text-xs text-[var(--ui-muted)]">Zeit bis zur vollständigen KI-Antwort (Standard: 30 Minuten)</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
+                                Confidence-Threshold ({{ number_format($aiSettings->auto_response_confidence_threshold * 100, 0) }}%)
+                            </label>
+                            <input type="range" wire:model.live="aiSettings.auto_response_confidence_threshold" min="0" max="1" step="0.01"
+                                   class="w-full">
+                            <p class="mt-1 text-xs text-[var(--ui-muted)]">Mindest-Confidence für automatisches Senden</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Auto-Assignment --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Auto-Assignment</h3>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" wire:model="aiSettings.auto_assignment_enabled" class="rounded border-gray-300">
+                            <span class="text-sm text-[var(--ui-secondary)]">Automatische Zuweisung aktivieren</span>
+                        </label>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
+                                Confidence-Threshold ({{ number_format($aiSettings->auto_assignment_confidence_threshold * 100, 0) }}%)
+                            </label>
+                            <input type="range" wire:model.live="aiSettings.auto_assignment_confidence_threshold" min="0" max="1" step="0.01"
+                                   class="w-full">
+                            <p class="mt-1 text-xs text-[var(--ui-muted)]">Mindest-Confidence für automatische Zuweisung</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Human-in-the-Loop --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Human-in-the-Loop</h3>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" wire:model="aiSettings.human_in_loop_enabled" class="rounded border-gray-300">
+                            <span class="text-sm text-[var(--ui-secondary)]">Human-in-the-Loop aktivieren</span>
+                        </label>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
+                                Threshold ({{ number_format($aiSettings->human_in_loop_threshold * 100, 0) }}%)
+                            </label>
+                            <input type="range" wire:model.live="aiSettings.human_in_loop_threshold" min="0" max="1" step="0.01"
+                                   class="w-full">
+                            <p class="mt-1 text-xs text-[var(--ui-muted)]">Unter diesem Threshold wird Review benötigt</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Eskalationen --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Eskalationen</h3>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" wire:model="aiSettings.ai_enabled_for_escalated" class="rounded border-gray-300">
+                            <span class="text-sm text-[var(--ui-secondary)]">KI für eskalierten Tickets aktivieren</span>
+                        </label>
+                        <p class="text-xs text-[var(--ui-muted)]">Standardmäßig pausiert die KI bei eskalierten Tickets</p>
+                    </div>
+                </div>
+            </div>
+
+            @elseif($activeTab === 'service-hours')
             {{-- Service-Zeiten --}}
             <div class="space-y-4">
                 <div class="d-flex items-center justify-between">
@@ -158,6 +308,7 @@
                 </div>
             </div>
 
+            @elseif($activeTab === 'sla')
             {{-- SLA-Auswahl --}}
             <div class="space-y-4">
                 <div class="d-flex items-center justify-between">
@@ -211,28 +362,14 @@
                     />
                 </div>
             </div>
-
-            {{-- Team-Mitglieder (Platzhalter für später) --}}
-            <div class="space-y-4">
-                <h3 class="text-lg font-medium text-gray-900">Team-Mitglieder</h3>
-                <div class="text-center py-4 text-gray-500">
-                    Team-Verwaltung wird später implementiert
-                </div>
-            </div>
-
-            {{-- Comms Channels (Platzhalter) --}}
-            <div class="space-y-4">
-                <h3 class="text-lg font-medium text-gray-900">Comms Channels</h3>
-                <div class="text-center py-4 text-gray-500">
-                    Comms Channel Integration wird später implementiert
-                </div>
-            </div>
+            @endif
 
             <hr>
 
             {{-- Löschen Button --}}
             <div class="d-flex justify-end">
                 <x-ui-confirm-button action="deleteBoard" text="Board löschen" confirmText="Wirklich löschen?" />
+            </div>
             </div>
         </div>
     @endif

@@ -6,6 +6,7 @@ use Livewire\Component;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardServiceHours;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
+use Platform\Helpdesk\Models\HelpdeskBoardAiSettings;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 
@@ -17,6 +18,11 @@ class BoardSettingsModal extends Component
     public $serviceHours = [];
     public $availableSlas = [];
     public $showServiceHoursForm = false;
+    
+    // AI Settings
+    public $activeTab = 'general'; // 'general', 'ai', 'service-hours', 'sla'
+    public $aiSettings;
+    public $availableModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
     public $newServiceZeit = [
         'name' => '',
         'description' => '',
@@ -49,7 +55,7 @@ class BoardSettingsModal extends Component
     #[On('open-modal-board-settings')] 
     public function openModalBoardSettings($boardId)
     {
-        $this->board = HelpdeskBoard::with(['serviceHours', 'sla'])->findOrFail($boardId);
+        $this->board = HelpdeskBoard::with(['serviceHours', 'sla', 'aiSettings'])->findOrFail($boardId);
 
         // Teammitglieder holen
         $this->teamUsers = Auth::user()
@@ -70,6 +76,9 @@ class BoardSettingsModal extends Component
             ->orderBy('name')
             ->get();
 
+        // AI Settings laden oder erstellen
+        $this->loadAiSettings();
+
         $this->modalShow = true;
     }
 
@@ -81,9 +90,27 @@ class BoardSettingsModal extends Component
     public function save()
     {
         $this->board->save();
+        
+        // AI Settings speichern
+        if ($this->aiSettings) {
+            $this->saveAiSettings();
+        }
+        
         $this->dispatch('boardUpdated');
         $this->dispatch('updateSidebar');
         $this->closeModal();
+    }
+
+    public function loadAiSettings(): void
+    {
+        $this->aiSettings = \Platform\Helpdesk\Models\HelpdeskBoardAiSettings::getOrCreateForBoard($this->board);
+    }
+
+    public function saveAiSettings(): void
+    {
+        if ($this->aiSettings) {
+            $this->aiSettings->save();
+        }
     }
 
     public function addServiceHours()

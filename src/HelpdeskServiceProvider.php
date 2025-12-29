@@ -20,6 +20,9 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Platform\Comms\Registry\ContextPresenterRegistry;
 use Platform\Helpdesk\Comms\HelpdeskContextPresenter;
+use Illuminate\Support\Facades\Event;
+use Platform\Helpdesk\Events\TicketCreated;
+use Platform\Helpdesk\Listeners\TicketCreatedListener;
 
 class HelpdeskServiceProvider extends ServiceProvider
 {
@@ -91,6 +94,12 @@ class HelpdeskServiceProvider extends ServiceProvider
         if (class_exists(HelpdeskBoard::class) && class_exists(HelpdeskBoardPolicy::class)) {
             Gate::policy(HelpdeskBoard::class, HelpdeskBoardPolicy::class);
         }
+
+        // Events & Listeners registrieren
+        Event::listen(
+            TicketCreated::class,
+            TicketCreatedListener::class
+        );
     }
 
     protected function registerLivewireComponents(): void
