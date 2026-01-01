@@ -45,8 +45,8 @@ class Board extends Component
             'context_type' => get_class($this->helpdeskBoard),
             'context_id' => $this->helpdeskBoard->id,
             'allow_time_entry' => true,
-            'allow_context_management' => true,
-            'can_link_to_entity' => true,
+            'allow_entities' => true,
+            'allow_dimensions' => true,
             // Verfügbare Relations für Children-Cascade (z.B. Tickets mit/ohne Slots)
             'include_children_relations' => ['tickets', 'slots.tickets'],
         ]);
