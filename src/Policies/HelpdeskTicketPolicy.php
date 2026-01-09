@@ -8,6 +8,22 @@ use Platform\Helpdesk\Models\HelpdeskTicket;
 class HelpdeskTicketPolicy
 {
     /**
+     * Darf der User Tickets listen?
+     */
+    public function viewAny(User $user): bool
+    {
+        return $user->currentTeam !== null;
+    }
+
+    /**
+     * Darf der User ein Ticket erstellen?
+     */
+    public function create(User $user): bool
+    {
+        return $user->currentTeam !== null;
+    }
+
+    /**
      * Darf der User dieses Ticket sehen?
      */
     public function view(User $user, HelpdeskTicket $ticket): bool

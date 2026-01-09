@@ -8,6 +8,22 @@ use Platform\Helpdesk\Models\HelpdeskBoard;
 class HelpdeskBoardPolicy
 {
     /**
+     * Darf der User Boards listen?
+     */
+    public function viewAny(User $user): bool
+    {
+        return $user->currentTeam !== null;
+    }
+
+    /**
+     * Darf der User ein Board erstellen?
+     */
+    public function create(User $user): bool
+    {
+        return $user->currentTeam !== null;
+    }
+
+    /**
      * Darf der User dieses Helpdesk Board sehen?
      */
     public function view(User $user, HelpdeskBoard $board): bool
