@@ -78,13 +78,6 @@
                     <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Allgemein</h3>
                     
                     <div class="space-y-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" 
-                                   wire:model="aiSettings.auto_response_enabled" 
-                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                            <span class="text-sm text-[var(--ui-secondary)]">KI-Auto-Response aktivieren</span>
-                        </label>
-                        
                         <x-ui-input-select
                             name="aiSettings.ai_model"
                             label="AI-Modell"
@@ -95,39 +88,6 @@
                             wire:model="aiSettings.ai_model"
                             :errorKey="'aiSettings.ai_model'"
                         />
-                    </div>
-                </div>
-
-                {{-- Auto-Response Einstellungen --}}
-                <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Auto-Response</h3>
-                    
-                    <div class="space-y-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" 
-                                   wire:model="aiSettings.auto_response_immediate_enabled" 
-                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                            <span class="text-sm text-[var(--ui-secondary)]">Sofortige Bestätigung aktivieren</span>
-                        </label>
-                        
-                        <x-ui-input-number
-                            name="aiSettings.auto_response_timing_minutes"
-                            label="Timing (Minuten)"
-                            wire:model="aiSettings.auto_response_timing_minutes"
-                            :min="1"
-                            :max="1440"
-                            hint="Zeit bis zur vollständigen KI-Antwort (Standard: 30 Minuten)"
-                            :errorKey="'aiSettings.auto_response_timing_minutes'"
-                        />
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
-                                Confidence-Threshold ({{ number_format($aiSettings->auto_response_confidence_threshold * 100, 0) }}%)
-                            </label>
-                            <input type="range" wire:model.live="aiSettings.auto_response_confidence_threshold" min="0" max="1" step="0.01"
-                                   class="w-full h-2 bg-[var(--ui-muted-5)] rounded-lg appearance-none cursor-pointer">
-                            <p class="mt-1 text-xs text-[var(--ui-muted)]">Mindest-Confidence für automatisches Senden</p>
-                        </div>
                     </div>
                 </div>
 
