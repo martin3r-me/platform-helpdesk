@@ -100,6 +100,42 @@ class HelpdeskServiceProvider extends ServiceProvider
             TicketCreated::class,
             TicketCreatedListener::class
         );
+
+        // Tools registrieren (loose gekoppelt - für AI/Chat)
+        $this->registerTools();
+    }
+    
+    /**
+     * Registriert Helpdesk-Tools für die AI/Chat-Funktionalität
+     * 
+     * HINWEIS: Tools werden auch automatisch via Auto-Discovery gefunden,
+     * aber manuelle Registrierung stellt sicher, dass sie verfügbar sind.
+     */
+    protected function registerTools(): void
+    {
+        try {
+            $registry = resolve(\Platform\Core\Tools\ToolRegistry::class);
+            
+            // Overview-Tool
+            $registry->register(new \Platform\Helpdesk\Tools\HelpdeskOverviewTool());
+            
+            // Board-Tools
+            $registry->register(new \Platform\Helpdesk\Tools\CreateBoardTool());
+            $registry->register(new \Platform\Helpdesk\Tools\ListBoardsTool());
+            $registry->register(new \Platform\Helpdesk\Tools\GetBoardTool());
+            $registry->register(new \Platform\Helpdesk\Tools\UpdateBoardTool());
+            $registry->register(new \Platform\Helpdesk\Tools\DeleteBoardTool());
+            
+            // Ticket-Tools
+            $registry->register(new \Platform\Helpdesk\Tools\CreateTicketTool());
+            $registry->register(new \Platform\Helpdesk\Tools\ListTicketsTool());
+            $registry->register(new \Platform\Helpdesk\Tools\GetTicketTool());
+            $registry->register(new \Platform\Helpdesk\Tools\UpdateTicketTool());
+            $registry->register(new \Platform\Helpdesk\Tools\DeleteTicketTool());
+        } catch (\Throwable $e) {
+            // Silent fail - ToolRegistry möglicherweise nicht verfügbar
+            \Log::warning('Helpdesk: Tool-Registrierung fehlgeschlagen', ['error' => $e->getMessage()]);
+        }
     }
 
     protected function registerLivewireComponents(): void
