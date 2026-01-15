@@ -8,6 +8,7 @@ use Platform\Core\Contracts\ToolContext;
 use Platform\Core\Contracts\ToolMetadataContract;
 use Platform\Core\Contracts\ToolResult;
 use Platform\Core\Tools\Concerns\HasStandardizedWriteOperations;
+use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
 use Platform\Helpdesk\Models\HelpdeskTicket;
@@ -35,6 +36,7 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
             'properties' => [
                 'team_id' => ['type' => 'integer'],
                 'ticket_id' => ['type' => 'integer', 'description' => 'ERFORDERLICH'],
+                'id' => ['type' => 'integer', 'description' => 'Alias für ticket_id (Deprecated). Verwende bevorzugt ticket_id.'],
                 'title' => ['type' => 'string'],
                 'description' => ['type' => 'string'],
                 'board_id' => ['type' => 'integer'],
@@ -43,7 +45,16 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 'due_date' => ['type' => 'string'],
                 'priority' => ['type' => 'string'],
                 'status' => ['type' => 'string'],
-                'story_points' => ['type' => 'string'],
+                'story_points' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Story Points (xs|s|m|l|xl|xxl). Setze auf null/""/0 um zu entfernen.',
+                    'enum' => ['xs', 's', 'm', 'l', 'xl', 'xxl'],
+                ],
+                'storyPoints' => [
+                    'type' => 'string',
+                    'description' => 'Alias für story_points.',
+                    'enum' => ['xs', 's', 'm', 'l', 'xl', 'xxl'],
+                ],
                 'user_in_charge_id' => ['type' => 'integer'],
                 'is_done' => ['type' => 'boolean'],
             ],
@@ -54,6 +65,16 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
     public function execute(array $arguments, ToolContext $context): ToolResult
     {
         try {
+            // Backward compatible: allow "id" as alias for "ticket_id"
+            if (!array_key_exists('ticket_id', $arguments) && array_key_exists('id', $arguments)) {
+                $arguments['ticket_id'] = $arguments['id'];
+            }
+
+            // Backward compatible: allow "storyPoints" as alias for "story_points"
+            if (!array_key_exists('story_points', $arguments) && array_key_exists('storyPoints', $arguments)) {
+                $arguments['story_points'] = $arguments['storyPoints'];
+            }
+
             $resolved = $this->resolveTeam($arguments, $context);
             if ($resolved['error']) {
                 return $resolved['error'];
@@ -80,12 +101,33 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 'due_date',
                 'priority',
                 'status',
-                'story_points',
                 'user_in_charge_id',
                 'is_done',
             ] as $f) {
                 if (array_key_exists($f, $arguments)) {
                     $update[$f] = $arguments[$f] === '' ? null : $arguments[$f];
+                }
+            }
+
+            // Story points normalisieren/validieren (damit Enum-Cast nie knallt)
+            if (array_key_exists('story_points', $arguments)) {
+                $sp = $arguments['story_points'];
+                if (is_string($sp)) {
+                    $sp = trim($sp);
+                }
+
+                if ($sp === null || $sp === '' || $sp === 'null' || $sp === 0 || $sp === '0') {
+                    $update['story_points'] = null;
+                } else {
+                    $normalized = strtolower((string)$sp);
+                    $enum = TicketStoryPoints::tryFrom($normalized);
+                    if (!$enum) {
+                        return ToolResult::error(
+                            'VALIDATION_ERROR',
+                            'Ungültige story_points. Erlaubt: xs|s|m|l|xl|xxl (oder null/""/0 zum Entfernen).'
+                        );
+                    }
+                    $update['story_points'] = $enum->value;
                 }
             }
 

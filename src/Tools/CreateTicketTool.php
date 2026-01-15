@@ -8,6 +8,7 @@ use Platform\Core\Contracts\ToolContext;
 use Platform\Core\Contracts\ToolMetadataContract;
 use Platform\Core\Contracts\ToolResult;
 use Platform\Core\Tools\Concerns\HasStandardizedWriteOperations;
+use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
 use Platform\Helpdesk\Models\HelpdeskTicket;
@@ -42,7 +43,16 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                 'due_date' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
                 'priority' => ['type' => 'string'],
                 'status' => ['type' => 'string'],
-                'story_points' => ['type' => 'string'],
+                'story_points' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Story Points (xs|s|m|l|xl|xxl). Setze auf null/""/0 um zu entfernen.',
+                    'enum' => ['xs', 's', 'm', 'l', 'xl', 'xxl'],
+                ],
+                'storyPoints' => [
+                    'type' => 'string',
+                    'description' => 'Alias für story_points.',
+                    'enum' => ['xs', 's', 'm', 'l', 'xl', 'xxl'],
+                ],
                 'user_in_charge_id' => ['type' => 'integer'],
             ],
             'required' => ['title'],
@@ -63,6 +73,33 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
             $title = trim((string)($arguments['title'] ?? ''));
             if ($title === '') {
                 return ToolResult::error('VALIDATION_ERROR', 'title ist erforderlich.');
+            }
+
+            // Backward compatible: allow "storyPoints" as alias for "story_points"
+            if (!array_key_exists('story_points', $arguments) && array_key_exists('storyPoints', $arguments)) {
+                $arguments['story_points'] = $arguments['storyPoints'];
+            }
+
+            // Story points normalisieren/validieren (damit Enum-Cast nie knallt)
+            $storyPointsValue = null;
+            if (array_key_exists('story_points', $arguments)) {
+                $sp = $arguments['story_points'];
+                if (is_string($sp)) {
+                    $sp = trim($sp);
+                }
+                if ($sp === null || $sp === '' || $sp === 'null' || $sp === 0 || $sp === '0') {
+                    $storyPointsValue = null;
+                } else {
+                    $normalized = strtolower((string)$sp);
+                    $enum = TicketStoryPoints::tryFrom($normalized);
+                    if (!$enum) {
+                        return ToolResult::error(
+                            'VALIDATION_ERROR',
+                            'Ungültige story_points. Erlaubt: xs|s|m|l|xl|xxl (oder null/""/0 zum Entfernen).'
+                        );
+                    }
+                    $storyPointsValue = $enum->value;
+                }
             }
 
             $boardId = isset($arguments['board_id']) ? (int)$arguments['board_id'] : null;
@@ -101,7 +138,7 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                 'due_date' => $arguments['due_date'] ?? null,
                 'priority' => $arguments['priority'] ?? null,
                 'status' => $arguments['status'] ?? null,
-                'story_points' => $arguments['story_points'] ?? null,
+                'story_points' => $storyPointsValue,
                 'helpdesk_board_id' => $boardId,
                 'helpdesk_board_slot_id' => $slotId,
                 'helpdesk_ticket_group_id' => $groupId,
