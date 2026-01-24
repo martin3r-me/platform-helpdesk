@@ -7,7 +7,9 @@ use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Integrations\Models\IntegrationsGithubRepository;
 use Platform\Integrations\Models\IntegrationAccountLink;
+use Platform\Core\Services\OpenAiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * API Controller für GitHub Repository-bezogene Tickets
@@ -545,5 +547,166 @@ class GithubRepositoryTicketController extends ApiController
                 'status_label' => $ticket->status->label(),
             ],
         ], 'Status wurde aktualisiert');
+    }
+
+    /**
+     * Führt eine Code-Analyse mit Claude durch (read-only)
+     * 
+     * Body Parameter:
+     * - ticket_id: Ticket ID (required)
+     * - ticket_title: Ticket Titel (required)
+     * - ticket_description: Ticket Beschreibung (required)
+     * - repo_structure: Repository-Struktur als JSON (required)
+     * - repo_files: Wichtige Dateien-Inhalte als JSON (optional)
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function analyzeCodeWithClaude(Request $request)
+    {
+        $ticketId = $request->input('ticket_id');
+        $ticketTitle = $request->input('ticket_title');
+        $ticketDescription = $request->input('ticket_description');
+        $repoStructure = $request->input('repo_structure');
+        $repoFiles = $request->input('repo_files', []);
+
+        if (!$ticketId || !$ticketTitle || !$repoStructure) {
+            return $this->error('Parameter "ticket_id", "ticket_title" und "repo_structure" sind erforderlich.', 400);
+        }
+
+        try {
+            $openAiService = app(OpenAiService::class);
+            
+            // Erstelle strukturierten Prompt für Claude
+            $prompt = $this->buildCodeAnalysisPrompt(
+                $ticketId,
+                $ticketTitle,
+                $ticketDescription ?? '',
+                $repoStructure,
+                $repoFiles
+            );
+
+            // Rufe Claude/OpenAI auf
+            $messages = [
+                [
+                    'role' => 'system',
+                    'content' => 'Du bist ein erfahrener Software-Entwickler, der Code-Analysen durchführt. Du arbeitest NUR read-only - du änderst, committest oder pushst NICHTS. Du analysierst Code und erstellst detaillierte Pläne.',
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $prompt,
+                ],
+            ];
+
+            $response = $openAiService->chat($messages, 'gpt-5.2', [
+                'max_tokens' => 4000,
+                'temperature' => 0.3,
+                'tools' => false,
+                'with_context' => false,
+            ]);
+
+            $analysis = $response['content'] ?? '';
+
+            return $this->success([
+                'analysis' => $analysis,
+                'ticket_id' => $ticketId,
+            ], 'Code-Analyse erfolgreich durchgeführt');
+
+        } catch (\Exception $e) {
+            Log::error('Code-Analyse Fehler', [
+                'ticket_id' => $ticketId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $this->error('Fehler bei der Code-Analyse: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Erstellt den Prompt für die Code-Analyse
+     */
+    private function buildCodeAnalysisPrompt(
+        int $ticketId,
+        string $ticketTitle,
+        string $ticketDescription,
+        array $repoStructure,
+        array $repoFiles = []
+    ): string {
+        $prompt = <<<PROMPT
+# Code-Analyse für Ticket #{$ticketId}
+
+## Kontext
+**Ticket-ID:** {$ticketId}
+**Titel:** {$ticketTitle}
+**Beschreibung:**
+{$ticketDescription}
+
+## Projektstruktur
+```json
+{$this->formatJsonForPrompt($repoStructure)}
+```
+
+PROMPT;
+
+        if (!empty($repoFiles)) {
+            $prompt .= "\n## Wichtige Dateien-Inhalte\n\n";
+            foreach ($repoFiles as $file => $content) {
+                $prompt .= "### {$file}\n```\n" . substr($content, 0, 2000) . "\n```\n\n";
+            }
+        }
+
+        $prompt .= <<<PROMPT
+
+## Aufgabe
+Führe eine detaillierte Code-Analyse durch (NUR READ-ONLY - keine Änderungen!). Erstelle einen strukturierten Plan mit folgenden Abschnitten:
+
+### 1. Problem-Zusammenfassung
+1-2 Sätze: Was ist das Problem?
+
+### 2. Definition of Done
+Was muss erfüllt sein, damit das Ticket als "done" gilt?
+
+### 3. Code-Suche
+Suche nach relevanten Begriffen im Code (Klassenname, Route, Fehlermeldung, Feature). Identifiziere Kandidaten-Dateien.
+
+### 4. Likely Files
+Liste mit 3-10 Dateien/Classes, die betroffen wären:
+- Dateipfad
+- Warum diese Datei betroffen ist (1 Satz)
+
+### 5. Umsetzungsplan
+3-7 Schritte:
+- Pro Schritt: Was genau geändert werden müsste (OHNE es zu ändern!)
+- Reihenfolge beachten
+
+### 6. How to Test
+2-5 konkrete User-Test-Schritte + erwartetes Ergebnis:
+- Schritt 1: ...
+- Erwartetes Ergebnis: ...
+
+### 7. Risiko-Einstufung
+low / medium / high + 1 Satz warum
+
+### 8. Offene Fragen
+max. 3 Rückfragen (nur wenn wirklich nötig)
+
+---
+
+**WICHTIG:** 
+- NUR READ-ONLY - keine Code-Änderungen!
+- Strukturierter Output als Markdown
+- Präzise und konkret
+PROMPT;
+
+        return $prompt;
+    }
+
+    /**
+     * Formatiert JSON für den Prompt
+     */
+    private function formatJsonForPrompt($data): string
+    {
+        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return $json ?: '{}';
     }
 }

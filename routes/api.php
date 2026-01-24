@@ -23,4 +23,5 @@ Route::post('/tickets/mark-done', [GithubRepositoryTicketController::class, 'mar
 Route::post('/tickets/mark-checked', [GithubRepositoryTicketController::class, 'markTicketAsChecked']);
 Route::post('/tickets/add-plan', [GithubRepositoryTicketController::class, 'addPlanToTicket']);
 Route::post('/tickets/set-status', [GithubRepositoryTicketController::class, 'setTicketStatus']);
+Route::post('/tickets/analyze-code', [GithubRepositoryTicketController::class, 'analyzeCodeWithClaude']);
 Route::get('/tickets/get', [GithubRepositoryTicketController::class, 'getTicket']);
