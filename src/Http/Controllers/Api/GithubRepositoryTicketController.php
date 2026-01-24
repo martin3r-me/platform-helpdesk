@@ -145,18 +145,23 @@ class GithubRepositoryTicketController extends ApiController
         $ticketUuid = $request->query('ticket_uuid');
         $repoFullName = $request->query('repo');
 
-        // Ticket finden
+        // Ticket finden (auch wenn es gesperrt oder als done markiert ist)
         $ticket = null;
         if ($ticketUuid) {
-            $ticket = HelpdeskTicket::where('uuid', $ticketUuid)->first();
+            $ticket = HelpdeskTicket::withTrashed()->where('uuid', $ticketUuid)->first();
         } elseif ($ticketId) {
-            $ticket = HelpdeskTicket::find($ticketId);
+            $ticket = HelpdeskTicket::withTrashed()->find($ticketId);
         } else {
             return $this->error('Parameter "ticket_id" oder "ticket_uuid" fehlt.', 400);
         }
 
         if (!$ticket) {
             return $this->error('Ticket nicht gefunden.', 404);
+        }
+        
+        // Prüfe ob Ticket gelöscht wurde
+        if ($ticket->trashed()) {
+            return $this->error('Ticket wurde gelöscht.', 404);
         }
 
         // Optional: Validierung gegen Repository, wenn angegeben
@@ -230,14 +235,14 @@ class GithubRepositoryTicketController extends ApiController
         $ticketUuid = $request->query('ticket_uuid');
         $repoFullName = $request->query('repo');
 
-        // Ticket finden
+        // Ticket finden (auch wenn es gesperrt oder als done markiert ist)
         $ticket = null;
         if ($ticketUuid) {
-            $ticket = HelpdeskTicket::where('uuid', $ticketUuid)
+            $ticket = HelpdeskTicket::withTrashed()->where('uuid', $ticketUuid)
                 ->with(['helpdeskBoard:id,name', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
                 ->first();
         } elseif ($ticketId) {
-            $ticket = HelpdeskTicket::with(['helpdeskBoard:id,name', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
+            $ticket = HelpdeskTicket::withTrashed()->with(['helpdeskBoard:id,name', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
                 ->find($ticketId);
         } else {
             return $this->error('Parameter "ticket_id" oder "ticket_uuid" fehlt.', 400);
@@ -245,6 +250,11 @@ class GithubRepositoryTicketController extends ApiController
 
         if (!$ticket) {
             return $this->error('Ticket nicht gefunden.', 404);
+        }
+        
+        // Prüfe ob Ticket gelöscht wurde
+        if ($ticket->trashed()) {
+            return $this->error('Ticket wurde gelöscht.', 404);
         }
 
         // Optional: Validierung gegen Repository, wenn angegeben
