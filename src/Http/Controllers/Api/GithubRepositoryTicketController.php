@@ -219,6 +219,90 @@ class GithubRepositoryTicketController extends ApiController
     }
 
     /**
+     * Markiert ein Ticket als "checked" (geprüft) - entsperrt es, markiert es aber nicht als done
+     * 
+     * Query Parameter:
+     * - ticket_id: Ticket ID (optional, wenn uuid verwendet wird)
+     * - ticket_uuid: Ticket UUID (optional, wenn id verwendet wird)
+     * - repo: GitHub Repository full_name (optional, zur Validierung)
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function markTicketAsChecked(Request $request)
+    {
+        $ticketId = $request->query('ticket_id');
+        $ticketUuid = $request->query('ticket_uuid');
+        $repoFullName = $request->query('repo');
+
+        // Ticket finden (auch wenn es gesperrt ist)
+        $ticket = null;
+        if ($ticketUuid) {
+            $ticket = HelpdeskTicket::withTrashed()->where('uuid', $ticketUuid)->first();
+        } elseif ($ticketId) {
+            $ticket = HelpdeskTicket::withTrashed()->find($ticketId);
+        } else {
+            return $this->error('Parameter "ticket_id" oder "ticket_uuid" fehlt.', 400);
+        }
+
+        if (!$ticket) {
+            return $this->error('Ticket nicht gefunden.', 404);
+        }
+        
+        // Prüfe ob Ticket gelöscht wurde
+        if ($ticket->trashed()) {
+            return $this->error('Ticket wurde gelöscht.', 404);
+        }
+
+        // Optional: Validierung gegen Repository, wenn angegeben
+        if ($repoFullName) {
+            $repository = IntegrationsGithubRepository::where('full_name', $repoFullName)->first();
+            
+            if (!$repository) {
+                return $this->error("GitHub Repository '{$repoFullName}' nicht gefunden.", 404);
+            }
+
+            // Prüfe ob Ticket mit Repository verknüpft ist
+            $isLinked = IntegrationAccountLink::where('account_type', 'github_repository')
+                ->where('account_id', $repository->id)
+                ->where('linkable_type', HelpdeskTicket::class)
+                ->where('linkable_id', $ticket->id)
+                ->exists();
+
+            if (!$isLinked) {
+                return $this->error("Ticket ist nicht mit Repository '{$repoFullName}' verknüpft.", 400);
+            }
+        }
+
+        // Ticket entsperren (aber nicht als done markieren)
+        $ticket->unlock();
+        $ticket->save();
+
+        // Ticket-Daten formatieren
+        $ticketData = [
+            'id' => $ticket->id,
+            'uuid' => $ticket->uuid,
+            'title' => $ticket->title,
+            'is_locked' => $ticket->is_locked,
+            'is_done' => $ticket->is_done,
+            'status' => $ticket->status?->value,
+            'updated_at' => $ticket->updated_at->toIso8601String(),
+        ];
+
+        $response = [
+            'ticket' => $ticketData,
+        ];
+
+        if ($repoFullName) {
+            $response['repository'] = [
+                'full_name' => $repoFullName,
+            ];
+        }
+
+        return $this->success($response, 'Ticket wurde als geprüft markiert und entsperrt');
+    }
+
+    /**
      * Gibt ein Ticket anhand von ID oder UUID zurück
      * 
      * Query Parameter:
