@@ -21,19 +21,35 @@ class TicketEscalationService
     {
         Log::info('Starting ticket escalation check');
 
+        // withoutGlobalScopes() für SLA-Beziehung verwenden, da in Console-Kontext kein Auth-User vorhanden ist
         $openTickets = HelpdeskTicket::query()
             ->where('is_done', false)
             ->whereHas('helpdeskBoard.sla', function ($query) {
                 $query->where('is_active', true);
             })
-            ->with(['helpdeskBoard.sla', 'userInCharge', 'team'])
+            ->with([
+                'helpdeskBoard' => function ($query) {
+                    $query->with(['sla' => function ($query) {
+                        $query->withoutGlobalScopes();
+                    }]);
+                },
+                'userInCharge', 
+                'team'
+            ])
             ->get();
 
         $escalatedCount = 0;
 
         foreach ($openTickets as $ticket) {
-            if ($this->checkTicketEscalation($ticket)) {
-                $escalatedCount++;
+            try {
+                if ($this->checkTicketEscalation($ticket)) {
+                    $escalatedCount++;
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to check escalation for ticket {$ticket->id}", [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
             }
         }
 
@@ -45,12 +61,20 @@ class TicketEscalationService
      */
     public function checkTicketEscalation(HelpdeskTicket $ticket): bool
     {
+        // Lade SLA ohne Global Scope, falls noch nicht geladen
+        $sla = $ticket->sla;
+        
+        // Falls SLA über Accessor null ist, versuche direkt über Board zu laden
+        if (!$sla && $ticket->helpdeskBoard) {
+            $sla = $ticket->helpdeskBoard->sla()->withoutGlobalScopes()->first();
+        }
+        
         // Keine SLA = Keine Eskalation
-        if (!$ticket->sla) {
+        if (!$sla) {
             return false;
         }
 
-        $newLevel = $ticket->sla->getEscalationLevel($ticket);
+        $newLevel = $sla->getEscalationLevel($ticket);
         
         // Prüfe ob Eskalations-Level geändert hat
         if ($newLevel !== $ticket->escalation_level) {

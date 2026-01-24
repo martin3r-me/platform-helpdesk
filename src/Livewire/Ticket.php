@@ -312,6 +312,42 @@ class Ticket extends Component
         ]);
     }
 
+    /**
+     * GitHub Repository mit Ticket verknüpfen
+     */
+    public function attachGithubRepository($githubRepositoryId)
+    {
+        $this->authorize('update', $this->ticket);
+        
+        $githubRepository = \Platform\Integrations\Models\IntegrationsGithubRepository::findOrFail($githubRepositoryId);
+        $service = app(\Platform\Integrations\Services\IntegrationAccountLinkService::class);
+        
+        if ($service->linkGithubRepository($githubRepository, $this->ticket)) {
+            $this->ticket->refresh();
+            session()->flash('success', 'GitHub Repository wurde erfolgreich mit dem Ticket verknüpft.');
+        } else {
+            session()->flash('error', 'GitHub Repository konnte nicht verknüpft werden.');
+        }
+    }
+
+    /**
+     * GitHub Repository von Ticket trennen
+     */
+    public function detachGithubRepository($githubRepositoryId)
+    {
+        $this->authorize('update', $this->ticket);
+        
+        $githubRepository = \Platform\Integrations\Models\IntegrationsGithubRepository::findOrFail($githubRepositoryId);
+        $service = app(\Platform\Integrations\Services\IntegrationAccountLinkService::class);
+        
+        if ($service->unlinkGithubRepository($githubRepository, $this->ticket)) {
+            $this->ticket->refresh();
+            session()->flash('success', 'GitHub Repository wurde erfolgreich vom Ticket getrennt.');
+        } else {
+            session()->flash('error', 'GitHub Repository konnte nicht getrennt werden.');
+        }
+    }
+
     public function render()
     {        
         // Teammitglieder für Zuweisung laden
@@ -321,8 +357,23 @@ class Ticket extends Component
             ->orderBy('name')
             ->get();
 
+        // Verknüpfte GitHub Repositories dieses Tickets
+        $linkedGithubRepositories = $this->ticket->githubRepositories();
+        
+        // Verfügbare GitHub Repositories des Users (noch nicht verknüpft)
+        $linkService = app(\Platform\Integrations\Services\IntegrationAccountLinkService::class);
+        $allGithubRepositories = \Platform\Integrations\Models\IntegrationsGithubRepository::where('user_id', Auth::id())
+            ->orderBy('full_name')
+            ->get();
+        
+        $availableGithubRepositories = $allGithubRepositories->reject(function ($repo) use ($linkService) {
+            return $linkService->isGithubRepositoryLinked($repo);
+        });
+
         return view('helpdesk::livewire.ticket', [
             'teamUsers' => $teamUsers,
+            'linkedGithubRepositories' => $linkedGithubRepositories,
+            'availableGithubRepositories' => $availableGithubRepositories,
         ])->layout('platform::layouts.app');
     }
 }

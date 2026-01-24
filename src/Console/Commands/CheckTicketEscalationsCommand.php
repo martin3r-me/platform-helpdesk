@@ -81,11 +81,14 @@ class CheckTicketEscalationsCommand extends Command
         $escalated = 0;
 
         // Alle Boards mit aktiven SLAs finden
+        // withoutGlobalScopes() verwenden, da in Console-Kontext kein Auth-User vorhanden ist
         $boards = \Platform\Helpdesk\Models\HelpdeskBoard::query()
             ->whereHas('sla', function ($query) {
                 $query->where('is_active', true);
             })
-            ->with(['sla'])
+            ->with(['sla' => function ($query) {
+                $query->withoutGlobalScopes();
+            }])
             ->get();
 
         if ($isDetailed) {
@@ -115,9 +118,18 @@ class CheckTicketEscalationsCommand extends Command
             return ['checked' => 0, 'escalated' => 0];
         }
 
+        // withoutGlobalScopes() für SLA-Beziehung verwenden, da in Console-Kontext kein Auth-User vorhanden ist
         $tickets = $board->tickets()
             ->where('is_done', false)
-            ->with(['helpdeskBoard.sla', 'userInCharge', 'escalations'])
+            ->with([
+                'helpdeskBoard' => function ($query) {
+                    $query->with(['sla' => function ($query) {
+                        $query->withoutGlobalScopes();
+                    }]);
+                },
+                'userInCharge', 
+                'escalations'
+            ])
             ->get();
 
         $checked = $tickets->count();
@@ -128,22 +140,48 @@ class CheckTicketEscalationsCommand extends Command
         }
 
         foreach ($tickets as $ticket) {
+            // Prüfe ob Board und SLA vorhanden sind
+            if (!$ticket->helpdeskBoard) {
+                if ($isDetailed) {
+                    $this->warn("⚠️  Ticket {$ticket->id} hat kein Board - überspringe");
+                }
+                continue;
+            }
+
+            $sla = $ticket->helpdeskBoard->sla;
+            
             if ($isDetailed) {
                 $this->info("🔍 Prüfe Ticket {$ticket->id}: {$ticket->title}");
                 $this->info("   - Board: {$ticket->helpdeskBoard->name}");
-                $this->info("   - SLA: " . ($ticket->helpdeskBoard->sla ? $ticket->helpdeskBoard->sla->name : 'KEINE'));
+                $this->info("   - SLA: " . ($sla ? $sla->name : 'KEINE'));
                 $this->info("   - Erstellt: {$ticket->created_at->diffForHumans()}");
                 
-                if ($ticket->helpdeskBoard->sla) {
-                    $remainingTime = $ticket->helpdeskBoard->sla->getRemainingTime($ticket);
-                    $this->info("   - Restzeit: " . ($remainingTime !== null ? "{$remainingTime}h" : "N/A"));
-                    $this->info("   - Eskalations-Level: " . $ticket->helpdeskBoard->sla->getEscalationLevel($ticket)->value);
+                if ($sla) {
+                    try {
+                        $remainingTime = $sla->getRemainingTime($ticket);
+                        $escalationLevel = $sla->getEscalationLevel($ticket);
+                        $this->info("   - Restzeit: " . ($remainingTime !== null ? "{$remainingTime}h" : "N/A"));
+                        $this->info("   - Eskalations-Level: " . $escalationLevel->value);
+                    } catch (\Exception $e) {
+                        $this->error("   - Fehler beim Abrufen der SLA-Informationen: {$e->getMessage()}");
+                        continue;
+                    }
                 }
             }
             
-            if ($ticket->helpdeskBoard->sla && $ticket->helpdeskBoard->sla->needsEscalation($ticket)) {
+            if ($sla && $sla->needsEscalation($ticket)) {
                 if (!$isDryRun) {
-                    $escalationService->checkTicketEscalation($ticket);
+                    try {
+                        $escalationService->checkTicketEscalation($ticket);
+                    } catch (\Exception $e) {
+                        $this->error("❌ Fehler beim Eskalieren von Ticket {$ticket->id}: {$e->getMessage()}");
+                        Log::error('Failed to escalate ticket', [
+                            'ticket_id' => $ticket->id,
+                            'error' => $e->getMessage(),
+                            'trace' => $e->getTraceAsString(),
+                        ]);
+                        continue;
+                    }
                 }
                 
                 $escalated++;

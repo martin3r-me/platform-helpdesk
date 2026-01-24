@@ -329,6 +329,121 @@
             </x-ui-form-grid>
         </x-ui-panel>
 
+        {{-- GitHub Repositories --}}
+        @if($linkedGithubRepositories->count() > 0 || $availableGithubRepositories->count() > 0)
+            <x-ui-panel title="GitHub Repositories">
+                {{-- Verknüpfte Repositories --}}
+                @if($linkedGithubRepositories->count() > 0)
+                    <div class="mb-6">
+                        <h3 class="text-sm font-semibold text-[var(--ui-secondary)] mb-3">Verknüpfte Repositories</h3>
+                        <div class="space-y-2">
+                            @foreach($linkedGithubRepositories as $repo)
+                                <div class="flex items-center justify-between p-3 bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40 rounded-lg">
+                                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                                        <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100">
+                                            @svg('heroicon-o-code-bracket', 'w-5 h-5 text-gray-700')
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <a href="{{ $repo->url }}" target="_blank" class="block hover:text-[var(--ui-primary)] transition-colors">
+                                                <h4 class="text-sm font-semibold text-[var(--ui-secondary)] truncate">{{ $repo->full_name }}</h4>
+                                            </a>
+                                            @if($repo->description)
+                                                <p class="text-xs text-[var(--ui-muted)] mt-0.5 line-clamp-1">{{ $repo->description }}</p>
+                                            @endif
+                                            <div class="flex items-center gap-3 mt-1 text-xs text-[var(--ui-muted)]">
+                                                @if($repo->language)
+                                                    <span class="inline-flex items-center gap-1">
+                                                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                                        {{ $repo->language }}
+                                                    </span>
+                                                @endif
+                                                <span class="inline-flex items-center gap-1">
+                                                    @svg('heroicon-o-star', 'w-3 h-3')
+                                                    {{ $repo->stars_count }}
+                                                </span>
+                                                @if($repo->is_private)
+                                                    <span class="inline-flex items-center gap-1 text-orange-600">
+                                                        @svg('heroicon-o-lock-closed', 'w-3 h-3')
+                                                        Privat
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @can('update', $ticket)
+                                        <x-ui-button 
+                                            variant="danger-outline" 
+                                            size="xs"
+                                            wire:click="detachGithubRepository({{ $repo->id }})"
+                                            wire:confirm="Repository wirklich vom Ticket trennen?"
+                                        >
+                                            @svg('heroicon-o-x-mark', 'w-3.5 h-3.5')
+                                        </x-ui-button>
+                                    @endcan
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Verfügbare Repositories zum Verknüpfen --}}
+                @if($availableGithubRepositories->count() > 0)
+                    <div>
+                        <h3 class="text-sm font-semibold text-[var(--ui-secondary)] mb-3">Repository verknüpfen</h3>
+                        <div class="space-y-2">
+                            @foreach($availableGithubRepositories as $repo)
+                                <div class="flex items-center justify-between p-3 bg-white border border-[var(--ui-border)]/40 rounded-lg hover:border-[var(--ui-primary)]/60 transition-colors">
+                                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                                        <div class="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100">
+                                            @svg('heroicon-o-code-bracket', 'w-5 h-5 text-gray-700')
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <a href="{{ $repo->url }}" target="_blank" class="block hover:text-[var(--ui-primary)] transition-colors">
+                                                <h4 class="text-sm font-semibold text-[var(--ui-secondary)] truncate">{{ $repo->full_name }}</h4>
+                                            </a>
+                                            @if($repo->description)
+                                                <p class="text-xs text-[var(--ui-muted)] mt-0.5 line-clamp-1">{{ $repo->description }}</p>
+                                            @endif
+                                            <div class="flex items-center gap-3 mt-1 text-xs text-[var(--ui-muted)]">
+                                                @if($repo->language)
+                                                    <span class="inline-flex items-center gap-1">
+                                                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                                        {{ $repo->language }}
+                                                    </span>
+                                                @endif
+                                                <span class="inline-flex items-center gap-1">
+                                                    @svg('heroicon-o-star', 'w-3 h-3')
+                                                    {{ $repo->stars_count }}
+                                                </span>
+                                                @if($repo->is_private)
+                                                    <span class="inline-flex items-center gap-1 text-orange-600">
+                                                        @svg('heroicon-o-lock-closed', 'w-3 h-3')
+                                                        Privat
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @can('update', $ticket)
+                                        <x-ui-button 
+                                            variant="primary-outline" 
+                                            size="xs"
+                                            wire:click="attachGithubRepository({{ $repo->id }})"
+                                        >
+                                            <span class="inline-flex items-center gap-1">
+                                                @svg('heroicon-o-plus', 'w-3.5 h-3.5')
+                                                Verknüpfen
+                                            </span>
+                                        </x-ui-button>
+                                    @endcan
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </x-ui-panel>
+        @endif
+
     </x-ui-page-container>
 
     <!-- Due Date Modal -->

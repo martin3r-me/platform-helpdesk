@@ -9,6 +9,7 @@ use Platform\Helpdesk\Enums\TicketEscalationLevel;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
 use Platform\Core\Contracts\HasDisplayName;
 use Platform\Core\Contracts\HasTimeAncestors;
+use Platform\Integrations\Contracts\SocialMediaAccountLinkableInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Symfony\Component\Uid\UuidV7;
@@ -17,7 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 use Platform\ActivityLog\Traits\LogsActivity;
 
-class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors
+class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, SocialMediaAccountLinkableInterface
 {
     use HasFactory, SoftDeletes, LogsActivity;
 
@@ -200,5 +201,32 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors
     public function getDisplayName(): ?string
     {
         return $this->title;
+    }
+
+    /**
+     * GitHub Repositories dieses Tickets (über lose Verknüpfung)
+     */
+    public function githubRepositories()
+    {
+        $service = app(\Platform\Integrations\Services\IntegrationAccountLinkService::class);
+        return $service->getLinkedGithubRepositories($this);
+    }
+
+    /**
+     * SocialMediaAccountLinkableInterface Implementation
+     */
+    public function getSocialMediaAccountLinkableId(): int
+    {
+        return $this->id;
+    }
+
+    public function getSocialMediaAccountLinkableType(): string
+    {
+        return self::class;
+    }
+
+    public function getTeamId(): int
+    {
+        return $this->team_id ?? 0;
     }
 }
