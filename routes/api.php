@@ -19,3 +19,5 @@ Route::get('/boards/datawarehouse/health', [BoardDatawarehouseController::class,
  * GitHub Repository-bezogene Ticket-Endpunkte
  */
 Route::get('/tickets/github-repository/next-open', [GithubRepositoryTicketController::class, 'getNextOpenTicket']);
+Route::post('/tickets/mark-done', [GithubRepositoryTicketController::class, 'markTicketAsDone']);
+Route::get('/tickets/get', [GithubRepositoryTicketController::class, 'getTicket']);
