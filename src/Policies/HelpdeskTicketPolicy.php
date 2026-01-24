@@ -56,6 +56,11 @@ class HelpdeskTicketPolicy
      */
     public function update(User $user, HelpdeskTicket $ticket): bool
     {
+        // Gesperrte Tickets können nicht bearbeitet werden
+        if ($ticket->isLocked()) {
+            return false;
+        }
+
         // Persönliches Ticket (Owner)
         if ($ticket->user_id === $user->id) {
             return true;
@@ -77,6 +82,24 @@ class HelpdeskTicketPolicy
 
         // Kein Zugriff
         return false;
+    }
+
+    /**
+     * Darf der User dieses Ticket sperren?
+     */
+    public function lock(User $user, HelpdeskTicket $ticket): bool
+    {
+        // Nur wenn User das Ticket bearbeiten darf
+        return $this->update($user, $ticket);
+    }
+
+    /**
+     * Darf der User dieses Ticket entsperren?
+     */
+    public function unlock(User $user, HelpdeskTicket $ticket): bool
+    {
+        // Nur wenn User das Ticket bearbeiten darf
+        return $this->update($user, $ticket);
     }
 
     /**

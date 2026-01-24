@@ -44,6 +44,9 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
         'escalation_level',
         'escalated_at',
         'escalation_count',
+        'is_locked',
+        'locked_at',
+        'locked_by_user_id',
     ];
 
     protected $casts = [
@@ -52,7 +55,9 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
         'story_points' => TicketStoryPoints::class,
         'escalation_level' => TicketEscalationLevel::class,
         'due_date' => 'date',
-        'escalated_at' => 'datetime'
+        'escalated_at' => 'datetime',
+        'is_locked' => 'boolean',
+        'locked_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -118,6 +123,41 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
     public function userInCharge()
     {
         return $this->belongsTo(\Platform\Core\Models\User::class, 'user_in_charge_id');
+    }
+
+    public function lockedByUser()
+    {
+        return $this->belongsTo(\Platform\Core\Models\User::class, 'locked_by_user_id');
+    }
+
+    /**
+     * Prüft ob das Ticket gesperrt ist
+     */
+    public function isLocked(): bool
+    {
+        return $this->is_locked === true;
+    }
+
+    /**
+     * Sperrt das Ticket
+     */
+    public function lock(): void
+    {
+        $this->is_locked = true;
+        $this->locked_at = now();
+        $this->locked_by_user_id = Auth::id();
+        $this->save();
+    }
+
+    /**
+     * Entsperrt das Ticket
+     */
+    public function unlock(): void
+    {
+        $this->is_locked = false;
+        $this->locked_at = null;
+        $this->locked_by_user_id = null;
+        $this->save();
     }
 
     public function getSlaAttribute()

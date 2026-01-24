@@ -102,8 +102,28 @@ class Ticket extends Component
         $this->ticket->save();
     }
 
+    public function lockTicket()
+    {
+        $this->authorize('lock', $this->ticket);
+        $this->ticket->lock();
+        session()->flash('success', 'Ticket wurde gesperrt.');
+    }
+
+    public function unlockTicket()
+    {
+        $this->authorize('unlock', $this->ticket);
+        $this->ticket->unlock();
+        session()->flash('success', 'Ticket wurde entsperrt.');
+    }
+
     public function save()
     {
+        // Gesperrte Tickets können nicht gespeichert werden
+        if ($this->ticket->isLocked()) {
+            session()->flash('error', 'Gesperrte Tickets können nicht bearbeitet werden.');
+            return;
+        }
+        
         $this->validate();
         $this->ticket->save();
         

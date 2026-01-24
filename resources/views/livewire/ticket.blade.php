@@ -67,6 +67,30 @@
                                 @endif
                             </div>
                         @endcan
+
+                        {{-- Ticket Sperren/Entsperren --}}
+                        @can('lock', $ticket)
+                            @if($ticket->isLocked())
+                                <button type="button" wire:click="unlockTicket"
+                                    class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-warning)] bg-[var(--ui-warning-5)] hover:bg-[var(--ui-warning-10)] transition-colors">
+                                    <span class="text-sm font-medium text-[var(--ui-warning)]">Gesperrt</span>
+                                    @svg('heroicon-o-lock-closed', 'w-5 h-5 text-[var(--ui-warning)]')
+                                </button>
+                            @else
+                                <button type="button" wire:click="lockTicket"
+                                    class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-muted-5)] hover:bg-[var(--ui-primary-5)] transition-colors">
+                                    <span class="text-sm font-medium text-[var(--ui-secondary)]">Sperren</span>
+                                    @svg('heroicon-o-lock-open', 'w-5 h-5 text-[var(--ui-muted)]')
+                                </button>
+                            @endif
+                        @else
+                            @if($ticket->isLocked())
+                                <div class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-warning)] bg-[var(--ui-warning-5)]">
+                                    <span class="text-sm font-medium text-[var(--ui-warning)]">Gesperrt</span>
+                                    @svg('heroicon-o-lock-closed', 'w-5 h-5 text-[var(--ui-warning)]')
+                                </div>
+                            @endif
+                        @endcan
                     </div>
                 </div>
 
@@ -140,7 +164,21 @@
 
     <x-ui-page-container spacing="space-y-8">
         {{-- Header Block --}}
-        <div class="bg-white rounded-lg border border-[var(--ui-border)]/60 p-8">
+        <div class="bg-white rounded-lg border border-[var(--ui-border)]/60 p-8 {{ $ticket->isLocked() ? 'border-[var(--ui-warning)] bg-[var(--ui-warning-5)]' : '' }}">
+            @if($ticket->isLocked())
+                <div class="mb-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--ui-warning)]/10 border border-[var(--ui-warning)]/30">
+                    @svg('heroicon-o-lock-closed', 'w-5 h-5 text-[var(--ui-warning)]')
+                    <span class="text-sm font-medium text-[var(--ui-warning)]">
+                        Ticket ist gesperrt
+                        @if($ticket->lockedByUser)
+                            (von {{ $ticket->lockedByUser->name }})
+                        @endif
+                        @if($ticket->locked_at)
+                            am {{ $ticket->locked_at->format('d.m.Y H:i') }}
+                        @endif
+                    </span>
+                </div>
+            @endif
             <div class="flex items-start justify-between">
                 <div class="flex-1 min-w-0">
                     <h1 class="text-3xl font-bold text-[var(--ui-secondary)] mb-4 tracking-tight">{{ $ticket->title }}</h1>
@@ -190,6 +228,7 @@
                                 placeholder="Ticket-Titel eingeben..."
                                 required
                                 :errorKey="'ticket.title'"
+                                :disabled="$ticket->isLocked()"
                             />
                         @else
                             <div>
@@ -208,6 +247,7 @@
                         :nullable="true"
                         nullLabel="– Niemand zugewiesen –"
                         wire:model.live="ticket.user_in_charge_id"
+                        :disabled="$ticket->isLocked()"
                     />
                 @else
                     <div>
@@ -223,6 +263,7 @@
                         @can('update', $ticket)
                             <x-ui-input-textarea 
                                 name="ticket.description"
+                                :disabled="$ticket->isLocked()"
                                 label="Ticket Beschreibung"
                                 wire:model.live.debounce.500ms="ticket.description"
                                 placeholder="Ticket Beschreibung eingeben..."
@@ -252,6 +293,7 @@
                                     :nullable="true"
                                     nullLabel="– Kein Status –"
                                     wire:model.live="ticket.status"
+                                    :disabled="$ticket->isLocked()"
                                 />
                             @else
                                 <div>
@@ -270,6 +312,7 @@
                                     :nullable="true"
                                     nullLabel="– Keine Priorität –"
                                     wire:model.live="ticket.priority"
+                                    :disabled="$ticket->isLocked()"
                                 />
                             @else
                                 <div>
@@ -289,6 +332,7 @@
                                     :nullable="true"
                                     nullLabel="– Kein Wert –"
                                     wire:model.live="ticket.story_points"
+                                    :disabled="$ticket->isLocked()"
                                 />
                             @else
                                 <div>
