@@ -60,9 +60,10 @@ class GithubRepositoryTicketController extends ApiController
         $ticketIds = $links->pluck('linkable_id')->toArray();
 
         // Nächstes offenes Ticket finden
-        // Offen = nicht erledigt (is_done = false) und Status nicht 'closed' oder 'resolved'
+        // Offen = nicht erledigt (is_done = false), nicht gesperrt (is_locked = false) und Status nicht 'closed' oder 'resolved'
         $ticket = HelpdeskTicket::whereIn('id', $ticketIds)
             ->where('is_done', false)
+            ->where('is_locked', false) // Nur nicht gesperrte Tickets
             ->where(function ($query) {
                 $query->whereNull('status')
                     ->orWhereNotIn('status', ['closed', 'resolved']);
@@ -85,6 +86,9 @@ class GithubRepositoryTicketController extends ApiController
             ], 'Kein offenes Ticket gefunden');
         }
 
+        // Ticket sperren (wenn es zurückgegeben wird)
+        $ticket->lock();
+
         // Ticket-Daten formatieren
         $ticketData = [
             'id' => $ticket->id,
@@ -99,6 +103,8 @@ class GithubRepositoryTicketController extends ApiController
             'helpdesk_board_id' => $ticket->helpdesk_board_id,
             'helpdesk_board_name' => $ticket->helpdeskBoard?->name,
             'is_done' => $ticket->is_done,
+            'is_locked' => $ticket->is_locked,
+            'locked_at' => $ticket->locked_at?->toIso8601String(),
             'due_date' => $ticket->due_date?->format('Y-m-d'),
             'story_points' => $ticket->story_points?->value,
             'story_points_numeric' => $ticket->story_points?->points(),
@@ -119,7 +125,7 @@ class GithubRepositoryTicketController extends ApiController
                 'url' => $repository->url,
             ],
             'ticket' => $ticketData,
-        ], 'Nächstes offenes Ticket gefunden');
+        ], 'Nächstes offenes Ticket gefunden und gesperrt');
     }
 
     /**
@@ -173,9 +179,10 @@ class GithubRepositoryTicketController extends ApiController
             }
         }
 
-        // Ticket als erledigt markieren
+        // Ticket als erledigt markieren und entsperren
         $ticket->is_done = true;
         $ticket->done_at = now();
+        $ticket->unlock(); // Ticket entsperren
         $ticket->save();
 
         // Ticket-Daten formatieren
