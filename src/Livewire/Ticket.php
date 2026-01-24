@@ -18,6 +18,7 @@ class Ticket extends Component
     public $selectedTime; // Ausgewählte Zeit (H:i)
     public $selectedHour = 12; // Ausgewählte Stunde (0-23)
     public $selectedMinute = 0; // Ausgewählte Minute (0-59)
+    public $githubRepositorySearch = ''; // Suchbegriff für GitHub Repositories
 
     protected $rules = [
         'ticket.title' => 'required|string|max:255',
@@ -369,6 +370,17 @@ class Ticket extends Component
         $availableGithubRepositories = $allGithubRepositories->reject(function ($repo) use ($linkService) {
             return $linkService->isGithubRepositoryLinked($repo);
         });
+
+        // Filtere nach Suchbegriff
+        if (!empty($this->githubRepositorySearch)) {
+            $searchTerm = strtolower($this->githubRepositorySearch);
+            $availableGithubRepositories = $availableGithubRepositories->filter(function ($repo) use ($searchTerm) {
+                return str_contains(strtolower($repo->full_name), $searchTerm) ||
+                       str_contains(strtolower($repo->name ?? ''), $searchTerm) ||
+                       str_contains(strtolower($repo->description ?? ''), $searchTerm) ||
+                       str_contains(strtolower($repo->owner ?? ''), $searchTerm);
+            });
+        }
 
         return view('helpdesk::livewire.ticket', [
             'teamUsers' => $teamUsers,

@@ -330,7 +330,7 @@
         </x-ui-panel>
 
         {{-- GitHub Repositories --}}
-        @if($linkedGithubRepositories->count() > 0 || $availableGithubRepositories->count() > 0)
+        @if($linkedGithubRepositories->count() > 0 || $availableGithubRepositories->count() > 0 || !empty($githubRepositorySearch))
             <x-ui-panel title="GitHub Repositories">
                 {{-- Verknüpfte Repositories --}}
                 @if($linkedGithubRepositories->count() > 0)
@@ -387,10 +387,25 @@
                 @endif
 
                 {{-- Verfügbare Repositories zum Verknüpfen --}}
-                @if($availableGithubRepositories->count() > 0)
+                @if($availableGithubRepositories->count() > 0 || !empty($githubRepositorySearch))
                     <div>
-                        <h3 class="text-sm font-semibold text-[var(--ui-secondary)] mb-3">Repository verknüpfen</h3>
-                        <div class="space-y-2">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-semibold text-[var(--ui-secondary)]">Repository verknüpfen</h3>
+                        </div>
+                        
+                        {{-- Suchfeld --}}
+                        <div class="mb-3">
+                            <x-ui-input-text
+                                name="githubRepositorySearch"
+                                label="Repository suchen"
+                                wire:model.live.debounce.300ms="githubRepositorySearch"
+                                placeholder="Nach Name, Beschreibung oder Owner suchen..."
+                                :errorKey="'githubRepositorySearch'"
+                            />
+                        </div>
+
+                        @if($availableGithubRepositories->count() > 0)
+                            <div class="space-y-2">
                             @foreach($availableGithubRepositories as $repo)
                                 <div class="flex items-center justify-between p-3 bg-white border border-[var(--ui-border)]/40 rounded-lg hover:border-[var(--ui-primary)]/60 transition-colors">
                                     <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -438,7 +453,12 @@
                                     @endcan
                                 </div>
                             @endforeach
-                        </div>
+                            </div>
+                        @elseif(!empty($githubRepositorySearch))
+                            <div class="p-4 text-center text-sm text-[var(--ui-muted)] bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40 rounded-lg">
+                                Keine Repositories gefunden für "{{ $githubRepositorySearch }}"
+                            </div>
+                        @endif
                     </div>
                 @endif
             </x-ui-panel>
