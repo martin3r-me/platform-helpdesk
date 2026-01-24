@@ -21,4 +21,6 @@ Route::get('/boards/datawarehouse/health', [BoardDatawarehouseController::class,
 Route::get('/tickets/github-repository/next-open', [GithubRepositoryTicketController::class, 'getNextOpenTicket']);
 Route::post('/tickets/mark-done', [GithubRepositoryTicketController::class, 'markTicketAsDone']);
 Route::post('/tickets/mark-checked', [GithubRepositoryTicketController::class, 'markTicketAsChecked']);
+Route::post('/tickets/add-plan', [GithubRepositoryTicketController::class, 'addPlanToTicket']);
+Route::post('/tickets/set-status', [GithubRepositoryTicketController::class, 'setTicketStatus']);
 Route::get('/tickets/get', [GithubRepositoryTicketController::class, 'getTicket']);

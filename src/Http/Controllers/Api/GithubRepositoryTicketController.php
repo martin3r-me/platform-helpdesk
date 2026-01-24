@@ -4,6 +4,7 @@ namespace Platform\Helpdesk\Http\Controllers\Api;
 
 use Platform\Core\Http\Controllers\ApiController;
 use Platform\Helpdesk\Models\HelpdeskTicket;
+use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Integrations\Models\IntegrationsGithubRepository;
 use Platform\Integrations\Models\IntegrationAccountLink;
 use Illuminate\Http\Request;
@@ -421,5 +422,128 @@ class GithubRepositoryTicketController extends ApiController
         }
 
         return $this->success($response, 'Ticket erfolgreich geladen');
+    }
+
+    /**
+     * Fügt einen Plan/Kommentar zum Ticket hinzu
+     * 
+     * Query Parameter:
+     * - ticket_id: Ticket ID (optional, wenn uuid verwendet wird)
+     * - ticket_uuid: Ticket UUID (optional, wenn id verwendet wird)
+     * 
+     * Body Parameter:
+     * - plan: Der Plan-Text (required)
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function addPlanToTicket(Request $request)
+    {
+        $ticketId = $request->query('ticket_id');
+        $ticketUuid = $request->query('ticket_uuid');
+        $plan = $request->input('plan');
+
+        if (!$plan) {
+            return $this->error('Parameter "plan" fehlt.', 400);
+        }
+
+        // Ticket finden
+        $ticket = null;
+        if ($ticketUuid) {
+            $ticket = HelpdeskTicket::withTrashed()->where('uuid', $ticketUuid)->first();
+        } elseif ($ticketId) {
+            $ticket = HelpdeskTicket::withTrashed()->find($ticketId);
+        } else {
+            return $this->error('Parameter "ticket_id" oder "ticket_uuid" fehlt.', 400);
+        }
+
+        if (!$ticket) {
+            return $this->error('Ticket nicht gefunden.', 404);
+        }
+        
+        if ($ticket->trashed()) {
+            return $this->error('Ticket wurde gelöscht.', 404);
+        }
+
+        // Plan zur Beschreibung hinzufügen (als separater Abschnitt)
+        $separator = "\n\n---\n\n## 🤖 Agent Plan\n\n";
+        $currentDescription = $ticket->description ?? '';
+        
+        // Entferne alten Plan, falls vorhanden
+        $descriptionWithoutPlan = preg_replace('/\n\n---\n\n## 🤖 Agent Plan\n\n.*/s', '', $currentDescription);
+        
+        // Füge neuen Plan hinzu
+        $newDescription = trim($descriptionWithoutPlan) . $separator . $plan;
+        
+        $ticket->description = $newDescription;
+        $ticket->save();
+
+        return $this->success([
+            'ticket' => [
+                'id' => $ticket->id,
+                'uuid' => $ticket->uuid,
+                'description' => $ticket->description,
+            ],
+        ], 'Plan wurde zum Ticket hinzugefügt');
+    }
+
+    /**
+     * Setzt den Status eines Tickets
+     * 
+     * Query Parameter:
+     * - ticket_id: Ticket ID (optional, wenn uuid verwendet wird)
+     * - ticket_uuid: Ticket UUID (optional, wenn id verwendet wird)
+     * - status: Neuer Status (required, z.B. "open", "in_progress", "waiting", "resolved", "closed")
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function setTicketStatus(Request $request)
+    {
+        $ticketId = $request->query('ticket_id');
+        $ticketUuid = $request->query('ticket_uuid');
+        $statusValue = $request->query('status');
+
+        if (!$statusValue) {
+            return $this->error('Parameter "status" fehlt.', 400);
+        }
+
+        // Validiere Status
+        try {
+            $status = TicketStatus::from($statusValue);
+        } catch (\ValueError $e) {
+            return $this->error("Ungültiger Status '{$statusValue}'. Erlaubte Werte: open, in_progress, waiting, resolved, closed", 400);
+        }
+
+        // Ticket finden
+        $ticket = null;
+        if ($ticketUuid) {
+            $ticket = HelpdeskTicket::withTrashed()->where('uuid', $ticketUuid)->first();
+        } elseif ($ticketId) {
+            $ticket = HelpdeskTicket::withTrashed()->find($ticketId);
+        } else {
+            return $this->error('Parameter "ticket_id" oder "ticket_uuid" fehlt.', 400);
+        }
+
+        if (!$ticket) {
+            return $this->error('Ticket nicht gefunden.', 404);
+        }
+        
+        if ($ticket->trashed()) {
+            return $this->error('Ticket wurde gelöscht.', 404);
+        }
+
+        // Status setzen
+        $ticket->status = $status;
+        $ticket->save();
+
+        return $this->success([
+            'ticket' => [
+                'id' => $ticket->id,
+                'uuid' => $ticket->uuid,
+                'status' => $ticket->status->value,
+                'status_label' => $ticket->status->label(),
+            ],
+        ], 'Status wurde aktualisiert');
     }
 }
