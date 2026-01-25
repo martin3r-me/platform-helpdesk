@@ -64,9 +64,11 @@ class GithubRepositoryTicketController extends ApiController
 
         // Nächstes offenes Ticket finden
         // Offen = nicht erledigt (is_done = false), nicht gesperrt (is_locked = false) und Status nicht 'closed' oder 'resolved'
+        // WICHTIG: Nur Tickets aus Slots holen, NICHT aus Backlog/Inbox (helpdesk_board_slot_id IS NOT NULL)
         $ticket = HelpdeskTicket::whereIn('id', $ticketIds)
             ->where('is_done', false)
             ->where('is_locked', false) // Nur nicht gesperrte Tickets
+            ->whereNotNull('helpdesk_board_slot_id') // Nur Tickets aus Slots, nicht aus Backlog/Inbox
             ->where(function ($query) {
                 $query->whereNull('status')
                     ->orWhereNotIn('status', ['closed', 'resolved']);
