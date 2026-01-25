@@ -306,6 +306,50 @@ class GithubRepositoryTicketController extends ApiController
     }
 
     /**
+     * Entsperrt ein Ticket (ohne es als erledigt zu markieren)
+     * 
+     * POST /api/helpdesk/tickets/unlock
+     * Body: { "ticket_id": 123 } oder { "ticket_uuid": "..." }
+     */
+    public function unlockTicket(Request $request)
+    {
+        $ticketId = $request->input('ticket_id');
+        $ticketUuid = $request->input('ticket_uuid');
+
+        if (!$ticketId && !$ticketUuid) {
+            return $this->error('Ticket-ID oder UUID erforderlich', 400);
+        }
+
+        $ticket = null;
+        if ($ticketId) {
+            $ticket = HelpdeskTicket::find($ticketId);
+        } elseif ($ticketUuid) {
+            $ticket = HelpdeskTicket::where('uuid', $ticketUuid)->first();
+        }
+
+        if (!$ticket) {
+            return $this->error('Ticket nicht gefunden', 404);
+        }
+
+        // Ticket entsperren
+        $ticket->unlock();
+        $ticket->save();
+
+        $ticketData = [
+            'id' => $ticket->id,
+            'uuid' => $ticket->uuid,
+            'title' => $ticket->title,
+            'is_locked' => $ticket->is_locked,
+            'status' => $ticket->status?->value,
+            'updated_at' => $ticket->updated_at->toIso8601String(),
+        ];
+
+        return $this->success([
+            'ticket' => $ticketData,
+        ], 'Ticket wurde entsperrt');
+    }
+
+    /**
      * Gibt ein Ticket anhand von ID oder UUID zurück
      * 
      * Query Parameter:
