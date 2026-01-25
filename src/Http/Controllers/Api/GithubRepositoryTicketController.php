@@ -99,7 +99,10 @@ class GithubRepositoryTicketController extends ApiController
             'id' => $ticket->id,
             'uuid' => $ticket->uuid,
             'title' => $ticket->title,
-            'description' => $ticket->description,
+            'notes' => $ticket->notes,
+            'description' => $ticket->notes, // Abwärtskompatibilität
+            'dod' => $ticket->dod,
+            'dod_progress' => $ticket->dod_progress,
             'team_id' => $ticket->team_id,
             'team_name' => $ticket->team?->name,
             'user_id' => $ticket->user_id,
@@ -200,7 +203,10 @@ class GithubRepositoryTicketController extends ApiController
             'id' => $ticket->id,
             'uuid' => $ticket->uuid,
             'title' => $ticket->title,
-            'description' => $ticket->description,
+            'notes' => $ticket->notes,
+            'description' => $ticket->notes, // Abwärtskompatibilität
+            'dod' => $ticket->dod,
+            'dod_progress' => $ticket->dod_progress,
             'is_done' => $ticket->is_done,
             'done_at' => $ticket->done_at->toIso8601String(),
             'status' => $ticket->status?->value,
@@ -465,7 +471,10 @@ class GithubRepositoryTicketController extends ApiController
             'id' => $ticket->id,
             'uuid' => $ticket->uuid,
             'title' => $ticket->title,
-            'description' => $ticket->description,
+            'notes' => $ticket->notes,
+            'description' => $ticket->notes, // Abwärtskompatibilität
+            'dod' => $ticket->dod,
+            'dod_progress' => $ticket->dod_progress,
             'team_id' => $ticket->team_id,
             'team_name' => $ticket->team?->name,
             'user_id' => $ticket->user_id,
@@ -562,24 +571,25 @@ class GithubRepositoryTicketController extends ApiController
             return $this->error('Ticket wurde gelöscht.', 404);
         }
 
-        // Plan zur Beschreibung hinzufügen (als separater Abschnitt)
+        // Plan zur Anmerkung (notes) hinzufügen (als separater Abschnitt)
         $separator = "\n\n---\n\n## 🤖 Agent Plan\n\n";
-        $currentDescription = $ticket->description ?? '';
-        
+        $currentNotes = $ticket->notes ?? '';
+
         // Entferne alten Plan, falls vorhanden
-        $descriptionWithoutPlan = preg_replace('/\n\n---\n\n## 🤖 Agent Plan\n\n.*/s', '', $currentDescription);
-        
+        $notesWithoutPlan = preg_replace('/\n\n---\n\n## 🤖 Agent Plan\n\n.*/s', '', $currentNotes);
+
         // Füge neuen Plan hinzu
-        $newDescription = trim($descriptionWithoutPlan) . $separator . $plan;
-        
-        $ticket->description = $newDescription;
+        $newNotes = trim($notesWithoutPlan) . $separator . $plan;
+
+        $ticket->notes = $newNotes;
         $ticket->save();
 
         return $this->success([
             'ticket' => [
                 'id' => $ticket->id,
                 'uuid' => $ticket->uuid,
-                'description' => $ticket->description,
+                'notes' => $ticket->notes,
+                'description' => $ticket->notes, // Abwärtskompatibilität
             ],
         ], 'Plan wurde zum Ticket hinzugefügt');
     }

@@ -38,7 +38,9 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
             'properties' => [
                 'team_id' => ['type' => 'integer'],
                 'title' => ['type' => 'string', 'description' => 'ERFORDERLICH'],
-                'description' => ['type' => 'string'],
+                'description' => ['type' => 'string', 'description' => 'Deprecated: Verwende notes stattdessen.'],
+                'notes' => ['type' => 'string', 'description' => 'Anmerkung zum Ticket.'],
+                'dod' => ['type' => 'array', 'description' => 'Definition of Done. Array von Objekten: [{"text": "...", "checked": false}, ...]'],
                 'board_id' => ['type' => 'integer'],
                 'slot_id' => ['type' => 'integer'],
                 'group_id' => ['type' => 'integer'],
@@ -183,12 +185,29 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                 }
             }
 
+            // notes/description: notes hat Priorität, description für Abwärtskompatibilität
+            $notes = $arguments['notes'] ?? $arguments['description'] ?? null;
+
+            // DoD validieren falls vorhanden
+            $dod = null;
+            if (isset($arguments['dod']) && is_array($arguments['dod'])) {
+                $dod = array_map(function ($item) {
+                    return [
+                        'text' => trim((string)($item['text'] ?? '')),
+                        'checked' => (bool)($item['checked'] ?? false),
+                    ];
+                }, $arguments['dod']);
+                // Leere Einträge entfernen
+                $dod = array_values(array_filter($dod, fn($item) => $item['text'] !== ''));
+            }
+
             $ticket = HelpdeskTicket::create([
                 'team_id' => $teamId,
                 'user_id' => $context->user?->id,
                 'user_in_charge_id' => $arguments['user_in_charge_id'] ?? null,
                 'title' => $title,
-                'description' => $arguments['description'] ?? null,
+                'notes' => $notes,
+                'dod' => $dod,
                 'due_date' => $arguments['due_date'] ?? null,
                 'priority' => $priorityValue,
                 'status' => $statusValue,

@@ -40,7 +40,9 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 'ticket_id' => ['type' => 'integer', 'description' => 'ERFORDERLICH'],
                 'id' => ['type' => 'integer', 'description' => 'Alias für ticket_id (Deprecated). Verwende bevorzugt ticket_id.'],
                 'title' => ['type' => 'string'],
-                'description' => ['type' => 'string'],
+                'description' => ['type' => 'string', 'description' => 'Deprecated: Verwende notes stattdessen.'],
+                'notes' => ['type' => 'string', 'description' => 'Anmerkung zum Ticket.'],
+                'dod' => ['type' => 'array', 'description' => 'Definition of Done. Array von Objekten: [{"text": "...", "checked": false}, ...]'],
                 'board_id' => ['type' => 'integer'],
                 'slot_id' => ['type' => 'integer'],
                 'group_id' => ['type' => 'integer'],
@@ -107,13 +109,34 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
             $update = [];
             foreach ([
                 'title',
-                'description',
+                'notes',
                 'due_date',
                 'user_in_charge_id',
                 'is_done',
             ] as $f) {
                 if (array_key_exists($f, $arguments)) {
                     $update[$f] = $arguments[$f] === '' ? null : $arguments[$f];
+                }
+            }
+
+            // Abwärtskompatibilität: description -> notes
+            if (array_key_exists('description', $arguments) && !array_key_exists('notes', $arguments)) {
+                $update['notes'] = $arguments['description'] === '' ? null : $arguments['description'];
+            }
+
+            // DoD aktualisieren
+            if (array_key_exists('dod', $arguments)) {
+                if ($arguments['dod'] === null || $arguments['dod'] === '') {
+                    $update['dod'] = null;
+                } elseif (is_array($arguments['dod'])) {
+                    $dod = array_map(function ($item) {
+                        return [
+                            'text' => trim((string)($item['text'] ?? '')),
+                            'checked' => (bool)($item['checked'] ?? false),
+                        ];
+                    }, $arguments['dod']);
+                    // Leere Einträge entfernen
+                    $update['dod'] = array_values(array_filter($dod, fn($item) => $item['text'] !== ''));
                 }
             }
 

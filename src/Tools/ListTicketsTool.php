@@ -85,7 +85,7 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
             $this->applyStandardFilters($query, $arguments, [
                 'title', 'status', 'priority', 'is_done', 'due_date', 'created_at',
             ]);
-            $this->applyStandardSearch($query, $arguments, ['title', 'description']);
+            $this->applyStandardSearch($query, $arguments, ['title', 'notes']);
             $this->applyStandardSort($query, $arguments, [
                 'order', 'slot_order', 'due_date', 'created_at', 'updated_at',
             ], 'created_at', 'desc');
@@ -99,7 +99,9 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
                     'id' => $t->id,
                     'uuid' => $t->uuid,
                     'title' => $t->title,
-                    'description' => $t->description,
+                    'notes' => $t->notes,
+                    'description' => $t->notes, // Abwärtskompatibilität
+                    'dod_progress' => $t->dod_progress,
                     'team_id' => $t->team_id,
                     'board_id' => $t->helpdesk_board_id,
                     'board_name' => $t->helpdeskBoard?->name,

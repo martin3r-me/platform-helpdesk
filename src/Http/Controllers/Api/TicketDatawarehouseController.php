@@ -59,7 +59,10 @@ class TicketDatawarehouseController extends ApiController
                 'id' => $ticket->id,
                 'uuid' => $ticket->uuid,
                 'title' => $ticket->title,
-                'description' => $ticket->description,
+                'notes' => $ticket->notes,
+                'description' => $ticket->notes, // Abwärtskompatibilität
+                'dod' => $ticket->dod,
+                'dod_progress' => $ticket->dod_progress,
                 'team_id' => $ticket->team_id,
                 'team_name' => $ticket->team?->name, // Team-Name mitliefern (denormalisiert)
                 'user_id' => $ticket->user_id,

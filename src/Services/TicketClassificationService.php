@@ -112,9 +112,15 @@ PROMPT;
     {
         $prompt = "Ticket analysieren:\n\n";
         $prompt .= "Titel: {$ticket->title}\n";
-        
-        if ($ticket->description) {
-            $prompt .= "Beschreibung: {$ticket->description}\n";
+
+        if ($ticket->notes) {
+            $prompt .= "Anmerkung: {$ticket->notes}\n";
+        }
+
+        // DoD-Fortschritt für KI-Kontext
+        $dodProgress = $ticket->dod_progress;
+        if ($dodProgress['total'] > 0) {
+            $prompt .= "DoD-Fortschritt: {$dodProgress['completed']}/{$dodProgress['total']} ({$dodProgress['percentage']}%)\n";
         }
         
         if ($ticket->helpdeskBoard) {

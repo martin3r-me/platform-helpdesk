@@ -261,22 +261,143 @@
             
             <div class="mt-6">
                         @can('update', $ticket)
-                            <x-ui-input-textarea 
-                                name="ticket.description"
+                            <x-ui-input-textarea
+                                name="ticket.notes"
                                 :disabled="$ticket->isLocked()"
-                                label="Ticket Beschreibung"
-                                wire:model.live.debounce.500ms="ticket.description"
-                                placeholder="Ticket Beschreibung eingeben..."
-                                rows="6"
-                                :errorKey="'ticket.description'"
+                                label="Anmerkung"
+                                wire:model.live.debounce.500ms="ticket.notes"
+                                placeholder="Anmerkung eingeben..."
+                                rows="4"
+                                :errorKey="'ticket.notes'"
                             />
                         @else
                             <div>
-                        <label class="font-semibold text-[var(--ui-secondary)]">Beschreibung:</label>
-                        <div class="p-3 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/40 whitespace-pre-wrap">{{ $ticket->description ?: 'Keine Beschreibung vorhanden' }}</div>
+                        <label class="font-semibold text-[var(--ui-secondary)]">Anmerkung:</label>
+                        <div class="p-3 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/40 whitespace-pre-wrap">{{ $ticket->notes ?: 'Keine Anmerkung vorhanden' }}</div>
                             </div>
                         @endcan
                     </div>
+        </x-ui-panel>
+
+        {{-- Definition of Done (DoD) --}}
+        <x-ui-panel title="Definition of Done (DoD)">
+            @php
+                $dodProgress = $ticket->dod_progress;
+                $dod = $ticket->dod ?? [];
+            @endphp
+
+            {{-- Fortschrittsanzeige --}}
+            @if(count($dod) > 0)
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-[var(--ui-secondary)]">Fortschritt</span>
+                        <span class="text-sm font-semibold text-[var(--ui-primary)]">
+                            {{ $dodProgress['completed'] }} / {{ $dodProgress['total'] }} ({{ $dodProgress['percentage'] }}%)
+                        </span>
+                    </div>
+                    <div class="w-full bg-[var(--ui-muted-10)] rounded-full h-2.5 overflow-hidden">
+                        <div
+                            class="h-2.5 rounded-full transition-all duration-300 {{ $dodProgress['percentage'] === 100 ? 'bg-[var(--ui-success)]' : 'bg-[var(--ui-primary)]' }}"
+                            style="width: {{ $dodProgress['percentage'] }}%"
+                        ></div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- DoD-Liste --}}
+            <div class="space-y-2">
+                @forelse($dod as $index => $item)
+                    <div class="flex items-start gap-3 p-3 rounded-lg border border-[var(--ui-border)]/40 bg-white hover:border-[var(--ui-primary)]/30 transition-colors group {{ ($item['checked'] ?? false) ? 'bg-[var(--ui-success-5)] border-[var(--ui-success)]/30' : '' }}">
+                        @can('update', $ticket)
+                            <button
+                                type="button"
+                                wire:click="toggleDodItem({{ $index }})"
+                                class="flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors {{ ($item['checked'] ?? false) ? 'bg-[var(--ui-success)] border-[var(--ui-success)] text-white' : 'border-[var(--ui-border)] hover:border-[var(--ui-primary)]' }}"
+                                :disabled="$ticket->isLocked()"
+                            >
+                                @if($item['checked'] ?? false)
+                                    @svg('heroicon-o-check', 'w-3.5 h-3.5')
+                                @endif
+                            </button>
+                        @else
+                            <div class="flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center {{ ($item['checked'] ?? false) ? 'bg-[var(--ui-success)] border-[var(--ui-success)] text-white' : 'border-[var(--ui-border)]' }}">
+                                @if($item['checked'] ?? false)
+                                    @svg('heroicon-o-check', 'w-3.5 h-3.5')
+                                @endif
+                            </div>
+                        @endcan
+
+                        <span class="flex-1 text-sm {{ ($item['checked'] ?? false) ? 'text-[var(--ui-muted)] line-through' : 'text-[var(--ui-secondary)]' }}">
+                            {{ $item['text'] ?? '' }}
+                        </span>
+
+                        @can('update', $ticket)
+                            @if(!$ticket->isLocked())
+                                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        type="button"
+                                        wire:click="moveDodItem({{ $index }}, 'up')"
+                                        class="p-1 text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] rounded hover:bg-[var(--ui-muted-5)]"
+                                        title="Nach oben"
+                                        @if($index === 0) disabled @endif
+                                    >
+                                        @svg('heroicon-o-chevron-up', 'w-4 h-4')
+                                    </button>
+                                    <button
+                                        type="button"
+                                        wire:click="moveDodItem({{ $index }}, 'down')"
+                                        class="p-1 text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] rounded hover:bg-[var(--ui-muted-5)]"
+                                        title="Nach unten"
+                                        @if($index === count($dod) - 1) disabled @endif
+                                    >
+                                        @svg('heroicon-o-chevron-down', 'w-4 h-4')
+                                    </button>
+                                    <button
+                                        type="button"
+                                        wire:click="removeDodItem({{ $index }})"
+                                        wire:confirm="DoD-Eintrag wirklich löschen?"
+                                        class="p-1 text-[var(--ui-muted)] hover:text-[var(--ui-danger)] rounded hover:bg-[var(--ui-danger-5)]"
+                                        title="Löschen"
+                                    >
+                                        @svg('heroicon-o-trash', 'w-4 h-4')
+                                    </button>
+                                </div>
+                            @endif
+                        @endcan
+                    </div>
+                @empty
+                    <div class="text-center py-6 text-sm text-[var(--ui-muted)]">
+                        Noch keine Definition of Done vorhanden.
+                    </div>
+                @endforelse
+            </div>
+
+            {{-- Neuen Eintrag hinzufügen --}}
+            @can('update', $ticket)
+                @if(!$ticket->isLocked())
+                    <div class="mt-4 pt-4 border-t border-[var(--ui-border)]/40">
+                        <div class="flex gap-2">
+                            <input
+                                type="text"
+                                wire:model="newDodItem"
+                                wire:keydown.enter="addDodItem"
+                                placeholder="Neuen DoD-Punkt hinzufügen..."
+                                class="flex-1 px-3 py-2 text-sm rounded-lg border border-[var(--ui-border)]/60 bg-[var(--ui-surface)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-primary)]/20 focus:border-[var(--ui-primary)]"
+                            >
+                            <x-ui-button
+                                variant="primary"
+                                size="sm"
+                                wire:click="addDodItem"
+                            >
+                                <span class="inline-flex items-center gap-1">
+                                    @svg('heroicon-o-plus', 'w-4 h-4')
+                                    Hinzufügen
+                                </span>
+                            </x-ui-button>
+                        </div>
+                    </div>
+                @endif
+            @endcan
         </x-ui-panel>
 
         {{-- Metadaten --}}

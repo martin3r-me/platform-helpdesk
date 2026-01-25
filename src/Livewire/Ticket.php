@@ -19,10 +19,12 @@ class Ticket extends Component
     public $selectedHour = 12; // Ausgewählte Stunde (0-23)
     public $selectedMinute = 0; // Ausgewählte Minute (0-59)
     public $githubRepositorySearch = ''; // Suchbegriff für GitHub Repositories
+    public $newDodItem = ''; // Neuer DoD-Eintrag
 
     protected $rules = [
         'ticket.title' => 'required|string|max:255',
-        'ticket.description' => 'nullable|string',
+        'ticket.notes' => 'nullable|string',
+        'ticket.dod' => 'nullable|array',
 
         'ticket.is_done' => 'boolean',
         'ticket.due_date' => 'nullable|date',
@@ -46,7 +48,7 @@ class Ticket extends Component
             'model' => get_class($this->ticket),                                // z. B. 'Platform\Helpdesk\Models\HelpdeskTicket'
             'modelId' => $this->ticket->id,
             'subject' => $this->ticket->title,
-            'description' => $this->ticket->description ?? '',
+            'description' => $this->ticket->notes ?? '',
             'url' => route('helpdesk.tickets.show', $this->ticket),            // absolute URL zum Ticket
             'source' => 'helpdesk.ticket.view',                                // eindeutiger Quell-Identifier (frei wählbar)
             'recipients' => [$this->ticket->user_in_charge_id],                // falls vorhanden, sonst leer
@@ -99,6 +101,103 @@ class Ticket extends Component
     public function toggleFrog()
     {
         $this->ticket->is_frog = !$this->ticket->is_frog;
+        $this->ticket->save();
+    }
+
+    /**
+     * Fügt einen neuen DoD-Eintrag hinzu
+     */
+    public function addDodItem()
+    {
+        if ($this->ticket->isLocked()) {
+            return;
+        }
+
+        $text = trim($this->newDodItem);
+        if (empty($text)) {
+            return;
+        }
+
+        $dod = $this->ticket->dod ?? [];
+        $dod[] = ['text' => $text, 'checked' => false];
+        $this->ticket->dod = $dod;
+        $this->ticket->save();
+        $this->newDodItem = '';
+    }
+
+    /**
+     * Entfernt einen DoD-Eintrag
+     */
+    public function removeDodItem($index)
+    {
+        if ($this->ticket->isLocked()) {
+            return;
+        }
+
+        $dod = $this->ticket->dod ?? [];
+        if (isset($dod[$index])) {
+            array_splice($dod, $index, 1);
+            $this->ticket->dod = array_values($dod);
+            $this->ticket->save();
+        }
+    }
+
+    /**
+     * Wechselt den Status eines DoD-Eintrags
+     */
+    public function toggleDodItem($index)
+    {
+        if ($this->ticket->isLocked()) {
+            return;
+        }
+
+        $dod = $this->ticket->dod ?? [];
+        if (isset($dod[$index])) {
+            $dod[$index]['checked'] = !($dod[$index]['checked'] ?? false);
+            $this->ticket->dod = $dod;
+            $this->ticket->save();
+        }
+    }
+
+    /**
+     * Aktualisiert den Text eines DoD-Eintrags
+     */
+    public function updateDodItem($index, $text)
+    {
+        if ($this->ticket->isLocked()) {
+            return;
+        }
+
+        $dod = $this->ticket->dod ?? [];
+        if (isset($dod[$index])) {
+            $dod[$index]['text'] = trim($text);
+            $this->ticket->dod = $dod;
+            $this->ticket->save();
+        }
+    }
+
+    /**
+     * Verschiebt einen DoD-Eintrag nach oben oder unten
+     */
+    public function moveDodItem($index, $direction)
+    {
+        if ($this->ticket->isLocked()) {
+            return;
+        }
+
+        $dod = $this->ticket->dod ?? [];
+        $newIndex = $direction === 'up' ? $index - 1 : $index + 1;
+
+        if ($newIndex < 0 || $newIndex >= count($dod)) {
+            return;
+        }
+
+        // Tausche die Elemente
+        $temp = $dod[$index];
+        $dod[$index] = $dod[$newIndex];
+        $dod[$newIndex] = $temp;
+
+        $this->ticket->dod = $dod;
         $this->ticket->save();
     }
 

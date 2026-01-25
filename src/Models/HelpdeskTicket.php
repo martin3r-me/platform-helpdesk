@@ -28,7 +28,8 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
         'user_in_charge_id',
         'team_id',
         'title',
-        'description',
+        'notes',
+        'dod',
         'due_date',
         'status',
         'priority',
@@ -58,7 +59,49 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
         'escalated_at' => 'datetime',
         'is_locked' => 'boolean',
         'locked_at' => 'datetime',
+        'dod' => 'array',
     ];
+
+    /**
+     * Alias für Abwärtskompatibilität: description -> notes
+     */
+    public function getDescriptionAttribute()
+    {
+        return $this->notes;
+    }
+
+    public function setDescriptionAttribute($value)
+    {
+        $this->attributes['notes'] = $value;
+    }
+
+    /**
+     * Berechnet den Fortschritt der DoD (Definition of Done)
+     * @return array ['completed' => int, 'total' => int, 'percentage' => int]
+     */
+    public function getDodProgressAttribute(): array
+    {
+        $dod = $this->dod ?? [];
+        $total = count($dod);
+
+        if ($total === 0) {
+            return ['completed' => 0, 'total' => 0, 'percentage' => 0];
+        }
+
+        $completed = collect($dod)->filter(fn($item) => $item['checked'] ?? false)->count();
+        $percentage = (int) round(($completed / $total) * 100);
+
+        return ['completed' => $completed, 'total' => $total, 'percentage' => $percentage];
+    }
+
+    /**
+     * Prüft ob alle DoD-Punkte abgehakt sind
+     */
+    public function isDodComplete(): bool
+    {
+        $progress = $this->dod_progress;
+        return $progress['total'] > 0 && $progress['completed'] === $progress['total'];
+    }
 
     protected static function booted(): void
     {
