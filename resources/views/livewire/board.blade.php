@@ -8,17 +8,40 @@
             <div class="p-6 space-y-6">
 				{{-- Board-Info --}}
                 <div>
-                    <div class="d-flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-[var(--ui-secondary)]">{{ $helpdeskBoard->name }}</h3>
-                        <x-ui-button variant="secondary-outline" size="sm" @click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })">
-                            <div class="d-flex items-center gap-2">
-                                @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
-                                Einstellungen
-                            </div>
-                        </x-ui-button>
-                    </div>
+                    <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-2">{{ $helpdeskBoard->name }}</h3>
                     <div class="text-sm text-[var(--ui-muted)]">{{ $helpdeskBoard->description ?? 'Keine Beschreibung' }}</div>
                 </div>
+
+				{{-- Aktionen --}}
+				<div>
+					<h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Aktionen</h3>
+					<div class="space-y-2">
+						<x-ui-button
+							variant="secondary-outline"
+							size="sm"
+							@click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })"
+							class="w-full"
+						>
+							<span class="flex items-center gap-2">
+								@svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
+								Einstellungen
+							</span>
+						</x-ui-button>
+						@can('update', $helpdeskBoard)
+							<x-ui-button
+								variant="secondary-outline"
+								size="sm"
+								wire:click="createBoardSlot"
+								class="w-full"
+							>
+								<span class="flex items-center gap-2">
+									@svg('heroicon-o-square-2-stack', 'w-4 h-4')
+									Spalte hinzufügen
+								</span>
+							</x-ui-button>
+						@endcan
+					</div>
+				</div>
 
 				{{-- Statistiken --}}
                 <div class="grid grid-cols-2 gap-2">
@@ -31,18 +54,6 @@
 					<x-ui-dashboard-tile title="Frösche" :count="0" icon="exclamation-triangle" variant="danger" size="sm" />
 					<x-ui-dashboard-tile title="Überfällig" :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->is_done)->count()" icon="exclamation-circle" variant="danger" size="sm" />
 				</div>
-
-				{{-- Aktionen --}}
-				@can('update', $helpdeskBoard)
-                    <div class="d-flex flex-col gap-2">
-                        <x-ui-button variant="secondary-outline" size="sm" wire:click="createBoardSlot">
-                            <span class="inline-flex items-center gap-2">
-                                @svg('heroicon-o-square-2-stack','w-4 h-4')
-                                Spalte hinzufügen
-                            </span>
-                        </x-ui-button>
-					</div>
-				@endcan
 
 				{{-- Erledigte Tickets --}}
 				@php $completedTickets = $groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks); @endphp
