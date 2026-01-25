@@ -8,6 +8,8 @@ use Platform\Core\Contracts\ToolContext;
 use Platform\Core\Contracts\ToolMetadataContract;
 use Platform\Core\Contracts\ToolResult;
 use Platform\Core\Tools\Concerns\HasStandardizedWriteOperations;
+use Platform\Helpdesk\Enums\TicketPriority;
+use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
@@ -43,8 +45,16 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 'slot_id' => ['type' => 'integer'],
                 'group_id' => ['type' => 'integer'],
                 'due_date' => ['type' => 'string'],
-                'priority' => ['type' => 'string'],
-                'status' => ['type' => 'string'],
+                'priority' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Priorität (low|normal|high). Setze auf null/"" um zu entfernen.',
+                    'enum' => ['low', 'normal', 'high'],
+                ],
+                'status' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Status (open|in_progress|waiting|resolved|closed).',
+                    'enum' => ['open', 'in_progress', 'waiting', 'resolved', 'closed'],
+                ],
                 'story_points' => [
                     'type' => 'string',
                     'description' => 'Optional: Story Points (xs|s|m|l|xl|xxl). Setze auf null/""/0 um zu entfernen.',
@@ -99,13 +109,55 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 'title',
                 'description',
                 'due_date',
-                'priority',
-                'status',
                 'user_in_charge_id',
                 'is_done',
             ] as $f) {
                 if (array_key_exists($f, $arguments)) {
                     $update[$f] = $arguments[$f] === '' ? null : $arguments[$f];
+                }
+            }
+
+            // Priority normalisieren/validieren (damit Enum-Cast nie knallt)
+            if (array_key_exists('priority', $arguments)) {
+                $prio = $arguments['priority'];
+                if (is_string($prio)) {
+                    $prio = trim($prio);
+                }
+
+                if ($prio === null || $prio === '' || $prio === 'null') {
+                    $update['priority'] = null;
+                } else {
+                    $normalized = strtolower((string)$prio);
+                    $enum = TicketPriority::tryFrom($normalized);
+                    if (!$enum) {
+                        return ToolResult::error(
+                            'VALIDATION_ERROR',
+                            'Ungültige priority. Erlaubt: low|normal|high (oder null/"" zum Entfernen).'
+                        );
+                    }
+                    $update['priority'] = $enum->value;
+                }
+            }
+
+            // Status normalisieren/validieren (damit Enum-Cast nie knallt)
+            if (array_key_exists('status', $arguments)) {
+                $st = $arguments['status'];
+                if (is_string($st)) {
+                    $st = trim($st);
+                }
+
+                if ($st === null || $st === '' || $st === 'null') {
+                    $update['status'] = null;
+                } else {
+                    $normalized = strtolower((string)$st);
+                    $enum = TicketStatus::tryFrom($normalized);
+                    if (!$enum) {
+                        return ToolResult::error(
+                            'VALIDATION_ERROR',
+                            'Ungültiger status. Erlaubt: open|in_progress|waiting|resolved|closed (oder null/"" zum Entfernen).'
+                        );
+                    }
+                    $update['status'] = $enum->value;
                 }
             }
 

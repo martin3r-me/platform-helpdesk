@@ -8,6 +8,8 @@ use Platform\Core\Contracts\ToolContext;
 use Platform\Core\Contracts\ToolMetadataContract;
 use Platform\Core\Contracts\ToolResult;
 use Platform\Core\Tools\Concerns\HasStandardizedWriteOperations;
+use Platform\Helpdesk\Enums\TicketPriority;
+use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
@@ -41,8 +43,16 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                 'slot_id' => ['type' => 'integer'],
                 'group_id' => ['type' => 'integer'],
                 'due_date' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
-                'priority' => ['type' => 'string'],
-                'status' => ['type' => 'string'],
+                'priority' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Priorität (low|normal|high). Setze auf null/"" um zu entfernen.',
+                    'enum' => ['low', 'normal', 'high'],
+                ],
+                'status' => [
+                    'type' => 'string',
+                    'description' => 'Optional: Status (open|in_progress|waiting|resolved|closed).',
+                    'enum' => ['open', 'in_progress', 'waiting', 'resolved', 'closed'],
+                ],
                 'story_points' => [
                     'type' => 'string',
                     'description' => 'Optional: Story Points (xs|s|m|l|xl|xxl). Setze auf null/""/0 um zu entfernen.',
@@ -78,6 +88,50 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
             // Backward compatible: allow "storyPoints" as alias for "story_points"
             if (!array_key_exists('story_points', $arguments) && array_key_exists('storyPoints', $arguments)) {
                 $arguments['story_points'] = $arguments['storyPoints'];
+            }
+
+            // Priority normalisieren/validieren (damit Enum-Cast nie knallt)
+            $priorityValue = null;
+            if (array_key_exists('priority', $arguments)) {
+                $prio = $arguments['priority'];
+                if (is_string($prio)) {
+                    $prio = trim($prio);
+                }
+                if ($prio === null || $prio === '' || $prio === 'null') {
+                    $priorityValue = null;
+                } else {
+                    $normalized = strtolower((string)$prio);
+                    $enum = TicketPriority::tryFrom($normalized);
+                    if (!$enum) {
+                        return ToolResult::error(
+                            'VALIDATION_ERROR',
+                            'Ungültige priority. Erlaubt: low|normal|high (oder null/"" zum Entfernen).'
+                        );
+                    }
+                    $priorityValue = $enum->value;
+                }
+            }
+
+            // Status normalisieren/validieren (damit Enum-Cast nie knallt)
+            $statusValue = null;
+            if (array_key_exists('status', $arguments)) {
+                $st = $arguments['status'];
+                if (is_string($st)) {
+                    $st = trim($st);
+                }
+                if ($st === null || $st === '' || $st === 'null') {
+                    $statusValue = null;
+                } else {
+                    $normalized = strtolower((string)$st);
+                    $enum = TicketStatus::tryFrom($normalized);
+                    if (!$enum) {
+                        return ToolResult::error(
+                            'VALIDATION_ERROR',
+                            'Ungültiger status. Erlaubt: open|in_progress|waiting|resolved|closed (oder null/"" zum Entfernen).'
+                        );
+                    }
+                    $statusValue = $enum->value;
+                }
             }
 
             // Story points normalisieren/validieren (damit Enum-Cast nie knallt)
@@ -136,8 +190,8 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                 'title' => $title,
                 'description' => $arguments['description'] ?? null,
                 'due_date' => $arguments['due_date'] ?? null,
-                'priority' => $arguments['priority'] ?? null,
-                'status' => $arguments['status'] ?? null,
+                'priority' => $priorityValue,
+                'status' => $statusValue,
                 'story_points' => $storyPointsValue,
                 'helpdesk_board_id' => $boardId,
                 'helpdesk_board_slot_id' => $slotId,
