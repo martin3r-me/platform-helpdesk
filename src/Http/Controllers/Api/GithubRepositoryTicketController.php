@@ -352,13 +352,13 @@ class GithubRepositoryTicketController extends ApiController
     }
 
     /**
-     * Gibt ein Ticket anhand von ID oder UUID zurück
-     * 
+     * Gibt ein Ticket anhand von ID, UUID oder Repository zurück
+     *
      * Query Parameter:
-     * - ticket_id: Ticket ID (optional, wenn uuid verwendet wird)
-     * - ticket_uuid: Ticket UUID (optional, wenn id verwendet wird)
-     * - repo: GitHub Repository full_name (optional, zur Validierung)
-     * 
+     * - ticket_id: Ticket ID (optional, wenn uuid oder repo verwendet wird)
+     * - ticket_uuid: Ticket UUID (optional, wenn id oder repo verwendet wird)
+     * - repo: GitHub Repository full_name (optional, wenn nur repo angegeben wird, wird das Ticket mit der niedrigsten Slot-Order zurückgegeben)
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -372,28 +372,75 @@ class GithubRepositoryTicketController extends ApiController
         $ticket = null;
         if ($ticketUuid) {
             $ticket = HelpdeskTicket::withTrashed()->where('uuid', $ticketUuid)
-                ->with(['helpdeskBoard:id,name', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
+                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
                 ->first();
         } elseif ($ticketId) {
-            $ticket = HelpdeskTicket::withTrashed()->with(['helpdeskBoard:id,name', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
+            $ticket = HelpdeskTicket::withTrashed()->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
                 ->find($ticketId);
+        } elseif ($repoFullName) {
+            // Wenn nur repo angegeben ist: Ticket mit der niedrigsten Slot-Order für diese Repo holen
+            $repository = IntegrationsGithubRepository::where('full_name', $repoFullName)->first();
+
+            if (!$repository) {
+                return $this->error("GitHub Repository '{$repoFullName}' nicht gefunden.", 404);
+            }
+
+            // Alle Ticket-IDs finden, die mit diesem Repository verknüpft sind
+            $links = IntegrationAccountLink::where('account_type', 'github_repository')
+                ->where('account_id', $repository->id)
+                ->where('linkable_type', HelpdeskTicket::class)
+                ->get();
+
+            if ($links->isEmpty()) {
+                return $this->success([
+                    'repository' => [
+                        'id' => $repository->id,
+                        'full_name' => $repository->full_name,
+                        'name' => $repository->name,
+                        'owner' => $repository->owner,
+                        'url' => $repository->url,
+                    ],
+                    'ticket' => null,
+                    'message' => 'Keine Tickets für dieses Repository gefunden',
+                ], 'Kein Ticket gefunden');
+            }
+
+            $ticketIds = $links->pluck('linkable_id')->toArray();
+
+            // Ticket mit der niedrigsten Slot-Order finden (nur aus Slots, nicht aus Backlog/Inbox)
+            $ticket = HelpdeskTicket::withTrashed()
+                ->whereIn('id', $ticketIds)
+                ->whereNotNull('helpdesk_board_slot_id') // Nur Tickets aus Slots
+                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
+                ->join('helpdesk_board_slots', 'helpdesk_tickets.helpdesk_board_slot_id', '=', 'helpdesk_board_slots.id')
+                ->orderBy('helpdesk_board_slots.order', 'asc')
+                ->select('helpdesk_tickets.*')
+                ->first();
+
+            // Fallback: Wenn kein Ticket in Slots, dann erstes Ticket aus der Liste nehmen
+            if (!$ticket) {
+                $ticket = HelpdeskTicket::withTrashed()
+                    ->whereIn('id', $ticketIds)
+                    ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
+                    ->first();
+            }
         } else {
-            return $this->error('Parameter "ticket_id" oder "ticket_uuid" fehlt.', 400);
+            return $this->error('Parameter "ticket_id", "ticket_uuid" oder "repo" fehlt.', 400);
         }
 
         if (!$ticket) {
             return $this->error('Ticket nicht gefunden.', 404);
         }
-        
+
         // Prüfe ob Ticket gelöscht wurde
         if ($ticket->trashed()) {
             return $this->error('Ticket wurde gelöscht.', 404);
         }
 
-        // Optional: Validierung gegen Repository, wenn angegeben
-        if ($repoFullName) {
+        // Optional: Validierung gegen Repository, wenn angegeben (und wenn ticket_id oder ticket_uuid verwendet wurde)
+        if ($repoFullName && ($ticketId || $ticketUuid)) {
             $repository = IntegrationsGithubRepository::where('full_name', $repoFullName)->first();
-            
+
             if (!$repository) {
                 return $this->error("GitHub Repository '{$repoFullName}' nicht gefunden.", 404);
             }
@@ -430,6 +477,8 @@ class GithubRepositoryTicketController extends ApiController
             'helpdesk_board_id' => $ticket->helpdesk_board_id,
             'helpdesk_board_name' => $ticket->helpdeskBoard?->name,
             'helpdesk_board_slot_id' => $ticket->helpdesk_board_slot_id,
+            'helpdesk_board_slot_name' => $ticket->helpdeskBoardSlot?->name,
+            'helpdesk_board_slot_order' => $ticket->helpdeskBoardSlot?->order,
             'helpdesk_ticket_group_id' => $ticket->helpdesk_ticket_group_id,
             'is_done' => $ticket->is_done,
             'done_at' => $ticket->done_at?->toIso8601String(),
