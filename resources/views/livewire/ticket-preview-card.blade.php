@@ -78,6 +78,20 @@
         </div>
     @endif
 
+    <!-- GitHub Repo Integration -->
+    @php
+        $githubRepos = $ticket->githubRepositories();
+        $githubRepoCount = $githubRepos->count();
+    @endphp
+    @if($githubRepoCount > 0)
+        <div class="mb-3">
+            <span class="inline-flex items-start gap-1 text-xs text-[var(--ui-muted)]" title="{{ $githubRepos->pluck('full_name')->join(', ') }}">
+                @svg('heroicon-o-code-bracket','w-3 h-3 mt-0.5')
+                <span>{{ $githubRepoCount }} {{ $githubRepoCount === 1 ? 'Repo' : 'Repos' }}</span>
+            </span>
+        </div>
+    @endif
+
     <!-- Description (truncated) -->
     @if($ticket->description)
         <div class="text-xs text-[var(--ui-muted)] my-1.5 mb-3 line-clamp-2">
