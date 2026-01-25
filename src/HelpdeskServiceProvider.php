@@ -161,7 +161,18 @@ class HelpdeskServiceProvider extends ServiceProvider
             $classPath = str_replace(['/', '.php'], ['\\', ''], $relativePath);
             $class = $baseNamespace . '\\' . $classPath;
 
-            if (!class_exists($class)) {
+            // Versuche die Klasse zu prüfen, mit Fehlerbehandlung für Autoloader-Probleme
+            try {
+                if (!class_exists($class)) {
+                    continue;
+                }
+            } catch (\Throwable $e) {
+                // Wenn beim Laden ein Fehler auftritt (z.B. fehlende Datei), überspringe diese Datei
+                \Log::warning('Helpdesk: Konnte Livewire-Komponente nicht laden', [
+                    'class' => $class,
+                    'file' => $file->getPathname(),
+                    'error' => $e->getMessage(),
+                ]);
                 continue;
             }
 
