@@ -154,12 +154,12 @@ class Board extends Component
                     }
                 }
 
-                // Update Ticket
+                // Update Ticket - nur Position ändern, NICHT den Erledigt-Status
+                // is_done und done_at werden bewusst nicht geändert, da Sortierung
+                // nur slot und order beeinflussen soll (siehe Ticket #119)
                 $ticket->helpdesk_board_slot_id = $newSlotId;
                 $ticket->slot_order = $item['order'];
                 $ticket->order = $item['order'];
-                $ticket->is_done = ($slotId === 'done');
-                $ticket->done_at = ($slotId === 'done') ? now() : null;
                 $ticket->save();
             }
         }

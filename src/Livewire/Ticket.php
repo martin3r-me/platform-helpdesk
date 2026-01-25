@@ -347,7 +347,7 @@ class Ticket extends Component
             $this->ticket->refresh();
             session()->flash('success', 'GitHub Repository wurde erfolgreich mit dem Ticket verknüpft.');
         } else {
-            session()->flash('error', 'GitHub Repository konnte nicht verknüpft werden.');
+            session()->flash('error', 'GitHub Repository ist bereits mit diesem Ticket verknüpft.');
         }
     }
 
@@ -381,14 +381,14 @@ class Ticket extends Component
         // Verknüpfte GitHub Repositories dieses Tickets
         $linkedGithubRepositories = $this->ticket->githubRepositories();
         
-        // Verfügbare GitHub Repositories des Users (noch nicht verknüpft)
+        // Verfügbare GitHub Repositories des Users (noch nicht mit diesem Ticket verknüpft)
         $linkService = app(\Platform\Integrations\Services\IntegrationAccountLinkService::class);
         $allGithubRepositories = \Platform\Integrations\Models\IntegrationsGithubRepository::where('user_id', Auth::id())
             ->orderBy('full_name')
             ->get();
         
         $availableGithubRepositories = $allGithubRepositories->reject(function ($repo) use ($linkService) {
-            return $linkService->isGithubRepositoryLinked($repo);
+            return $linkService->isGithubRepositoryLinked($repo, $this->ticket);
         });
 
         // Filtere nach Suchbegriff
