@@ -204,13 +204,16 @@ class MyTickets extends Component
     public function toggleDone($ticketId)
     {
         $ticket = HelpdeskTicket::findOrFail($ticketId);
+        $userId = auth()->id();
 
-        if ($ticket->user_id !== auth()->id()) {
+        // Erlaubt für: Ersteller ODER verantwortliche Person
+        if ($ticket->user_id !== $userId && $ticket->user_in_charge_id !== $userId) {
             abort(403);
         }
 
         $ticket->update([
             'is_done' => ! $ticket->is_done,
+            'done_at' => ! $ticket->is_done ? now() : null,
         ]);
     }
 
