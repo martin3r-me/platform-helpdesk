@@ -13,6 +13,7 @@ class Board extends Component
 {
     public HelpdeskBoard $helpdeskBoard;
     public $groups;
+    public bool $showDone = false;
 
     public function mount(HelpdeskBoard $helpdeskBoard)
     {
@@ -184,6 +185,11 @@ class Board extends Component
 
         // Nach Update State refresh
         $this->loadGroups();
+    }
+
+    public function toggleShowDone()
+    {
+        $this->showDone = !$this->showDone;
     }
 
     public function render()

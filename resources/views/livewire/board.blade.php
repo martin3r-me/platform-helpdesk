@@ -43,6 +43,22 @@
 					</div>
 				</div>
 
+				{{-- Ansicht --}}
+				<div>
+					<h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Ansicht</h3>
+					<div class="space-y-2">
+						<label class="flex items-center gap-3 cursor-pointer">
+							<input
+								type="checkbox"
+								wire:click="toggleShowDone"
+								@if($showDone) checked @endif
+								class="w-4 h-4 rounded border-[var(--ui-border)] text-[var(--ui-primary)] focus:ring-[var(--ui-primary)] focus:ring-offset-0"
+							>
+							<span class="text-sm text-[var(--ui-secondary)]">Erledigte Tickets anzeigen</span>
+						</label>
+					</div>
+				</div>
+
 				{{-- Statistiken --}}
                 <div class="grid grid-cols-2 gap-2">
 					<x-ui-dashboard-tile title="Story Points (offen)" :count="$groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0)" icon="chart-bar" variant="warning" size="sm" />
@@ -135,14 +151,16 @@
 			</x-ui-kanban-column>
 		@endforeach
 
-		{{-- ERLEDIGT Spalte (muted, nicht sortierbar als Gruppe) --}}
-		@php $doneGroup = $groups->first(fn($g) => ($g->isDoneGroup ?? false)); @endphp
-		@if($doneGroup)
-			<x-ui-kanban-column :title="($doneGroup->label ?? 'Erledigt')" :sortable-id="null" :scrollable="true" :muted="true">
-				@foreach($doneGroup->tasks as $ticket)
-					@include('helpdesk::livewire.ticket-preview-card', ['ticket' => $ticket])
-				@endforeach
-			</x-ui-kanban-column>
+		{{-- ERLEDIGT Spalte (muted, nicht sortierbar als Gruppe) - nur anzeigen wenn $showDone aktiv --}}
+		@if($showDone)
+			@php $doneGroup = $groups->first(fn($g) => ($g->isDoneGroup ?? false)); @endphp
+			@if($doneGroup)
+				<x-ui-kanban-column :title="($doneGroup->label ?? 'Erledigt')" :sortable-id="null" :scrollable="true" :muted="true">
+					@foreach($doneGroup->tasks as $ticket)
+						@include('helpdesk::livewire.ticket-preview-card', ['ticket' => $ticket])
+					@endforeach
+				</x-ui-kanban-column>
+			@endif
 		@endif
     </x-ui-kanban-container>
 
