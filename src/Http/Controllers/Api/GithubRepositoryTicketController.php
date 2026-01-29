@@ -74,7 +74,7 @@ class GithubRepositoryTicketController extends ApiController
                     ->orWhereNotIn('status', ['closed', 'resolved']);
             })
             ->orderBy('created_at', 'asc') // Ältestes zuerst
-            ->with(['helpdeskBoard:id,name', 'team:id,name', 'userInCharge:id,name,email'])
+            ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'user:id,name,email', 'userInCharge:id,name,email', 'resolution'])
             ->first();
 
         if (!$ticket) {
@@ -94,6 +94,9 @@ class GithubRepositoryTicketController extends ApiController
         // Ticket sperren (wenn es zurückgegeben wird)
         $ticket->lock();
 
+        // Verknüpfte GitHub Repositories laden
+        $linkedRepositories = $ticket->githubRepositories();
+
         // Ticket-Daten formatieren
         $ticketData = [
             'id' => $ticket->id,
@@ -106,11 +109,18 @@ class GithubRepositoryTicketController extends ApiController
             'team_id' => $ticket->team_id,
             'team_name' => $ticket->team?->name,
             'user_id' => $ticket->user_id,
+            'user_name' => $ticket->user?->name,
+            'user_email' => $ticket->user?->email,
             'user_in_charge_id' => $ticket->user_in_charge_id,
             'user_in_charge_name' => $ticket->userInCharge?->name,
+            'user_in_charge_email' => $ticket->userInCharge?->email,
             'helpdesk_board_id' => $ticket->helpdesk_board_id,
             'helpdesk_board_name' => $ticket->helpdeskBoard?->name,
+            'helpdesk_board_slot_id' => $ticket->helpdesk_board_slot_id,
+            'helpdesk_board_slot_name' => $ticket->helpdeskBoardSlot?->name,
+            'helpdesk_board_slot_order' => $ticket->helpdeskBoardSlot?->order,
             'is_done' => $ticket->is_done,
+            'done_at' => $ticket->done_at?->toIso8601String(),
             'is_locked' => $ticket->is_locked,
             'locked_at' => $ticket->locked_at?->toIso8601String(),
             'due_date' => $ticket->due_date?->format('Y-m-d'),
@@ -119,9 +129,33 @@ class GithubRepositoryTicketController extends ApiController
             'priority' => $ticket->priority?->value,
             'status' => $ticket->status?->value,
             'escalation_level' => $ticket->escalation_level?->value,
+            'escalated_at' => $ticket->escalated_at?->toIso8601String(),
+            'escalation_count' => $ticket->escalation_count,
+            'is_escalated' => $ticket->isEscalated(),
+            'is_critical' => $ticket->isCritical(),
             'created_at' => $ticket->created_at->toIso8601String(),
             'updated_at' => $ticket->updated_at->toIso8601String(),
             'url' => route('helpdesk.tickets.show', $ticket),
+            'github_repositories' => $linkedRepositories->map(function ($repo) {
+                return [
+                    'id' => $repo->id,
+                    'full_name' => $repo->full_name,
+                    'name' => $repo->name,
+                    'owner' => $repo->owner,
+                    'url' => $repo->url,
+                    'language' => $repo->language,
+                    'is_private' => $repo->is_private,
+                ];
+            })->toArray(),
+            'resolution' => $ticket->resolution ? [
+                'id' => $ticket->resolution->id,
+                'resolution_text' => $ticket->resolution->resolution_text,
+                'ai_generated' => $ticket->resolution->ai_generated,
+                'user_confirmed' => $ticket->resolution->user_confirmed,
+                'effectiveness_score' => $ticket->resolution->effectiveness_score,
+                'created_at' => $ticket->resolution->created_at?->toIso8601String(),
+                'updated_at' => $ticket->resolution->updated_at?->toIso8601String(),
+            ] : null,
         ];
 
         return $this->success([
@@ -378,10 +412,10 @@ class GithubRepositoryTicketController extends ApiController
         $ticket = null;
         if ($ticketUuid) {
             $ticket = HelpdeskTicket::withTrashed()->where('uuid', $ticketUuid)
-                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
+                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email', 'resolution'])
                 ->first();
         } elseif ($ticketId) {
-            $ticket = HelpdeskTicket::withTrashed()->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
+            $ticket = HelpdeskTicket::withTrashed()->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email', 'resolution'])
                 ->find($ticketId);
         } elseif ($repoFullName) {
             // Wenn nur repo angegeben ist: Ticket mit der niedrigsten Slot-Order für diese Repo holen
@@ -417,7 +451,7 @@ class GithubRepositoryTicketController extends ApiController
             $ticket = HelpdeskTicket::withTrashed()
                 ->whereIn('id', $ticketIds)
                 ->whereNotNull('helpdesk_board_slot_id') // Nur Tickets aus Slots
-                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
+                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email', 'resolution'])
                 ->join('helpdesk_board_slots', 'helpdesk_tickets.helpdesk_board_slot_id', '=', 'helpdesk_board_slots.id')
                 ->orderBy('helpdesk_board_slots.order', 'asc')
                 ->select('helpdesk_tickets.*')
@@ -427,7 +461,7 @@ class GithubRepositoryTicketController extends ApiController
             if (!$ticket) {
                 $ticket = HelpdeskTicket::withTrashed()
                     ->whereIn('id', $ticketIds)
-                    ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
+                    ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email', 'resolution'])
                     ->first();
             }
         } else {
@@ -515,6 +549,15 @@ class GithubRepositoryTicketController extends ApiController
                     'is_private' => $repo->is_private,
                 ];
             })->toArray(),
+            'resolution' => $ticket->resolution ? [
+                'id' => $ticket->resolution->id,
+                'resolution_text' => $ticket->resolution->resolution_text,
+                'ai_generated' => $ticket->resolution->ai_generated,
+                'user_confirmed' => $ticket->resolution->user_confirmed,
+                'effectiveness_score' => $ticket->resolution->effectiveness_score,
+                'created_at' => $ticket->resolution->created_at?->toIso8601String(),
+                'updated_at' => $ticket->resolution->updated_at?->toIso8601String(),
+            ] : null,
         ];
 
         $response = [
