@@ -219,6 +219,7 @@
 
             {{-- Ticket Details --}}
         <x-ui-panel title="Ticket-Details">
+            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Grunddaten</h4>
             <x-ui-form-grid :cols="2" :gap="6">
                         @can('update', $ticket)
                             <x-ui-input-text 
@@ -260,6 +261,7 @@
             </x-ui-form-grid>
             
             <div class="mt-6">
+                <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Anmerkungen</h4>
                         @can('update', $ticket)
                             <x-ui-input-textarea
                                 name="ticket.notes"
@@ -305,6 +307,7 @@
             @endif
 
             {{-- DoD-Liste --}}
+            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Checkliste</h4>
             <div class="space-y-2">
                 @forelse($dod as $index => $item)
                     <div class="flex items-start gap-3 p-3 rounded-lg border border-[var(--ui-border)]/40 bg-white hover:border-[var(--ui-primary)]/30 transition-colors group {{ ($item['checked'] ?? false) ? 'bg-[var(--ui-success-5)] border-[var(--ui-success)]/30' : '' }}">
@@ -402,6 +405,7 @@
 
         {{-- Metadaten --}}
         <x-ui-panel title="Metadaten">
+            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Status & Priorität</h4>
             <x-ui-form-grid :cols="2" :gap="6">
                         {{-- Status & Priorität --}}
                             @can('update', $ticket)
@@ -442,7 +446,11 @@
                                 </div>
                             @endcan
 
-                        {{-- Story Points & Fälligkeitsdatum --}}
+            </x-ui-form-grid>
+
+            {{-- Story Points & Fälligkeitsdatum --}}
+            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3 mt-6">Planung</h4>
+            <x-ui-form-grid :cols="2" :gap="6">
                             @can('update', $ticket)
                                 <x-ui-input-select
                                     name="ticket.story_points"
@@ -500,7 +508,7 @@
                 {{-- Verknüpfte Repositories --}}
                 @if($linkedGithubRepositories->count() > 0)
                     <div class="mb-6">
-                        <h3 class="text-sm font-semibold text-[var(--ui-secondary)] mb-3">Verknüpfte Repositories</h3>
+                        <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Verknüpfte Repositories</h4>
                         <div class="space-y-2">
                             @foreach($linkedGithubRepositories as $repo)
                                 <div class="flex items-center justify-between p-3 bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40 rounded-lg">
@@ -555,7 +563,7 @@
                 @if($availableGithubRepositories->count() > 0 || !empty($githubRepositorySearch))
                     <div>
                         <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-semibold text-[var(--ui-secondary)]">Repository verknüpfen</h3>
+                            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider">Repository verknüpfen</h4>
                         </div>
                         
                         {{-- Suchfeld --}}
