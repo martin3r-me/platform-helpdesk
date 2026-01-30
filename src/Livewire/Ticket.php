@@ -148,7 +148,7 @@ class Ticket extends Component
      */
     public function addDodItem()
     {
-        if ($this->ticket->isLocked()) {
+        if ($this->isLockedForCurrentUser()) {
             return;
         }
 
@@ -169,7 +169,7 @@ class Ticket extends Component
      */
     public function removeDodItem($index)
     {
-        if ($this->ticket->isLocked()) {
+        if ($this->isLockedForCurrentUser()) {
             return;
         }
 
@@ -186,7 +186,7 @@ class Ticket extends Component
      */
     public function toggleDodItem($index)
     {
-        if ($this->ticket->isLocked()) {
+        if ($this->isLockedForCurrentUser()) {
             return;
         }
 
@@ -203,7 +203,7 @@ class Ticket extends Component
      */
     public function updateDodItem($index, $text)
     {
-        if ($this->ticket->isLocked()) {
+        if ($this->isLockedForCurrentUser()) {
             return;
         }
 
@@ -220,7 +220,7 @@ class Ticket extends Component
      */
     public function moveDodItem($index, $direction)
     {
-        if ($this->ticket->isLocked()) {
+        if ($this->isLockedForCurrentUser()) {
             return;
         }
 
@@ -256,8 +256,8 @@ class Ticket extends Component
 
     public function save()
     {
-        // Gesperrte Tickets können nicht gespeichert werden
-        if ($this->ticket->isLocked()) {
+        // Gesperrte Tickets können nur vom sperrenden User gespeichert werden
+        if ($this->isLockedForCurrentUser()) {
             session()->flash('error', 'Gesperrte Tickets können nicht bearbeitet werden.');
             return;
         }
@@ -274,6 +274,15 @@ class Ticket extends Component
     public function isDirty()
     {
         return $this->ticket->isDirty();
+    }
+
+    /**
+     * Prüft ob das Ticket für den aktuellen User gesperrt ist.
+     * Gibt true zurück wenn das Ticket gesperrt ist UND nicht vom aktuellen User.
+     */
+    public function isLockedForCurrentUser(): bool
+    {
+        return $this->ticket->isLocked() && $this->ticket->locked_by_user_id !== Auth::id();
     }
 
     #[Computed]

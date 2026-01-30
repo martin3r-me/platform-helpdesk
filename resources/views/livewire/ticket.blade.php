@@ -104,17 +104,19 @@
                                 </span>
                             </x-ui-button>
                     @endif
-                        @can('delete', $ticket)
-                            <x-ui-confirm-button
-                                action="deleteTicket"
-                                text="Ticket löschen"
-                                confirmText="Wirklich löschen?"
-                                variant="danger"
-                                size="sm"
-                                :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
-                                class="w-full"
-                            />
-                        @endcan
+                        @if(!$ticket->isLocked())
+                            @can('delete', $ticket)
+                                <x-ui-confirm-button
+                                    action="deleteTicket"
+                                    text="Ticket löschen"
+                                    confirmText="Wirklich löschen?"
+                                    variant="danger"
+                                    size="sm"
+                                    :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
+                                    class="w-full"
+                                />
+                            @endcan
+                        @endif
                     </div>
                 </div>
 
@@ -220,14 +222,14 @@
             <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Grunddaten</h4>
             <x-ui-form-grid :cols="2" :gap="6">
                         @can('update', $ticket)
-                            <x-ui-input-text 
+                            <x-ui-input-text
                                 name="ticket.title"
                                 label="Ticket-Titel"
                                 wire:model.live.debounce.500ms="ticket.title"
                                 placeholder="Ticket-Titel eingeben..."
                                 required
                                 :errorKey="'ticket.title'"
-                                :disabled="$ticket->isLocked()"
+                                :disabled="$this->isLockedForCurrentUser()"
                             />
                         @else
                             <div>
@@ -246,7 +248,7 @@
                         :nullable="true"
                         nullLabel="– Niemand zugewiesen –"
                         wire:model.live="ticket.user_in_charge_id"
-                        :disabled="$ticket->isLocked()"
+                        :disabled="$this->isLockedForCurrentUser()"
                     />
                 @else
                     <div>
@@ -263,7 +265,7 @@
                         @can('update', $ticket)
                             <x-ui-input-textarea
                                 name="ticket.notes"
-                                :disabled="$ticket->isLocked()"
+                                :disabled="$this->isLockedForCurrentUser()"
                                 label="Anmerkung"
                                 wire:model.live.debounce.500ms="ticket.notes"
                                 placeholder="Anmerkung eingeben..."
@@ -314,7 +316,7 @@
                                 type="button"
                                 wire:click="toggleDodItem({{ $index }})"
                                 class="flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors {{ ($item['checked'] ?? false) ? 'bg-[var(--ui-success)] border-[var(--ui-success)] text-white' : 'border-[var(--ui-border)] hover:border-[var(--ui-primary)]' }}"
-                                :disabled="$ticket->isLocked()"
+                                :disabled="$this->isLockedForCurrentUser()"
                             >
                                 @if($item['checked'] ?? false)
                                     @svg('heroicon-o-check', 'w-3.5 h-3.5')
@@ -333,7 +335,7 @@
                         </span>
 
                         @can('update', $ticket)
-                            @if(!$ticket->isLocked())
+                            @if(!$this->isLockedForCurrentUser())
                                 <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
                                         type="button"
@@ -375,7 +377,7 @@
 
             {{-- Neuen Eintrag hinzufügen --}}
             @can('update', $ticket)
-                @if(!$ticket->isLocked())
+                @if(!$this->isLockedForCurrentUser())
                     <div class="mt-4 pt-4 border-t border-[var(--ui-border)]/40">
                         <div class="flex gap-2">
                             <input
@@ -416,7 +418,7 @@
                                     :nullable="true"
                                     nullLabel="– Kein Status –"
                                     wire:model.live="ticket.status"
-                                    :disabled="$ticket->isLocked()"
+                                    :disabled="$this->isLockedForCurrentUser()"
                                 />
                             @else
                                 <div>
@@ -435,7 +437,7 @@
                                     :nullable="true"
                                     nullLabel="– Keine Priorität –"
                                     wire:model.live="ticket.priority"
-                                    :disabled="$ticket->isLocked()"
+                                    :disabled="$this->isLockedForCurrentUser()"
                                 />
                             @else
                                 <div>
@@ -459,7 +461,7 @@
                                     :nullable="true"
                                     nullLabel="– Kein Wert –"
                                     wire:model.live="ticket.story_points"
-                                    :disabled="$ticket->isLocked()"
+                                    :disabled="$this->isLockedForCurrentUser()"
                                 />
                             @else
                                 <div>
