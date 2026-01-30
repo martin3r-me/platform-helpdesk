@@ -40,6 +40,11 @@ class Ticket extends Component
         $this->authorize('view', $helpdeskTicket);
         $this->ticket = $helpdeskTicket;
         $this->ticket->load('helpdeskBoard');
+
+        // Ticket automatisch sperren beim Öffnen (wenn nicht bereits gesperrt)
+        if (!$this->ticket->isLocked()) {
+            $this->ticket->lock();
+        }
     }
 
     public function rendered()
@@ -87,7 +92,41 @@ class Ticket extends Component
     public function deleteTicket()
     {
         $this->authorize('delete', $this->ticket);
+        // Ticket entsperren vor dem Löschen (falls gesperrt vom aktuellen User)
+        if ($this->ticket->isLocked() && $this->ticket->locked_by_user_id === Auth::id()) {
+            $this->ticket->unlock();
+        }
         $this->ticket->delete();
+        return $this->redirect(route('helpdesk.my-tickets'), navigate: true);
+    }
+
+    /**
+     * Navigation zum Board mit automatischer Entsperrung
+     */
+    public function navigateToBoard()
+    {
+        // Ticket entsperren wenn vom aktuellen User gesperrt
+        if ($this->ticket->isLocked() && $this->ticket->locked_by_user_id === Auth::id()) {
+            $this->ticket->unlock();
+        }
+
+        if ($this->ticket->helpdeskBoard) {
+            return $this->redirect(route('helpdesk.boards.show', $this->ticket->helpdeskBoard), navigate: true);
+        }
+
+        return $this->redirect(route('helpdesk.my-tickets'), navigate: true);
+    }
+
+    /**
+     * Navigation zu "Meine Tickets" mit automatischer Entsperrung
+     */
+    public function navigateToMyTickets()
+    {
+        // Ticket entsperren wenn vom aktuellen User gesperrt
+        if ($this->ticket->isLocked() && $this->ticket->locked_by_user_id === Auth::id()) {
+            $this->ticket->unlock();
+        }
+
         return $this->redirect(route('helpdesk.my-tickets'), navigate: true);
     }
 

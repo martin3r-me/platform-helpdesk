@@ -14,8 +14,7 @@
                             <x-ui-button
                                 variant="secondary-outline"
                                 size="sm"
-                                :href="route('helpdesk.boards.show', $ticket->helpdeskBoard)"
-                                wire:navigate
+                                wire:click="navigateToBoard"
                                 class="w-full"
                             >
                                 <span class="flex items-center gap-2">
@@ -27,8 +26,7 @@
                         <x-ui-button
                             variant="secondary-outline"
                             size="sm"
-                            :href="route('helpdesk.my-tickets')"
-                            wire:navigate
+                            wire:click="navigateToMyTickets"
                             class="w-full"
                         >
                             <span class="flex items-center gap-2">
