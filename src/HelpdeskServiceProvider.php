@@ -23,11 +23,19 @@ use Platform\Helpdesk\Comms\HelpdeskContextPresenter;
 use Illuminate\Support\Facades\Event;
 use Platform\Helpdesk\Events\TicketCreated;
 use Platform\Helpdesk\Listeners\TicketCreatedListener;
+use Platform\Helpdesk\Contracts\ErrorTrackerContract;
+use Platform\Helpdesk\Services\ErrorTrackingService;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class HelpdeskServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Error Tracking Service registrieren
+        $this->app->singleton('helpdesk.error-tracker', ErrorTrackingService::class);
+        $this->app->singleton(ErrorTrackerContract::class, ErrorTrackingService::class);
+
         // Commands registrieren
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -103,6 +111,9 @@ class HelpdeskServiceProvider extends ServiceProvider
 
         // Tools registrieren (loose gekoppelt - für AI/Chat)
         $this->registerTools();
+
+        // Error Tracking in Exception Handler integrieren
+        $this->registerErrorTracking();
     }
     
     /**
@@ -135,6 +146,69 @@ class HelpdeskServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             // Silent fail - ToolRegistry möglicherweise nicht verfügbar
             \Log::warning('Helpdesk: Tool-Registrierung fehlgeschlagen', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Registriert Error Tracking im Exception Handler
+     *
+     * Sobald das Helpdesk-Modul installiert ist, werden Exceptions
+     * automatisch erfasst (sofern Error Tracking für ein Board aktiviert ist).
+     */
+    protected function registerErrorTracking(): void
+    {
+        try {
+            $handler = $this->app->make(ExceptionHandler::class);
+
+            // Laravel 8+ hat reportable() Methode
+            if (method_exists($handler, 'reportable')) {
+                $handler->reportable(function (\Throwable $e) {
+                    $this->captureException($e);
+                });
+            }
+        } catch (\Throwable $e) {
+            // Silent fail - Exception Handler möglicherweise nicht verfügbar
+            \Log::debug('Helpdesk: Error Tracking Registrierung übersprungen', [
+                'reason' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Erfasst eine Exception über den Error Tracking Service
+     */
+    protected function captureException(\Throwable $e): void
+    {
+        try {
+            // Nicht während Migrations oder Console-Befehlen (außer Tests)
+            if ($this->app->runningInConsole() && !$this->app->runningUnitTests()) {
+                return;
+            }
+
+            // Error Tracker Service holen
+            if (!$this->app->bound('helpdesk.error-tracker')) {
+                return;
+            }
+
+            $tracker = $this->app->make('helpdesk.error-tracker');
+
+            // HTTP Status Code ermitteln
+            $httpCode = null;
+            if ($e instanceof HttpExceptionInterface) {
+                $httpCode = $e->getStatusCode();
+            } elseif (method_exists($e, 'getStatusCode')) {
+                $httpCode = $e->getStatusCode();
+            }
+
+            // Exception erfassen
+            $tracker->capture($e, [
+                'http_code' => $httpCode,
+            ]);
+        } catch (\Throwable $captureError) {
+            // Fehler beim Erfassen dürfen die App nicht beeinträchtigen
+            \Log::debug('Helpdesk: Exception konnte nicht erfasst werden', [
+                'error' => $captureError->getMessage(),
+            ]);
         }
     }
 

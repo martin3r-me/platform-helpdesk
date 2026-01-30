@@ -40,6 +40,14 @@
                     >
                         SLA
                     </button>
+                    <button
+                        @click="$wire.set('activeTab', 'error-tracking')"
+                        :class="$wire.activeTab === 'error-tracking' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        wire:click="$set('activeTab', 'error-tracking')"
+                    >
+                        Error Tracking
+                    </button>
                 </nav>
             </div>
 
@@ -349,6 +357,108 @@
                         nullLabel="– SLA auswählen –"
                         wire:model.live="board.helpdesk_board_sla_id"
                     />
+                </div>
+            </div>
+
+            @elseif($activeTab === 'error-tracking' && $errorSettings)
+            {{-- Error Tracking Einstellungen --}}
+            <div class="space-y-6">
+                {{-- Aktivierung --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Error Tracking</h3>
+
+                    <div class="p-4 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/40">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox"
+                                   wire:model="errorSettings.enabled"
+                                   class="w-5 h-5 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
+                            <div>
+                                <span class="text-sm font-medium text-[var(--ui-secondary)]">Error Tracking aktivieren</span>
+                                <p class="text-xs text-[var(--ui-muted)] mt-0.5">Systemfehler werden automatisch als Tickets erfasst</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                {{-- HTTP Codes --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">HTTP-Codes erfassen</h3>
+                    <p class="text-sm text-[var(--ui-muted)]">Wählen Sie die HTTP-Statuscodes, die als Fehler erfasst werden sollen.</p>
+
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($availableHttpCodes as $code)
+                            <button
+                                type="button"
+                                wire:click="toggleHttpCode({{ $code }})"
+                                class="px-3 py-1.5 text-sm font-medium rounded-full border transition-colors
+                                    {{ $this->isHttpCodeEnabled($code)
+                                        ? 'bg-[var(--ui-primary)] text-white border-[var(--ui-primary)]'
+                                        : 'bg-[var(--ui-surface)] text-[var(--ui-muted)] border-[var(--ui-border)] hover:border-[var(--ui-primary)] hover:text-[var(--ui-secondary)]' }}"
+                            >
+                                {{ $code }}
+                                @if($code >= 500)
+                                    <span class="ml-1 text-xs opacity-75">(Server)</span>
+                                @elseif($code >= 400)
+                                    <span class="ml-1 text-xs opacity-75">(Client)</span>
+                                @endif
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Deduplizierung --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Deduplizierung</h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
+                                Dedupe-Fenster (Stunden)
+                            </label>
+                            <input type="number"
+                                   wire:model="errorSettings.dedupe_window_hours"
+                                   min="1"
+                                   max="720"
+                                   class="w-32 px-3 py-2 text-sm border border-[var(--ui-border)] rounded-md bg-[var(--ui-surface)] text-[var(--ui-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-primary)]/20 focus:border-[var(--ui-primary)]">
+                            <p class="mt-1 text-xs text-[var(--ui-muted)]">Gleiche Fehler werden innerhalb dieses Zeitraums zusammengefasst</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Optionen --}}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Optionen</h3>
+
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox"
+                                   wire:model="errorSettings.auto_create_ticket"
+                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
+                            <span class="text-sm text-[var(--ui-secondary)]">Automatisch Tickets erstellen</span>
+                        </label>
+                        <p class="text-xs text-[var(--ui-muted)] ml-6">Bei neuen Fehlern wird automatisch ein Ticket angelegt</p>
+
+                        <label class="flex items-center gap-2 cursor-pointer mt-4">
+                            <input type="checkbox"
+                                   wire:model="errorSettings.include_stack_trace"
+                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
+                            <span class="text-sm text-[var(--ui-secondary)]">Stack Trace erfassen</span>
+                        </label>
+                        <p class="text-xs text-[var(--ui-muted)] ml-6">Stack Trace wird in den Fehlerdaten gespeichert</p>
+
+                        @if($errorSettings->include_stack_trace)
+                            <div class="ml-6 mt-2">
+                                <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
+                                    Stack Trace Limit (Frames)
+                                </label>
+                                <input type="number"
+                                       wire:model="errorSettings.stack_trace_limit"
+                                       min="1"
+                                       max="200"
+                                       class="w-24 px-3 py-2 text-sm border border-[var(--ui-border)] rounded-md bg-[var(--ui-surface)] text-[var(--ui-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-primary)]/20 focus:border-[var(--ui-primary)]">
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
             @endif

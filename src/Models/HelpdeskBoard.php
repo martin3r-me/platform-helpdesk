@@ -76,6 +76,16 @@ class HelpdeskBoard extends Model implements HasDisplayName
         return $this->hasOne(HelpdeskBoardAiSettings::class, 'helpdesk_board_id');
     }
 
+    public function errorSettings(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(HelpdeskBoardErrorSettings::class, 'helpdesk_board_id');
+    }
+
+    public function errorOccurrences(): HasMany
+    {
+        return $this->hasMany(HelpdeskErrorOccurrence::class, 'helpdesk_board_id');
+    }
+
     /**
      * Gibt den anzeigbaren Namen des Boards zurück.
      * 
