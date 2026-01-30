@@ -49,7 +49,7 @@ return new class extends Migration
             $table->index('http_code');
             $table->index('first_seen_at');
             $table->index('last_seen_at');
-            $table->index(['helpdesk_board_id', 'error_hash', 'status']);
+            $table->index(['helpdesk_board_id', 'error_hash', 'status'], 'hd_err_occ_board_hash_status_idx');
         });
     }
 
