@@ -230,6 +230,16 @@ class GithubRepositoryTicketController extends ApiController
         $ticket->is_done = true;
         $ticket->done_at = now();
         $ticket->unlock(); // Ticket entsperren
+
+        // Alle DoD-Einträge als erledigt markieren
+        if (!empty($ticket->dod) && is_array($ticket->dod)) {
+            $dod = $ticket->dod;
+            foreach ($dod as $index => $item) {
+                $dod[$index]['checked'] = true;
+            }
+            $ticket->dod = $dod;
+        }
+
         $ticket->save();
 
         // Ticket-Daten formatieren
