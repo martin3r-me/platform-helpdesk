@@ -98,4 +98,29 @@
             {{ Str::limit($ticket->description, 80) }}
         </div>
     @endif
+
+    <!-- DoD (Definition of Done) Fortschrittsanzeige -->
+    @php
+        $dodProgress = $ticket->dod_progress;
+        $hasDod = $dodProgress['total'] > 0;
+    @endphp
+    @if($hasDod)
+        <div class="mt-3 pt-3 border-t border-[var(--ui-border)]/30">
+            <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs text-[var(--ui-muted)] flex items-center gap-1">
+                    @svg('heroicon-o-clipboard-document-check', 'w-3 h-3')
+                    DoD
+                </span>
+                <span class="text-xs font-medium {{ $dodProgress['percentage'] === 100 ? 'text-[var(--ui-success)]' : 'text-[var(--ui-primary)]' }}">
+                    {{ $dodProgress['completed'] }}/{{ $dodProgress['total'] }}
+                </span>
+            </div>
+            <div class="w-full bg-[var(--ui-muted-10)] rounded-full h-1.5 overflow-hidden">
+                <div
+                    class="h-1.5 rounded-full transition-all duration-300 {{ $dodProgress['percentage'] === 100 ? 'bg-[var(--ui-success)]' : 'bg-[var(--ui-primary)]' }}"
+                    style="width: {{ $dodProgress['percentage'] }}%"
+                ></div>
+            </div>
+        </div>
+    @endif
 </x-ui-kanban-card>
