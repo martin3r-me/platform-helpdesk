@@ -81,6 +81,12 @@ class Ticket extends Component
             'allow_entities' => false,
             'allow_dimensions' => false,
         ]);
+
+        // Files-Kontext setzen - ermöglicht Datei-Upload für dieses Ticket
+        $this->dispatch('files', [
+            'context_type' => get_class($this->ticket),
+            'context_id' => $this->ticket->id,
+        ]);
     }
 
     public function updatedTicket($property, $value)
