@@ -8,6 +8,9 @@ use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardErrorSettings;
 use Platform\Helpdesk\Models\HelpdeskErrorOccurrence;
 use Platform\Helpdesk\Models\HelpdeskTicket;
+use Platform\Integrations\Models\IntegrationsGithubRepository;
+use Platform\Integrations\Services\IntegrationAccountLinkService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -163,6 +166,13 @@ class ErrorTrackingService implements ErrorTrackerContract
     }
 
     /**
+     * Konstanten für Error-Tracking Defaults
+     * Diese werden verwendet wenn kein User authentifiziert ist (z.B. Console/Scheduler)
+     */
+    protected const DEFAULT_ERROR_USER_ID = 21;
+    protected const DEFAULT_GITHUB_REPOSITORY_ID = 4;
+
+    /**
      * Erstellt ein Ticket für eine Error Occurrence
      */
     protected function createTicket(
@@ -179,17 +189,25 @@ class ErrorTrackingService implements ErrorTrackerContract
             $priority = $this->mapPriority($settings->getPriorityForCode($httpCode));
             $title = $this->buildTicketTitle($occurrence);
 
+            // User-ID ermitteln: Auth-User oder Fallback für Console/Scheduler
+            $userId = Auth::id() ?? self::DEFAULT_ERROR_USER_ID;
+
             $ticket = HelpdeskTicket::create([
                 'helpdesk_board_id' => $board->id,
                 'team_id' => $settings->team_id,
+                'user_id' => $userId,
                 'title' => $title,
                 'notes' => $this->buildTicketDescription($occurrence),
                 'priority' => $priority,
             ]);
 
+            // GitHub Repository verknüpfen (für Fehler aus dem Platforms-Core Repo)
+            $this->linkDefaultGithubRepository($ticket);
+
             Log::info('ErrorTrackingService: Ticket erstellt', [
                 'ticket_id' => $ticket->id,
                 'occurrence_id' => $occurrence->id,
+                'user_id' => $userId,
             ]);
 
             return $ticket;
@@ -200,6 +218,39 @@ class ErrorTrackingService implements ErrorTrackerContract
             ]);
 
             return null;
+        }
+    }
+
+    /**
+     * Verknüpft das Default GitHub Repository mit dem Ticket
+     * Wird für Error-Tickets verwendet, um automatisch das Platforms-Core Repo zu verknüpfen
+     */
+    protected function linkDefaultGithubRepository(HelpdeskTicket $ticket): void
+    {
+        try {
+            $githubRepository = IntegrationsGithubRepository::find(self::DEFAULT_GITHUB_REPOSITORY_ID);
+            if (!$githubRepository) {
+                Log::warning('ErrorTrackingService: Default GitHub Repository nicht gefunden', [
+                    'repository_id' => self::DEFAULT_GITHUB_REPOSITORY_ID,
+                    'ticket_id' => $ticket->id,
+                ]);
+                return;
+            }
+
+            $linkService = app(IntegrationAccountLinkService::class);
+            $linkService->linkGithubRepository($githubRepository, $ticket);
+
+            Log::info('ErrorTrackingService: GitHub Repository verknüpft', [
+                'ticket_id' => $ticket->id,
+                'repository_id' => self::DEFAULT_GITHUB_REPOSITORY_ID,
+                'repository_name' => $githubRepository->full_name ?? 'unknown',
+            ]);
+        } catch (Throwable $e) {
+            // Fehler beim Verknüpfen sollte nicht die Ticket-Erstellung verhindern
+            Log::warning('ErrorTrackingService: GitHub Repository konnte nicht verknüpft werden', [
+                'error' => $e->getMessage(),
+                'ticket_id' => $ticket->id,
+            ]);
         }
     }
 
