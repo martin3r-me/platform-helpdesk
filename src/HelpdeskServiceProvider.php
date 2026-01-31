@@ -181,11 +181,6 @@ class HelpdeskServiceProvider extends ServiceProvider
     protected function captureException(\Throwable $e): void
     {
         try {
-            // Nicht während Migrations oder Console-Befehlen (außer Tests)
-            if ($this->app->runningInConsole() && !$this->app->runningUnitTests()) {
-                return;
-            }
-
             // Error Tracker Service holen
             if (!$this->app->bound('helpdesk.error-tracker')) {
                 return;
@@ -201,9 +196,13 @@ class HelpdeskServiceProvider extends ServiceProvider
                 $httpCode = $e->getStatusCode();
             }
 
-            // Exception erfassen
+            // Prüfen ob Console-Errors erfasst werden sollen
+            $isConsole = $this->app->runningInConsole() && !$this->app->runningUnitTests();
+
+            // Exception erfassen (Console-Flag wird an Service übergeben)
             $tracker->capture($e, [
                 'http_code' => $httpCode,
+                'is_console' => $isConsole,
             ]);
         } catch (\Throwable $captureError) {
             // Fehler beim Erfassen dürfen die App nicht beeinträchtigen

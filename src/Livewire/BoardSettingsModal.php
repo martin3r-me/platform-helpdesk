@@ -58,6 +58,7 @@ class BoardSettingsModal extends Component
             'aiSettings.knowledge_base_categories' => 'nullable|array',
             // Error Tracking Settings Rules
             'errorSettings.enabled' => 'nullable|boolean',
+            'errorSettings.capture_console_errors' => 'nullable|boolean',
             'errorSettings.capture_codes' => 'nullable|array',
             'errorSettings.dedupe_window_hours' => 'nullable|integer|min:1|max:720',
             'errorSettings.auto_create_ticket' => 'nullable|boolean',

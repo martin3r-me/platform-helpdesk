@@ -25,6 +25,7 @@ class HelpdeskBoardErrorSettings extends Model
         'helpdesk_board_id',
         'team_id',
         'enabled',
+        'capture_console_errors',
         'capture_codes',
         'priority_mapping',
         'dedupe_window_hours',
@@ -35,6 +36,7 @@ class HelpdeskBoardErrorSettings extends Model
 
     protected $casts = [
         'enabled' => 'boolean',
+        'capture_console_errors' => 'boolean',
         'capture_codes' => 'array',
         'priority_mapping' => 'array',
         'dedupe_window_hours' => 'integer',
@@ -68,6 +70,7 @@ class HelpdeskBoardErrorSettings extends Model
             [
                 'team_id' => $board->team_id,
                 'enabled' => false,
+                'capture_console_errors' => false,
                 'capture_codes' => self::DEFAULT_CAPTURE_CODES,
                 'priority_mapping' => self::DEFAULT_PRIORITY_MAPPING,
                 'dedupe_window_hours' => 24,

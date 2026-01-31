@@ -20,11 +20,17 @@ class ErrorTrackingService implements ErrorTrackerContract
     {
         try {
             $httpCode = $context['http_code'] ?? null;
+            $isConsole = $context['is_console'] ?? false;
             $occurrences = [];
 
             $enabledSettings = HelpdeskBoardErrorSettings::where('enabled', true)->get();
 
             foreach ($enabledSettings as $settings) {
+                // Console-Errors nur erfassen, wenn explizit aktiviert
+                if ($isConsole && !$settings->capture_console_errors) {
+                    continue;
+                }
+
                 if (!$settings->shouldCaptureCode($httpCode)) {
                     continue;
                 }

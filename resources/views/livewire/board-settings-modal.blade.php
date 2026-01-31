@@ -432,6 +432,14 @@
                     <div class="space-y-3">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox"
+                                   wire:model="errorSettings.capture_console_errors"
+                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
+                            <span class="text-sm text-[var(--ui-secondary)]">Console-/Scheduler-Fehler erfassen</span>
+                        </label>
+                        <p class="text-xs text-[var(--ui-muted)] ml-6">Fehler aus Artisan-Commands und Scheduler-Jobs werden ebenfalls erfasst (ohne User-Kontext)</p>
+
+                        <label class="flex items-center gap-2 cursor-pointer mt-4">
+                            <input type="checkbox"
                                    wire:model="errorSettings.auto_create_ticket"
                                    class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
                             <span class="text-sm text-[var(--ui-secondary)]">Automatisch Tickets erstellen</span>
