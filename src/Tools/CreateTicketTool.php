@@ -169,9 +169,9 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                 }
             }
 
-            $boardId = isset($arguments['board_id']) ? (int)$arguments['board_id'] : null;
-            $slotId = isset($arguments['slot_id']) ? (int)$arguments['slot_id'] : null;
-            $groupId = isset($arguments['group_id']) ? (int)$arguments['group_id'] : null;
+            $boardId = !empty($arguments['board_id']) ? (int)$arguments['board_id'] : null;
+            $slotId = !empty($arguments['slot_id']) ? (int)$arguments['slot_id'] : null;
+            $groupId = !empty($arguments['group_id']) ? (int)$arguments['group_id'] : null;
 
             $board = null;
             if ($boardId) {
@@ -215,7 +215,7 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
             $ticket = HelpdeskTicket::create([
                 'team_id' => $teamId,
                 'user_id' => $context->user?->id,
-                'user_in_charge_id' => $arguments['user_in_charge_id'] ?? null,
+                'user_in_charge_id' => !empty($arguments['user_in_charge_id']) ? (int)$arguments['user_in_charge_id'] : null,
                 'title' => $title,
                 'notes' => $notes,
                 'dod' => $dod,
