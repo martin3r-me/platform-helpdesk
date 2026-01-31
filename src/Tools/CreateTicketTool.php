@@ -40,7 +40,18 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                 'title' => ['type' => 'string', 'description' => 'ERFORDERLICH'],
                 'description' => ['type' => 'string', 'description' => 'Deprecated: Verwende notes stattdessen.'],
                 'notes' => ['type' => 'string', 'description' => 'Anmerkung zum Ticket.'],
-                'dod' => ['type' => 'array', 'description' => 'Definition of Done. Array von Objekten: [{"text": "...", "checked": false}, ...]'],
+                'dod' => [
+                    'type' => 'array',
+                    'description' => 'Definition of Done.',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'text' => ['type' => 'string', 'description' => 'DoD-Eintrag Text'],
+                            'checked' => ['type' => 'boolean', 'description' => 'Abgehakt?'],
+                        ],
+                        'required' => ['text'],
+                    ],
+                ],
                 'board_id' => ['type' => 'integer'],
                 'slot_id' => ['type' => 'integer'],
                 'group_id' => ['type' => 'integer'],
