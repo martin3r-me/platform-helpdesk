@@ -153,8 +153,8 @@ class HelpdeskTicketPolicy
      */
     public function delete(User $user, HelpdeskTicket $ticket): bool
     {
-        // Gesperrte Tickets können nicht gelöscht werden
-        if ($ticket->isLocked()) {
+        // Gesperrte Tickets können nur vom sperrenden User gelöscht werden
+        if ($ticket->isLocked() && $ticket->locked_by_user_id !== $user->id) {
             return false;
         }
 

@@ -104,19 +104,17 @@
                                 </span>
                             </x-ui-button>
                     @endif
-                        @if(!$ticket->isLocked())
-                            @can('delete', $ticket)
-                                <x-ui-confirm-button
-                                    action="deleteTicket"
-                                    text="Ticket löschen"
-                                    confirmText="Wirklich löschen?"
-                                    variant="danger"
-                                    size="sm"
-                                    :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
-                                    class="w-full"
-                                />
-                            @endcan
-                        @endif
+                        @can('delete', $ticket)
+                            <x-ui-confirm-button
+                                action="deleteTicket"
+                                text="Ticket löschen"
+                                confirmText="Wirklich löschen?"
+                                variant="danger"
+                                size="sm"
+                                :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
+                                class="w-full"
+                            />
+                        @endcan
                     </div>
                 </div>
 
