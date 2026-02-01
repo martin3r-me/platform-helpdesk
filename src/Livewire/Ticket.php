@@ -89,6 +89,7 @@ class Ticket extends Component
         ]);
 
         // Playground-Kontext setzen - ermöglicht LLM den Ticket-Kontext zu kennen
+        \Log::info('[Playground] Ticket dispatching playground event', ['ticket_id' => $this->ticket->id, 'title' => $this->ticket->title]);
         $this->dispatch('playground', [
             'type' => 'Ticket',
             'model' => get_class($this->ticket),
