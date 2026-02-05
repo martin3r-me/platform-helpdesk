@@ -7,6 +7,8 @@ use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardServiceHours;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
 use Platform\Helpdesk\Models\HelpdeskBoardErrorSettings;
+use Platform\Core\Models\CommsChannel;
+use Platform\Core\Models\CommsChannelContext;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 
@@ -19,7 +21,11 @@ class BoardSettingsModal extends Component
     public $availableSlas = [];
     public $showServiceHoursForm = false;
     
-    public $activeTab = 'general'; // 'general', 'service-hours', 'sla', 'error-tracking'
+    public $activeTab = 'general'; // 'general', 'service-hours', 'sla', 'error-tracking', 'channels'
+
+    // Kanäle (Channel Context)
+    public array $availableChannels = [];
+    public array $linkedChannelIds = [];
 
     // Error Tracking Settings
     public $errorSettings;
@@ -88,6 +94,10 @@ class BoardSettingsModal extends Component
         // Error Settings laden oder erstellen
         $this->loadErrorSettings();
 
+        // Kanäle laden
+        $this->loadAvailableChannels();
+        $this->loadLinkedChannels();
+
         $this->modalShow = true;
     }
 
@@ -149,6 +159,62 @@ class BoardSettingsModal extends Component
         $codes = $this->errorSettings->capture_codes ?? HelpdeskBoardErrorSettings::DEFAULT_CAPTURE_CODES;
 
         return in_array($code, $codes);
+    }
+
+    public function loadAvailableChannels(): void
+    {
+        $teamId = Auth::user()->currentTeam?->id;
+        if (!$teamId) {
+            $this->availableChannels = [];
+            return;
+        }
+
+        $this->availableChannels = CommsChannel::query()
+            ->where('team_id', $teamId)
+            ->where('type', 'email')
+            ->where('is_active', true)
+            ->orderBy('sender_identifier')
+            ->get()
+            ->toArray();
+    }
+
+    public function loadLinkedChannels(): void
+    {
+        if (!$this->board) {
+            $this->linkedChannelIds = [];
+            return;
+        }
+
+        $this->linkedChannelIds = CommsChannelContext::query()
+            ->where('context_model', HelpdeskBoard::class)
+            ->where('context_model_id', $this->board->id)
+            ->pluck('comms_channel_id')
+            ->toArray();
+    }
+
+    public function toggleChannel(int $channelId): void
+    {
+        if (!$this->board) {
+            return;
+        }
+
+        $existing = CommsChannelContext::query()
+            ->where('comms_channel_id', $channelId)
+            ->where('context_model', HelpdeskBoard::class)
+            ->where('context_model_id', $this->board->id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+        } else {
+            CommsChannelContext::create([
+                'comms_channel_id' => $channelId,
+                'context_model' => HelpdeskBoard::class,
+                'context_model_id' => $this->board->id,
+            ]);
+        }
+
+        $this->loadLinkedChannels();
     }
 
     public function addServiceHours()

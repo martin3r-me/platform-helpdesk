@@ -5,10 +5,13 @@ namespace Platform\Helpdesk;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Platform\Core\PlatformCore;
 use Platform\Core\Routing\ModuleRouter;
+use Platform\Core\Events\CommsInboundReceived;
+use Platform\Helpdesk\Listeners\HandleCommsInbound;
 
 // Optional: Models und Policies absichern
 use Platform\Helpdesk\Models\HelpdeskTicket;
@@ -92,6 +95,9 @@ class HelpdeskServiceProvider extends ServiceProvider
         if (class_exists(HelpdeskBoard::class) && class_exists(HelpdeskBoardPolicy::class)) {
             Gate::policy(HelpdeskBoard::class, HelpdeskBoardPolicy::class);
         }
+
+        // Inbound-Listener registrieren (Ticket-Erstellung bei E-Mail-Eingang)
+        Event::listen(CommsInboundReceived::class, HandleCommsInbound::class);
 
         // Tools registrieren (loose gekoppelt - für AI/Chat)
         $this->registerTools();
