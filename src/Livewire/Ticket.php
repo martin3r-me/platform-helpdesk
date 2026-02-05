@@ -65,6 +65,29 @@ class Ticket extends Component
             'context_id' => $this->ticket->id,
         ]);
 
+        // Comms-Kontext setzen - ermöglicht Kommunikation im Ticket-Kontext
+        $this->dispatch('comms', [
+            'model' => get_class($this->ticket),
+            'modelId' => $this->ticket->id,
+            'subject' => $this->ticket->title,
+            'description' => $this->ticket->notes ?? '',
+            'url' => route('helpdesk.tickets.show', $this->ticket),
+            'source' => 'helpdesk.ticket.view',
+            'recipients' => [],
+            'capabilities' => [
+                'manage_channels' => false,
+                'threads' => true,
+            ],
+            'meta' => [
+                'priority' => $this->ticket->priority,
+                'status' => $this->ticket->status,
+                'due_date' => $this->ticket->due_date?->toIso8601String(),
+                'story_points' => $this->ticket->story_points,
+                'is_done' => $this->ticket->is_done,
+                'board' => $this->ticket->helpdeskBoard?->name,
+            ],
+        ]);
+
         // Playground-Kontext setzen - ermöglicht LLM den Ticket-Kontext zu kennen
         \Log::info('[Playground] Ticket dispatching playground event', ['ticket_id' => $this->ticket->id, 'title' => $this->ticket->title]);
         $this->dispatch('playground', [
