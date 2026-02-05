@@ -169,6 +169,14 @@ class Board extends Component
         $this->loadGroups();
     }
 
+    public function deleteTicket($ticketId)
+    {
+        $ticket = HelpdeskTicket::findOrFail($ticketId);
+        $this->authorize('delete', $ticket);
+        $ticket->delete();
+        $this->loadGroups();
+    }
+
     public function toggleShowDone()
     {
         $this->showDone = !$this->showDone;

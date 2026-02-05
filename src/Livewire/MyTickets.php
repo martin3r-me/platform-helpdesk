@@ -202,6 +202,13 @@ class MyTickets extends Component
         ]);
     }
 
+    public function deleteTicket($ticketId)
+    {
+        $ticket = HelpdeskTicket::findOrFail($ticketId);
+        $this->authorize('delete', $ticket);
+        $ticket->delete();
+    }
+
     public function toggleDone($ticketId)
     {
         $ticket = HelpdeskTicket::findOrFail($ticketId);

@@ -5,11 +5,25 @@
     $isEscalated = $ticket->isEscalated() ?? false;
     $isCritical = $ticket->isCritical() ?? false;
 @endphp
-<x-ui-kanban-card 
-    :title="''" 
-    :sortable-id="$ticket->id" 
+<x-ui-kanban-card
+    :title="''"
+    :sortable-id="$ticket->id"
     :href="route('helpdesk.tickets.show', $ticket)"
 >
+    <div class="relative group/card">
+        <!-- Lösch-Icon -->
+        <div class="absolute -top-1 -right-1 opacity-0 group-hover/card:opacity-100 transition-opacity z-10">
+            <button
+                type="button"
+                wire:click.stop.prevent="deleteTicket({{ $ticket->id }})"
+                wire:confirm="Ticket wirklich löschen?"
+                class="p-1 rounded hover:bg-[var(--ui-danger)]/10 text-[var(--ui-muted)] hover:text-[var(--ui-danger)] transition-colors"
+                title="Ticket löschen"
+            >
+                @svg('heroicon-o-trash', 'w-3.5 h-3.5')
+            </button>
+        </div>
+
     <!-- Story Points und Eskalation (oben in eigene Zeile) -->
     @if($isEscalated || $ticket->story_points)
         <div class="mb-3 flex items-start gap-2">
@@ -123,4 +137,5 @@
             </div>
         </div>
     @endif
+    </div>
 </x-ui-kanban-card>
