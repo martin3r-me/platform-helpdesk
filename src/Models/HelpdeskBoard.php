@@ -18,7 +18,6 @@ class HelpdeskBoard extends Model implements HasDisplayName
         'order',
         'user_id',
         'team_id',
-        'comms_channel_id',
     ];
 
     protected $casts = [
@@ -69,11 +68,6 @@ class HelpdeskBoard extends Model implements HasDisplayName
     public function team(): BelongsTo
     {
         return $this->belongsTo(\Platform\Core\Models\Team::class);
-    }
-
-    public function aiSettings(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(HelpdeskBoardAiSettings::class, 'helpdesk_board_id');
     }
 
     public function errorSettings(): \Illuminate\Database\Eloquent\Relations\HasOne

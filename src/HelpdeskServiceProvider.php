@@ -18,11 +18,6 @@ use Platform\Helpdesk\Policies\HelpdeskBoardPolicy;
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use Platform\Comms\Registry\ContextPresenterRegistry;
-use Platform\Helpdesk\Comms\HelpdeskContextPresenter;
-use Illuminate\Support\Facades\Event;
-use Platform\Helpdesk\Events\TicketCreated;
-use Platform\Helpdesk\Listeners\TicketCreatedListener;
 use Platform\Helpdesk\Contracts\ErrorTrackerContract;
 use Platform\Helpdesk\Services\ErrorTrackingService;
 use Illuminate\Contracts\Debug\ExceptionHandler;
@@ -77,11 +72,6 @@ class HelpdeskServiceProvider extends ServiceProvider
             });
         }
 
-        // Comms: Kontext-Resolver registrieren (Inbox / Badges)
-        if (class_exists(ContextPresenterRegistry::class) && class_exists(HelpdeskContextPresenter::class)) {
-            ContextPresenterRegistry::add(HelpdeskContextPresenter::class);
-        }
-
         // Config veröffentlichen & zusammenführen
         $this->publishes([
             __DIR__.'/../config/helpdesk.php' => config_path('helpdesk.php'),
@@ -102,12 +92,6 @@ class HelpdeskServiceProvider extends ServiceProvider
         if (class_exists(HelpdeskBoard::class) && class_exists(HelpdeskBoardPolicy::class)) {
             Gate::policy(HelpdeskBoard::class, HelpdeskBoardPolicy::class);
         }
-
-        // Events & Listeners registrieren
-        Event::listen(
-            TicketCreated::class,
-            TicketCreatedListener::class
-        );
 
         // Tools registrieren (loose gekoppelt - für AI/Chat)
         $this->registerTools();

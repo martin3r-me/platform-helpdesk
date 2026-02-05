@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('helpdesk_ai_responses', function (Blueprint $table) {
             $table->id();
             $table->foreignId('helpdesk_ticket_id')->constrained('helpdesk_tickets')->cascadeOnDelete();
-            $table->string('comms_channel_id')->nullable();
             
             $table->enum('response_type', ['immediate', 'delayed', 'manual'])->default('delayed');
             $table->text('response_text')->nullable(); // Wird verschlüsselt
@@ -27,7 +26,6 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index('helpdesk_ticket_id');
-            $table->index('comms_channel_id');
             $table->index('response_type');
             $table->index('response_text_hash');
             $table->index('sent_at');

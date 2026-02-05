@@ -23,24 +23,6 @@ class Board extends Component
 
     public function rendered()
     {
-        $this->dispatch('comms', [
-            'model' => get_class($this->helpdeskBoard),
-            'modelId' => $this->helpdeskBoard->id,
-            'subject' => $this->helpdeskBoard->name,
-            'description' => $this->helpdeskBoard->description ?? '',
-            'url' => route('helpdesk.boards.show', $this->helpdeskBoard),
-            'source' => 'helpdesk.board.view',
-            'recipients' => [],
-            'preferred_channel_id' => $this->helpdeskBoard->comms_channel_id ?? null,
-            'capabilities' => [
-                'manage_channels' => true,
-                'threads' => false,
-            ],
-            'meta' => [
-                'team_id' => $this->helpdeskBoard->team_id ?? null,
-            ],
-        ]);
-
         // Organization-Kontext setzen - beides erlauben: Zeiten + Entity-Verknüpfung (analog zu Project)
         $this->dispatch('organization', [
             'context_type' => get_class($this->helpdeskBoard),

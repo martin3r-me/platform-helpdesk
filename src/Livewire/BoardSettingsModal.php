@@ -6,7 +6,6 @@ use Livewire\Component;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardServiceHours;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
-use Platform\Helpdesk\Models\HelpdeskBoardAiSettings;
 use Platform\Helpdesk\Models\HelpdeskBoardErrorSettings;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
@@ -20,10 +19,7 @@ class BoardSettingsModal extends Component
     public $availableSlas = [];
     public $showServiceHoursForm = false;
     
-    // AI Settings
-    public $activeTab = 'general'; // 'general', 'ai', 'service-hours', 'sla', 'error-tracking'
-    public $aiSettings;
-    public $availableModels = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'];
+    public $activeTab = 'general'; // 'general', 'service-hours', 'sla', 'error-tracking'
 
     // Error Tracking Settings
     public $errorSettings;
@@ -48,14 +44,6 @@ class BoardSettingsModal extends Component
             'newServiceZeit.description' => 'nullable|string',
             'newServiceZeit.auto_message_inside' => 'nullable|string',
             'newServiceZeit.auto_message_outside' => 'nullable|string',
-            // AI Settings Rules
-            'aiSettings.auto_assignment_enabled' => 'nullable|boolean',
-            'aiSettings.auto_assignment_confidence_threshold' => 'nullable|numeric|min:0|max:1',
-            'aiSettings.ai_model' => 'nullable|string|max:50',
-            'aiSettings.human_in_loop_enabled' => 'nullable|boolean',
-            'aiSettings.human_in_loop_threshold' => 'nullable|numeric|min:0|max:1',
-            'aiSettings.ai_enabled_for_escalated' => 'nullable|boolean',
-            'aiSettings.knowledge_base_categories' => 'nullable|array',
             // Error Tracking Settings Rules
             'errorSettings.enabled' => 'nullable|boolean',
             'errorSettings.capture_console_errors' => 'nullable|boolean',
@@ -76,7 +64,7 @@ class BoardSettingsModal extends Component
     #[On('open-modal-board-settings')]
     public function openModalBoardSettings($boardId)
     {
-        $this->board = HelpdeskBoard::with(['serviceHours', 'sla', 'aiSettings', 'errorSettings'])->findOrFail($boardId);
+        $this->board = HelpdeskBoard::with(['serviceHours', 'sla', 'errorSettings'])->findOrFail($boardId);
 
         // Teammitglieder holen
         $this->teamUsers = Auth::user()
@@ -97,9 +85,6 @@ class BoardSettingsModal extends Component
             ->orderBy('name')
             ->get();
 
-        // AI Settings laden oder erstellen
-        $this->loadAiSettings();
-
         // Error Settings laden oder erstellen
         $this->loadErrorSettings();
 
@@ -115,11 +100,6 @@ class BoardSettingsModal extends Component
     {
         $this->board->save();
 
-        // AI Settings speichern
-        if ($this->aiSettings) {
-            $this->saveAiSettings();
-        }
-
         // Error Settings speichern
         if ($this->errorSettings) {
             $this->saveErrorSettings();
@@ -128,18 +108,6 @@ class BoardSettingsModal extends Component
         $this->dispatch('boardUpdated');
         $this->dispatch('updateSidebar');
         $this->closeModal();
-    }
-
-    public function loadAiSettings(): void
-    {
-        $this->aiSettings = \Platform\Helpdesk\Models\HelpdeskBoardAiSettings::getOrCreateForBoard($this->board);
-    }
-
-    public function saveAiSettings(): void
-    {
-        if ($this->aiSettings) {
-            $this->aiSettings->save();
-        }
     }
 
     public function loadErrorSettings(): void

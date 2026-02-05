@@ -49,29 +49,6 @@ class Ticket extends Component
 
     public function rendered()
     {
-        $this->dispatch('comms', [
-            'model' => get_class($this->ticket),                                // z. B. 'Platform\Helpdesk\Models\HelpdeskTicket'
-            'modelId' => $this->ticket->id,
-            'subject' => $this->ticket->title,
-            'description' => $this->ticket->notes ?? '',
-            'url' => route('helpdesk.tickets.show', $this->ticket),            // absolute URL zum Ticket
-            'source' => 'helpdesk.ticket.view',                                // eindeutiger Quell-Identifier (frei wählbar)
-            'recipients' => [$this->ticket->user_in_charge_id],                // falls vorhanden, sonst leer
-            'preferred_channel_id' => $this->ticket->comms_channel_id
-                ?? $this->ticket->helpdeskBoard?->comms_channel_id
-                ?? null,
-            'capabilities' => [
-                'manage_channels' => false,
-                'threads' => true,
-            ],
-            'meta' => [
-                'priority' => $this->ticket->priority,
-                'status' => $this->ticket->status,
-                'due_date' => $this->ticket->due_date,
-                'story_points' => $this->ticket->story_points,
-            ],
-        ]);
-
         // Organization-Kontext setzen - nur Zeiten erlauben, keine Entity-Verknüpfung, keine Dimensionen
         $this->dispatch('organization', [
             'context_type' => get_class($this->ticket),

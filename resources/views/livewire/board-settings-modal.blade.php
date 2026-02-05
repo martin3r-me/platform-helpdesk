@@ -17,14 +17,6 @@
                         Allgemein
                     </button>
                     <button
-                        @click="$wire.set('activeTab', 'ai')"
-                        :class="$wire.activeTab === 'ai' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
-                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
-                        wire:click="$set('activeTab', 'ai')"
-                    >
-                        KI-Einstellungen
-                    </button>
-                    <button
                         @click="$wire.set('activeTab', 'service-hours')"
                         :class="$wire.activeTab === 'service-hours' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
                         class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
@@ -75,89 +67,6 @@
                         placeholder="Beschreibung des Helpdesk Boards..."
                         :errorKey="'board.description'"
                     />
-                </div>
-            </div>
-
-            @elseif($activeTab === 'ai' && $aiSettings)
-            {{-- KI-Einstellungen --}}
-            <div class="space-y-6">
-                {{-- Allgemeine KI-Einstellungen --}}
-                <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Allgemein</h3>
-                    
-                    <div class="space-y-4">
-                        <x-ui-input-select
-                            name="aiSettings.ai_model"
-                            label="AI-Modell"
-                            :options="collect($availableModels)->map(fn($m) => ['value' => $m, 'label' => $m])"
-                            optionValue="value"
-                            optionLabel="label"
-                            :nullable="false"
-                            wire:model="aiSettings.ai_model"
-                            :errorKey="'aiSettings.ai_model'"
-                        />
-                    </div>
-                </div>
-
-                {{-- Auto-Assignment --}}
-                <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Auto-Assignment</h3>
-                    
-                    <div class="space-y-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" 
-                                   wire:model="aiSettings.auto_assignment_enabled" 
-                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                            <span class="text-sm text-[var(--ui-secondary)]">Automatische Zuweisung aktivieren</span>
-                        </label>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
-                                Confidence-Threshold ({{ number_format($aiSettings->auto_assignment_confidence_threshold * 100, 0) }}%)
-                            </label>
-                            <input type="range" wire:model.live="aiSettings.auto_assignment_confidence_threshold" min="0" max="1" step="0.01"
-                                   class="w-full h-2 bg-[var(--ui-muted-5)] rounded-lg appearance-none cursor-pointer">
-                            <p class="mt-1 text-xs text-[var(--ui-muted)]">Mindest-Confidence für automatische Zuweisung</p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Human-in-the-Loop --}}
-                <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Human-in-the-Loop</h3>
-                    
-                    <div class="space-y-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" 
-                                   wire:model="aiSettings.human_in_loop_enabled" 
-                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                            <span class="text-sm text-[var(--ui-secondary)]">Human-in-the-Loop aktivieren</span>
-                        </label>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
-                                Threshold ({{ number_format($aiSettings->human_in_loop_threshold * 100, 0) }}%)
-                            </label>
-                            <input type="range" wire:model.live="aiSettings.human_in_loop_threshold" min="0" max="1" step="0.01"
-                                   class="w-full h-2 bg-[var(--ui-muted-5)] rounded-lg appearance-none cursor-pointer">
-                            <p class="mt-1 text-xs text-[var(--ui-muted)]">Unter diesem Threshold wird Review benötigt</p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Eskalationen --}}
-                <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Eskalationen</h3>
-                    
-                    <div class="space-y-3">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" 
-                                   wire:model="aiSettings.ai_enabled_for_escalated" 
-                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                            <span class="text-sm text-[var(--ui-secondary)]">KI für eskalierten Tickets aktivieren</span>
-                        </label>
-                        <p class="text-xs text-[var(--ui-muted)]">Standardmäßig pausiert die KI bei eskalierten Tickets</p>
-                    </div>
                 </div>
             </div>
 
