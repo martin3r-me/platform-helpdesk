@@ -163,14 +163,16 @@ class BoardSettingsModal extends Component
 
     public function loadAvailableChannels(): void
     {
-        $teamId = Auth::user()->currentTeam?->id;
-        if (!$teamId) {
+        $team = Auth::user()->currentTeam;
+        if (!$team) {
             $this->availableChannels = [];
             return;
         }
 
+        $rootTeam = method_exists($team, 'getRootTeam') ? $team->getRootTeam() : $team;
+
         $this->availableChannels = CommsChannel::query()
-            ->where('team_id', $teamId)
+            ->where('team_id', $rootTeam->id)
             ->where('type', 'email')
             ->where('is_active', true)
             ->orderBy('sender_identifier')
