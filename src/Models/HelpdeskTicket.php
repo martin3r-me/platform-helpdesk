@@ -17,10 +17,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 use Platform\ActivityLog\Traits\LogsActivity;
+use Platform\Core\Traits\HasExtraFields;
 
 class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, SocialMediaAccountLinkableInterface
 {
-    use HasFactory, SoftDeletes, LogsActivity;
+    use HasFactory, SoftDeletes, LogsActivity, HasExtraFields;
 
     protected $fillable = [
         'uuid',

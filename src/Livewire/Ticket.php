@@ -6,10 +6,12 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
+use Platform\Core\Livewire\Concerns\WithExtraFields;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 
 class Ticket extends Component
 {
+    use WithExtraFields;
     public $ticket;
     public $dueDateModalShow = false;
     public $calendarMonth; // Aktueller Monat (1-12)
@@ -41,6 +43,9 @@ class Ticket extends Component
         $this->ticket = $helpdeskTicket;
         $this->ticket->load('helpdeskBoard');
 
+        // Extra-Felder laden
+        $this->loadExtraFieldValues($this->ticket);
+
         // Ticket automatisch sperren beim Öffnen (wenn nicht bereits gesperrt)
         if (!$this->ticket->isLocked()) {
             $this->ticket->lock();
@@ -49,6 +54,12 @@ class Ticket extends Component
 
     public function rendered()
     {
+        // Extra-Fields-Kontext setzen
+        $this->dispatch('extrafields', [
+            'context_type' => get_class($this->ticket),
+            'context_id' => $this->ticket->id,
+        ]);
+
         // Organization-Kontext setzen - nur Zeiten erlauben, keine Entity-Verknüpfung, keine Dimensionen
         $this->dispatch('organization', [
             'context_type' => get_class($this->ticket),
@@ -287,10 +298,11 @@ class Ticket extends Component
             session()->flash('error', 'Gesperrte Tickets können nicht bearbeitet werden.');
             return;
         }
-        
+
         $this->validate();
         $this->ticket->save();
-        
+        $this->saveExtraFieldValues($this->ticket);
+
         $this->dispatch('notify', [
             'type' => 'success',
             'message' => 'Ticket gespeichert',
@@ -299,7 +311,7 @@ class Ticket extends Component
 
     public function isDirty()
     {
-        return $this->ticket->isDirty();
+        return $this->ticket->isDirty() || $this->isExtraFieldsDirty();
     }
 
     /**
