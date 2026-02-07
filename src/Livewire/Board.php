@@ -23,6 +23,12 @@ class Board extends Component
 
     public function rendered()
     {
+        // Extra-Fields-Kontext setzen (für Modal-Definitionen)
+        $this->dispatch('extrafields', [
+            'context_type' => get_class($this->helpdeskBoard),
+            'context_id' => $this->helpdeskBoard->id,
+        ]);
+
         // Organization-Kontext setzen - beides erlauben: Zeiten + Entity-Verknüpfung (analog zu Project)
         $this->dispatch('organization', [
             'context_type' => get_class($this->helpdeskBoard),

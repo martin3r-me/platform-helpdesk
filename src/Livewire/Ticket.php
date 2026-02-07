@@ -43,8 +43,10 @@ class Ticket extends Component
         $this->ticket = $helpdeskTicket;
         $this->ticket->load('helpdeskBoard');
 
-        // Extra-Felder laden
-        $this->loadExtraFieldValues($this->ticket);
+        // Extra-Felder laden (Definitionen vom Board, Werte vom Ticket)
+        if ($this->ticket->helpdeskBoard) {
+            $this->loadExtraFieldValuesFromParent($this->ticket, $this->ticket->helpdeskBoard);
+        }
 
         // Ticket automatisch sperren beim Öffnen (wenn nicht bereits gesperrt)
         if (!$this->ticket->isLocked()) {
@@ -54,11 +56,13 @@ class Ticket extends Component
 
     public function rendered()
     {
-        // Extra-Fields-Kontext setzen
-        $this->dispatch('extrafields', [
-            'context_type' => get_class($this->ticket),
-            'context_id' => $this->ticket->id,
-        ]);
+        // Extra-Fields-Kontext setzen (zeigt auf Board für Definitionen)
+        if ($this->ticket->helpdeskBoard) {
+            $this->dispatch('extrafields', [
+                'context_type' => get_class($this->ticket->helpdeskBoard),
+                'context_id' => $this->ticket->helpdeskBoard->id,
+            ]);
+        }
 
         // Organization-Kontext setzen - nur Zeiten erlauben, keine Entity-Verknüpfung, keine Dimensionen
         $this->dispatch('organization', [
