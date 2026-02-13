@@ -500,7 +500,9 @@
             </x-ui-form-grid>
         </x-ui-panel>
 
-        <x-core-extra-fields-section :definitions="$this->extraFieldDefinitions" />
+        <x-core-extra-fields-section
+            :definitions="$this->extraFieldDefinitions"
+        />
 
         {{-- GitHub Repositories --}}
         @if($linkedGithubRepositories->count() > 0 || $availableGithubRepositories->count() > 0 || !empty($githubRepositorySearch))

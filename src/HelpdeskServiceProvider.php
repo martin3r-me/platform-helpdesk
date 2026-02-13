@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Livewire\Livewire;
 use Platform\Core\PlatformCore;
 use Platform\Core\Routing\ModuleRouter;
@@ -44,6 +45,11 @@ class HelpdeskServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Morph-Map für Extra-Fields (damit core.extra_fields.PUT die Entity findet)
+        Relation::morphMap([
+            'helpdesk_ticket' => \Platform\Helpdesk\Models\HelpdeskTicket::class,
+        ]);
+
         // Modul-Registrierung nur, wenn Config & Tabelle vorhanden
         if (
             Schema::hasTable('modules')
