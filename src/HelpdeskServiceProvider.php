@@ -141,6 +141,11 @@ class HelpdeskServiceProvider extends ServiceProvider
             $registry->register(new \Platform\Helpdesk\Tools\DeleteTicketTool());
             $registry->register(new \Platform\Helpdesk\Tools\TicketDodTool());
 
+            // Ticket Bulk-Tools
+            $registry->register(new \Platform\Helpdesk\Tools\BulkCreateTicketsTool());
+            $registry->register(new \Platform\Helpdesk\Tools\BulkUpdateTicketsTool());
+            $registry->register(new \Platform\Helpdesk\Tools\BulkDeleteTicketsTool());
+
             // GitHub-Tools
             $registry->register(new \Platform\Helpdesk\Tools\ListGithubRepositoriesTool());
             $registry->register(new \Platform\Helpdesk\Tools\LinkTicketGithubRepositoryTool());
