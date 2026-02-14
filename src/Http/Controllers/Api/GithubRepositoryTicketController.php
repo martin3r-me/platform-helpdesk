@@ -74,7 +74,7 @@ class GithubRepositoryTicketController extends ApiController
                     ->orWhereNotIn('status', ['closed', 'resolved']);
             })
             ->orderBy('created_at', 'asc') // Ältestes zuerst
-            ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'user:id,name,email', 'userInCharge:id,name,email', 'resolution'])
+            ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'user:id,name,email', 'userInCharge:id,name,email'])
             ->first();
 
         if (!$ticket) {
