@@ -17,8 +17,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('helpdesk_board_slas', function (Blueprint $table) {
+            $table->dropForeign(['team_id']);
             $table->dropIndex(['team_id', 'is_active']);
-            $table->dropConstrainedForeignId('team_id');
+            $table->dropColumn('team_id');
         });
     }
 };
