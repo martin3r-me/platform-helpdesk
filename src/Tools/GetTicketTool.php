@@ -57,7 +57,7 @@ class GetTicketTool implements ToolContract, ToolMetadataContract
             }
 
             $ticket = HelpdeskTicket::query()
-                ->with(['helpdeskBoard', 'helpdeskBoardSlot', 'helpdeskTicketGroup', 'user', 'userInCharge', 'escalations', 'resolution'])
+                ->with(['helpdeskBoard', 'helpdeskBoardSlot', 'helpdeskTicketGroup', 'user', 'userInCharge', 'escalations'])
                 ->where('team_id', $teamId)
                 ->find($ticketId);
 
@@ -103,11 +103,6 @@ class GetTicketTool implements ToolContract, ToolMetadataContract
                 'escalation_level' => (string)($ticket->escalation_level?->value ?? $ticket->escalation_level),
                 'escalated_at' => $ticket->escalated_at?->toISOString(),
                 'escalation_count' => (int)$ticket->escalation_count,
-                'resolution' => $ticket->resolution ? [
-                    'id' => $ticket->resolution->id,
-                    'summary' => $ticket->resolution->summary ?? null,
-                    'resolution' => $ticket->resolution->resolution ?? null,
-                ] : null,
                 'created_at' => $ticket->created_at?->toISOString(),
                 'updated_at' => $ticket->updated_at?->toISOString(),
             ]);

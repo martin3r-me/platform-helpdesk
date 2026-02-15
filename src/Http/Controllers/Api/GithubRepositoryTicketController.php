@@ -141,15 +141,6 @@ class GithubRepositoryTicketController extends ApiController
                     'is_private' => $repo->is_private,
                 ];
             })->toArray(),
-            'resolution' => $ticket->resolution ? [
-                'id' => $ticket->resolution->id,
-                'resolution_text' => $ticket->resolution->resolution_text,
-                'ai_generated' => $ticket->resolution->ai_generated,
-                'user_confirmed' => $ticket->resolution->user_confirmed,
-                'effectiveness_score' => $ticket->resolution->effectiveness_score,
-                'created_at' => $ticket->resolution->created_at?->toIso8601String(),
-                'updated_at' => $ticket->resolution->updated_at?->toIso8601String(),
-            ] : null,
         ];
 
         return $this->success([
@@ -413,10 +404,10 @@ class GithubRepositoryTicketController extends ApiController
         $ticket = null;
         if ($ticketUuid) {
             $ticket = HelpdeskTicket::withTrashed()->where('uuid', $ticketUuid)
-                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email', 'resolution'])
+                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
                 ->first();
         } elseif ($ticketId) {
-            $ticket = HelpdeskTicket::withTrashed()->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email', 'resolution'])
+            $ticket = HelpdeskTicket::withTrashed()->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
                 ->find($ticketId);
         } elseif ($repoFullName) {
             // Wenn nur repo angegeben ist: Ticket mit der niedrigsten Slot-Order für diese Repo holen
@@ -452,7 +443,7 @@ class GithubRepositoryTicketController extends ApiController
             $ticket = HelpdeskTicket::withTrashed()
                 ->whereIn('id', $ticketIds)
                 ->whereNotNull('helpdesk_board_slot_id') // Nur Tickets aus Slots
-                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email', 'resolution'])
+                ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
                 ->join('helpdesk_board_slots', 'helpdesk_tickets.helpdesk_board_slot_id', '=', 'helpdesk_board_slots.id')
                 ->orderBy('helpdesk_board_slots.order', 'asc')
                 ->select('helpdesk_tickets.*')
@@ -462,7 +453,7 @@ class GithubRepositoryTicketController extends ApiController
             if (!$ticket) {
                 $ticket = HelpdeskTicket::withTrashed()
                     ->whereIn('id', $ticketIds)
-                    ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email', 'resolution'])
+                    ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'userInCharge:id,name,email', 'user:id,name,email'])
                     ->first();
             }
         } else {
@@ -549,15 +540,6 @@ class GithubRepositoryTicketController extends ApiController
                     'is_private' => $repo->is_private,
                 ];
             })->toArray(),
-            'resolution' => $ticket->resolution ? [
-                'id' => $ticket->resolution->id,
-                'resolution_text' => $ticket->resolution->resolution_text,
-                'ai_generated' => $ticket->resolution->ai_generated,
-                'user_confirmed' => $ticket->resolution->user_confirmed,
-                'effectiveness_score' => $ticket->resolution->effectiveness_score,
-                'created_at' => $ticket->resolution->created_at?->toIso8601String(),
-                'updated_at' => $ticket->resolution->updated_at?->toIso8601String(),
-            ] : null,
         ];
 
         $response = [
