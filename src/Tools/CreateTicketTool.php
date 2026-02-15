@@ -9,7 +9,6 @@ use Platform\Core\Contracts\ToolMetadataContract;
 use Platform\Core\Contracts\ToolResult;
 use Platform\Core\Tools\Concerns\HasStandardizedWriteOperations;
 use Platform\Helpdesk\Enums\TicketPriority;
-use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
@@ -29,7 +28,7 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'POST /helpdesk/tickets - Erstellt ein Ticket. Parameter: title (required), description (optional), board_id/slot_id/group_id (optional), due_date (optional), priority/status/story_points (optional), user_in_charge_id (optional).';
+        return 'POST /helpdesk/tickets - Erstellt ein Ticket. Parameter: title (required), description (optional), board_id/slot_id/group_id (optional), due_date (optional), priority/story_points (optional), user_in_charge_id (optional).';
     }
 
     public function getSchema(): array
@@ -60,11 +59,6 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                     'type' => 'string',
                     'description' => 'Optional: Priorität (low|normal|high). Setze auf null/"" um zu entfernen.',
                     'enum' => ['low', 'normal', 'high'],
-                ],
-                'status' => [
-                    'type' => 'string',
-                    'description' => 'Optional: Status (open|in_progress|waiting|resolved|closed).',
-                    'enum' => ['open', 'in_progress', 'waiting', 'resolved', 'closed'],
                 ],
                 'story_points' => [
                     'type' => 'string',
@@ -122,28 +116,6 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                         );
                     }
                     $priorityValue = $enum->value;
-                }
-            }
-
-            // Status normalisieren/validieren (damit Enum-Cast nie knallt)
-            $statusValue = null;
-            if (array_key_exists('status', $arguments)) {
-                $st = $arguments['status'];
-                if (is_string($st)) {
-                    $st = trim($st);
-                }
-                if ($st === null || $st === '' || $st === 'null') {
-                    $statusValue = null;
-                } else {
-                    $normalized = strtolower((string)$st);
-                    $enum = TicketStatus::tryFrom($normalized);
-                    if (!$enum) {
-                        return ToolResult::error(
-                            'VALIDATION_ERROR',
-                            'Ungültiger status. Erlaubt: open|in_progress|waiting|resolved|closed (oder null/"" zum Entfernen).'
-                        );
-                    }
-                    $statusValue = $enum->value;
                 }
             }
 
@@ -221,7 +193,6 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                 'dod' => $dod,
                 'due_date' => $arguments['due_date'] ?? null,
                 'priority' => $priorityValue,
-                'status' => $statusValue,
                 'story_points' => $storyPointsValue,
                 'helpdesk_board_id' => $boardId,
                 'helpdesk_board_slot_id' => $slotId,

@@ -49,10 +49,6 @@ class BulkCreateTicketsTool implements ToolContract, ToolMetadataContract
                             'type' => 'string',
                             'enum' => ['low', 'normal', 'high'],
                         ],
-                        'status' => [
-                            'type' => 'string',
-                            'enum' => ['open', 'in_progress', 'waiting', 'resolved', 'closed'],
-                        ],
                         'story_points' => [
                             'type' => 'string',
                             'enum' => ['xs', 's', 'm', 'l', 'xl', 'xxl'],
@@ -89,10 +85,6 @@ class BulkCreateTicketsTool implements ToolContract, ToolMetadataContract
                             'priority' => [
                                 'type' => 'string',
                                 'enum' => ['low', 'normal', 'high'],
-                            ],
-                            'status' => [
-                                'type' => 'string',
-                                'enum' => ['open', 'in_progress', 'waiting', 'resolved', 'closed'],
                             ],
                             'story_points' => [
                                 'type' => 'string',

@@ -13,7 +13,7 @@
 {{ $separator }}
 
 {{ str_pad('TITEL:', 15, ' ') }}{{ Str::limit($printable->title, $width - 15) }}
-{{ str_pad('STATUS:', 15, ' ') }}{{ $printable->status?->label() ?? 'Kein Status' }}
+{{ str_pad('ERLEDIGT:', 15, ' ') }}{{ $printable->is_done ? 'Ja' : 'Nein' }}
 {{ str_pad('PRIORITAT:', 15, ' ') }}{{ $printable->priority?->label() ?? 'Keine' }}
 
 @if($printable->description)

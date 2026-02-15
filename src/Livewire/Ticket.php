@@ -32,7 +32,6 @@ class Ticket extends Component
         'ticket.due_date' => 'nullable|date',
         'ticket.user_in_charge_id' => 'nullable|integer',
         'ticket.priority' => 'nullable|in:low,normal,high',
-        'ticket.status' => 'nullable|in:open,in_progress,waiting,resolved,closed',
         'ticket.story_points' => 'nullable|in:xs,s,m,l,xl,xxl',
         'ticket.helpdesk_board_id' => 'nullable|integer',
     ];
@@ -95,7 +94,6 @@ class Ticket extends Component
             ],
             'meta' => [
                 'priority' => $this->ticket->priority,
-                'status' => $this->ticket->status,
                 'due_date' => $this->ticket->due_date?->toIso8601String(),
                 'story_points' => $this->ticket->story_points,
                 'is_done' => $this->ticket->is_done,
@@ -115,7 +113,6 @@ class Ticket extends Component
             'source' => 'helpdesk.ticket.view',
             'meta' => [
                 'priority' => $this->ticket->priority,
-                'status' => $this->ticket->status,
                 'due_date' => $this->ticket->due_date?->toIso8601String(),
                 'story_points' => $this->ticket->story_points,
                 'is_done' => $this->ticket->is_done,

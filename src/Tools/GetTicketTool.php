@@ -96,7 +96,6 @@ class GetTicketTool implements ToolContract, ToolMetadataContract
                     'id' => $ticket->userInCharge->id,
                     'name' => $ticket->userInCharge->name,
                 ] : null,
-                'status' => (string)($ticket->status?->value ?? $ticket->status),
                 'priority' => (string)($ticket->priority?->value ?? $ticket->priority),
                 'story_points' => (string)($ticket->story_points?->value ?? $ticket->story_points),
                 'is_done' => (bool)$ticket->is_done,

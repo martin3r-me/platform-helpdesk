@@ -3,7 +3,6 @@
 namespace Platform\Helpdesk\Models;
 
 use Platform\Helpdesk\Enums\TicketPriority;
-use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Enums\TicketEscalationLevel;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
@@ -32,7 +31,6 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
         'notes',
         'dod',
         'due_date',
-        'status',
         'priority',
         'story_points',
 
@@ -52,7 +50,6 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
 
     protected $casts = [
         'priority' => TicketPriority::class,
-        'status' => TicketStatus::class,
         'story_points' => TicketStoryPoints::class,
         'escalation_level' => TicketEscalationLevel::class,
         'due_date' => 'date',

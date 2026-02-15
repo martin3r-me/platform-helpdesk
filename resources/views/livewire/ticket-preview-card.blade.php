@@ -1,7 +1,7 @@
 @props(['ticket'])
 
 @php
-    $isDone = ($ticket->status?->value ?? null) === 'done' || ($ticket->is_done ?? false);
+    $isDone = $ticket->is_done ?? false;
     $isEscalated = $ticket->isEscalated() ?? false;
     $isCritical = $ticket->isCritical() ?? false;
 @endphp

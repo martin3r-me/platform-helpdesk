@@ -9,7 +9,6 @@ use Platform\Core\Contracts\ToolMetadataContract;
 use Platform\Core\Contracts\ToolResult;
 use Platform\Core\Tools\Concerns\HasStandardizedWriteOperations;
 use Platform\Helpdesk\Enums\TicketPriority;
-use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
@@ -62,11 +61,6 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                     'type' => 'string',
                     'description' => 'Optional: Priorität (low|normal|high). Setze auf null/"" um zu entfernen.',
                     'enum' => ['low', 'normal', 'high'],
-                ],
-                'status' => [
-                    'type' => 'string',
-                    'description' => 'Optional: Status (open|in_progress|waiting|resolved|closed).',
-                    'enum' => ['open', 'in_progress', 'waiting', 'resolved', 'closed'],
                 ],
                 'story_points' => [
                     'type' => 'string',
@@ -170,28 +164,6 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                         );
                     }
                     $update['priority'] = $enum->value;
-                }
-            }
-
-            // Status normalisieren/validieren (damit Enum-Cast nie knallt)
-            if (array_key_exists('status', $arguments)) {
-                $st = $arguments['status'];
-                if (is_string($st)) {
-                    $st = trim($st);
-                }
-
-                if ($st === null || $st === '' || $st === 'null') {
-                    $update['status'] = null;
-                } else {
-                    $normalized = strtolower((string)$st);
-                    $enum = TicketStatus::tryFrom($normalized);
-                    if (!$enum) {
-                        return ToolResult::error(
-                            'VALIDATION_ERROR',
-                            'Ungültiger status. Erlaubt: open|in_progress|waiting|resolved|closed (oder null/"" zum Entfernen).'
-                        );
-                    }
-                    $update['status'] = $enum->value;
                 }
             }
 

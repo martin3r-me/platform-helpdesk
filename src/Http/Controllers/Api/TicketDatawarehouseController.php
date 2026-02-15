@@ -80,7 +80,6 @@ class TicketDatawarehouseController extends ApiController
                 'story_points' => $ticket->story_points?->value,
                 'story_points_numeric' => $ticket->story_points?->points(),
                 'priority' => $ticket->priority?->value,
-                'status' => $ticket->status?->value,
                 'escalation_level' => $ticket->escalation_level?->value,
                 'escalated_at' => $ticket->escalated_at?->toIso8601String(),
                 'escalation_count' => $ticket->escalation_count,
@@ -203,11 +202,6 @@ class TicketDatawarehouseController extends ApiController
         // Priority Filter
         if ($request->has('priority')) {
             $query->where('priority', $request->priority);
-        }
-
-        // Status Filter
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
         }
 
         // Escalation Filter
@@ -461,7 +455,6 @@ class TicketDatawarehouseController extends ApiController
                 'story_points' => $example->story_points?->value,
                 'story_points_numeric' => $example->story_points?->points(),
                 'priority' => $example->priority?->value,
-                'status' => $example->status?->value,
                 'escalation_level' => $example->escalation_level?->value,
                 'created_at' => $example->created_at->toIso8601String(),
                 'updated_at' => $example->updated_at->toIso8601String(),

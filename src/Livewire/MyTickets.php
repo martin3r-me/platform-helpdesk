@@ -195,7 +195,6 @@ class MyTickets extends Component
             'dod' => null,
             'due_date' => null,
             'priority' => null,
-            'status' => null,
             'story_points' => null,
             'team_id' => Auth::user()->currentTeam->id,
             'order' => $order,

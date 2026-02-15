@@ -97,7 +97,6 @@ class Board extends Component
         $ticket->team_id = $this->helpdeskBoard->team_id;
         $ticket->title = 'Neues Ticket';
         $ticket->priority = null;
-        $ticket->status = null;
         $ticket->story_points = null;
         
         $ticket->is_done = false;

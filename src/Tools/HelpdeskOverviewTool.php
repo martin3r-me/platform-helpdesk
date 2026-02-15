@@ -56,7 +56,7 @@ class HelpdeskOverviewTool implements ToolContract, ToolMetadataContract
                     'tickets' => [
                         'model' => 'Platform\\Helpdesk\\Models\\HelpdeskTicket',
                         'table' => 'helpdesk_tickets',
-                        'keys' => ['id', 'uuid', 'team_id', 'user_id', 'user_in_charge_id', 'title', 'status', 'priority', 'is_done'],
+                        'keys' => ['id', 'uuid', 'team_id', 'user_id', 'user_in_charge_id', 'title', 'priority', 'is_done'],
                     ],
                 ],
                 'relationships' => [

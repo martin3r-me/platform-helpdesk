@@ -6,7 +6,6 @@ use Platform\Core\Events\CommsInboundReceived;
 use Platform\Core\Models\CommsChannelContext;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskTicket;
-use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Helpdesk\Enums\TicketPriority;
 
 class HandleCommsInbound
@@ -35,7 +34,6 @@ class HandleCommsInbound
                 'helpdesk_board_id' => $board->id,
                 'team_id' => $board->team_id,
                 'user_id' => $board->user_id,
-                'status' => TicketStatus::Open,
                 'priority' => TicketPriority::Normal,
             ]);
 

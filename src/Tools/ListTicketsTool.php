@@ -23,7 +23,7 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'GET /helpdesk/tickets - Listet Tickets. Parameter: team_id (optional), board_id (optional), slot_id (optional), group_id (optional), is_done (optional), status (optional), priority (optional), user_in_charge_id (optional), filters/search/sort/limit/offset (optional).';
+        return 'GET /helpdesk/tickets - Listet Tickets. Parameter: team_id (optional), board_id (optional), slot_id (optional), group_id (optional), is_done (optional), priority (optional), user_in_charge_id (optional), filters/search/sort/limit/offset (optional).';
     }
 
     public function getSchema(): array
@@ -37,7 +37,6 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
                     'slot_id' => ['type' => 'integer'],
                     'group_id' => ['type' => 'integer'],
                     'is_done' => ['type' => 'boolean'],
-                    'status' => ['type' => 'string'],
                     'priority' => ['type' => 'string'],
                     'user_in_charge_id' => ['type' => 'integer'],
                 ],
@@ -72,9 +71,6 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
             if (isset($arguments['is_done'])) {
                 $query->where('is_done', (bool)$arguments['is_done']);
             }
-            if (isset($arguments['status'])) {
-                $query->where('status', (string)$arguments['status']);
-            }
             if (isset($arguments['priority'])) {
                 $query->where('priority', (string)$arguments['priority']);
             }
@@ -83,7 +79,7 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
             }
 
             $this->applyStandardFilters($query, $arguments, [
-                'title', 'status', 'priority', 'is_done', 'due_date', 'created_at',
+                'title', 'priority', 'is_done', 'due_date', 'created_at',
             ]);
             $this->applyStandardSearch($query, $arguments, ['title', 'notes']);
             $this->applyStandardSort($query, $arguments, [
@@ -112,7 +108,6 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
                     'user_id' => $t->user_id,
                     'user_in_charge_id' => $t->user_in_charge_id,
                     'user_in_charge_name' => $t->userInCharge?->name,
-                    'status' => (string)($t->status?->value ?? $t->status),
                     'priority' => (string)($t->priority?->value ?? $t->priority),
                     'story_points' => (string)($t->story_points?->value ?? $t->story_points),
                     'is_done' => (bool)$t->is_done,

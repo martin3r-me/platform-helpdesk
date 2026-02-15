@@ -68,11 +68,6 @@ class BulkUpdateTicketsTool implements ToolContract, ToolMetadataContract
                                 'description' => 'Priorität (low|normal|high). Setze auf null/"" um zu entfernen.',
                                 'enum' => ['low', 'normal', 'high'],
                             ],
-                            'status' => [
-                                'type' => 'string',
-                                'description' => 'Status (open|in_progress|waiting|resolved|closed).',
-                                'enum' => ['open', 'in_progress', 'waiting', 'resolved', 'closed'],
-                            ],
                             'story_points' => [
                                 'type' => 'string',
                                 'description' => 'Story Points (xs|s|m|l|xl|xxl). Setze auf null/""/0 um zu entfernen.',

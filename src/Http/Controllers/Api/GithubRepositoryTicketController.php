@@ -4,7 +4,6 @@ namespace Platform\Helpdesk\Http\Controllers\Api;
 
 use Platform\Core\Http\Controllers\ApiController;
 use Platform\Helpdesk\Models\HelpdeskTicket;
-use Platform\Helpdesk\Enums\TicketStatus;
 use Platform\Integrations\Models\IntegrationsGithubRepository;
 use Platform\Integrations\Models\IntegrationAccountLink;
 use Platform\Core\Services\OpenAiService;
@@ -63,16 +62,12 @@ class GithubRepositoryTicketController extends ApiController
         $ticketIds = $links->pluck('linkable_id')->toArray();
 
         // Nächstes offenes Ticket finden
-        // Offen = nicht erledigt (is_done = false), nicht gesperrt (is_locked = false) und Status nicht 'closed' oder 'resolved'
+        // Offen = nicht erledigt (is_done = false), nicht gesperrt (is_locked = false)
         // WICHTIG: Nur Tickets aus Slots holen, NICHT aus Backlog/Inbox (helpdesk_board_slot_id IS NOT NULL)
         $ticket = HelpdeskTicket::whereIn('id', $ticketIds)
             ->where('is_done', false)
             ->where('is_locked', false) // Nur nicht gesperrte Tickets
             ->whereNotNull('helpdesk_board_slot_id') // Nur Tickets aus Slots, nicht aus Backlog/Inbox
-            ->where(function ($query) {
-                $query->whereNull('status')
-                    ->orWhereNotIn('status', ['closed', 'resolved']);
-            })
             ->orderBy('created_at', 'asc') // Ältestes zuerst
             ->with(['helpdeskBoard:id,name', 'helpdeskBoardSlot:id,name,order', 'team:id,name', 'user:id,name,email', 'userInCharge:id,name,email'])
             ->first();
@@ -127,7 +122,6 @@ class GithubRepositoryTicketController extends ApiController
             'story_points' => $ticket->story_points?->value,
             'story_points_numeric' => $ticket->story_points?->points(),
             'priority' => $ticket->priority?->value,
-            'status' => $ticket->status?->value,
             'escalation_level' => $ticket->escalation_level?->value,
             'escalated_at' => $ticket->escalated_at?->toIso8601String(),
             'escalation_count' => $ticket->escalation_count,
@@ -253,7 +247,6 @@ class GithubRepositoryTicketController extends ApiController
             'dod_progress' => $ticket->dod_progress,
             'is_done' => $ticket->is_done,
             'done_at' => $ticket->done_at->toIso8601String(),
-            'status' => $ticket->status?->value,
             'priority' => $ticket->priority?->value,
             'created_at' => $ticket->created_at->toIso8601String(),
             'updated_at' => $ticket->updated_at->toIso8601String(),
@@ -340,7 +333,6 @@ class GithubRepositoryTicketController extends ApiController
             'title' => $ticket->title,
             'is_locked' => $ticket->is_locked,
             'is_done' => $ticket->is_done,
-            'status' => $ticket->status?->value,
             'updated_at' => $ticket->updated_at->toIso8601String(),
         ];
 
@@ -392,7 +384,6 @@ class GithubRepositoryTicketController extends ApiController
             'uuid' => $ticket->uuid,
             'title' => $ticket->title,
             'is_locked' => $ticket->is_locked,
-            'status' => $ticket->status?->value,
             'updated_at' => $ticket->updated_at->toIso8601String(),
         ];
 
@@ -539,7 +530,6 @@ class GithubRepositoryTicketController extends ApiController
             'story_points' => $ticket->story_points?->value,
             'story_points_numeric' => $ticket->story_points?->points(),
             'priority' => $ticket->priority?->value,
-            'status' => $ticket->status?->value,
             'escalation_level' => $ticket->escalation_level?->value,
             'escalated_at' => $ticket->escalated_at?->toIso8601String(),
             'escalation_count' => $ticket->escalation_count,
@@ -645,66 +635,6 @@ class GithubRepositoryTicketController extends ApiController
                 'description' => $ticket->notes, // Abwärtskompatibilität
             ],
         ], 'Plan wurde zum Ticket hinzugefügt');
-    }
-
-    /**
-     * Setzt den Status eines Tickets
-     * 
-     * Query Parameter:
-     * - ticket_id: Ticket ID (optional, wenn uuid verwendet wird)
-     * - ticket_uuid: Ticket UUID (optional, wenn id verwendet wird)
-     * - status: Neuer Status (required, z.B. "open", "in_progress", "waiting", "resolved", "closed")
-     * 
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function setTicketStatus(Request $request)
-    {
-        $ticketId = $request->query('ticket_id');
-        $ticketUuid = $request->query('ticket_uuid');
-        $statusValue = $request->query('status');
-
-        if (!$statusValue) {
-            return $this->error('Parameter "status" fehlt.', 400);
-        }
-
-        // Validiere Status
-        try {
-            $status = TicketStatus::from($statusValue);
-        } catch (\ValueError $e) {
-            return $this->error("Ungültiger Status '{$statusValue}'. Erlaubte Werte: open, in_progress, waiting, resolved, closed", 400);
-        }
-
-        // Ticket finden
-        $ticket = null;
-        if ($ticketUuid) {
-            $ticket = HelpdeskTicket::withTrashed()->where('uuid', $ticketUuid)->first();
-        } elseif ($ticketId) {
-            $ticket = HelpdeskTicket::withTrashed()->find($ticketId);
-        } else {
-            return $this->error('Parameter "ticket_id" oder "ticket_uuid" fehlt.', 400);
-        }
-
-        if (!$ticket) {
-            return $this->error('Ticket nicht gefunden.', 404);
-        }
-        
-        if ($ticket->trashed()) {
-            return $this->error('Ticket wurde gelöscht.', 404);
-        }
-
-        // Status setzen
-        $ticket->status = $status;
-        $ticket->save();
-
-        return $this->success([
-            'ticket' => [
-                'id' => $ticket->id,
-                'uuid' => $ticket->uuid,
-                'status' => $ticket->status->value,
-                'status_label' => $ticket->status->label(),
-            ],
-        ], 'Status wurde aktualisiert');
     }
 
     /**

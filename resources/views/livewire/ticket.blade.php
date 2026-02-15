@@ -403,28 +403,8 @@
 
         {{-- Metadaten --}}
         <x-ui-panel title="Metadaten">
-            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Status & Priorität</h4>
+            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Priorität</h4>
             <x-ui-form-grid :cols="2" :gap="6">
-                        {{-- Status & Priorität --}}
-                            @can('update', $ticket)
-                                <x-ui-input-select
-                                    name="ticket.status"
-                                    label="Status"
-                                    :options="\Platform\Helpdesk\Enums\TicketStatus::cases()"
-                                    optionValue="value"
-                                    optionLabel="label"
-                                    :nullable="true"
-                                    nullLabel="– Kein Status –"
-                                    wire:model.live="ticket.status"
-                                    :disabled="$this->isLockedForCurrentUser()"
-                                />
-                            @else
-                                <div>
-                        <label class="font-semibold text-[var(--ui-secondary)]">Status:</label>
-                        <div class="p-3 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/40">{{ $ticket->status?->label() ?? '–' }}</div>
-                                </div>
-                            @endcan
-
                             @can('update', $ticket)
                                 <x-ui-input-select
                                     name="ticket.priority"
