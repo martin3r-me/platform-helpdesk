@@ -67,6 +67,13 @@ class GetTicketTool implements ToolContract, ToolMetadataContract
 
             Gate::forUser($context->user)->authorize('view', $ticket);
 
+            $githubRepositories = $ticket->githubRepositories()->map(function ($repo) {
+                return [
+                    'id' => $repo->id,
+                    'full_name' => $repo->full_name,
+                ];
+            })->toArray();
+
             return ToolResult::success([
                 'id' => $ticket->id,
                 'uuid' => $ticket->uuid,
@@ -108,6 +115,7 @@ class GetTicketTool implements ToolContract, ToolMetadataContract
                 'escalation_count' => (int)$ticket->escalation_count,
                 'created_at' => $ticket->created_at?->toISOString(),
                 'updated_at' => $ticket->updated_at?->toISOString(),
+                'github_repositories' => $githubRepositories,
             ]);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
             return ToolResult::error('ACCESS_DENIED', 'Kein Zugriff auf dieses Ticket.');
