@@ -66,7 +66,12 @@
     @endif
 
     <!-- Titel (durchgestrichen wenn erledigt) -->
-    <div class="mb-4">
+    <div class="mb-4 flex items-start gap-1.5">
+        @if($ticket->is_locked)
+            <span class="mt-0.5 shrink-0" title="Ticket ist gesperrt">
+                @svg('heroicon-o-lock-closed', 'w-3.5 h-3.5 text-[var(--ui-warning)]')
+            </span>
+        @endif
         <h4 class="text-sm font-medium text-[var(--ui-secondary)] m-0 {{ $isDone ? 'line-through text-[var(--ui-muted)]' : '' }}">
             {{ $ticket->title }}
         </h4>
