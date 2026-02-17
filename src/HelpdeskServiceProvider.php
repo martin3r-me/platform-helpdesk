@@ -150,6 +150,10 @@ class HelpdeskServiceProvider extends ServiceProvider
             $registry->register(new \Platform\Helpdesk\Tools\ListGithubRepositoriesTool());
             $registry->register(new \Platform\Helpdesk\Tools\LinkTicketGithubRepositoryTool());
             $registry->register(new \Platform\Helpdesk\Tools\UnlinkTicketGithubRepositoryTool());
+            $registry->register(new \Platform\Helpdesk\Tools\BulkLinkTicketGithubRepositoriesTool());
+
+            // Kombi-Tool (Ticket + DODs + Repos in einem Call)
+            $registry->register(new \Platform\Helpdesk\Tools\CreateTicketWithRelationsTool());
         } catch (\Throwable $e) {
             // Silent fail - ToolRegistry möglicherweise nicht verfügbar
             \Log::warning('Helpdesk: Tool-Registrierung fehlgeschlagen', ['error' => $e->getMessage()]);
