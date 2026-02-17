@@ -17,8 +17,10 @@ use Platform\Helpdesk\Listeners\HandleCommsInbound;
 // Optional: Models und Policies absichern
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Models\HelpdeskBoard;
+use Platform\Helpdesk\Models\HelpdeskKnowledgeEntry;
 use Platform\Helpdesk\Policies\HelpdeskTicketPolicy;
 use Platform\Helpdesk\Policies\HelpdeskBoardPolicy;
+use Platform\Helpdesk\Policies\HelpdeskKnowledgeEntryPolicy;
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -102,6 +104,10 @@ class HelpdeskServiceProvider extends ServiceProvider
             Gate::policy(HelpdeskBoard::class, HelpdeskBoardPolicy::class);
         }
 
+        if (class_exists(HelpdeskKnowledgeEntry::class) && class_exists(HelpdeskKnowledgeEntryPolicy::class)) {
+            Gate::policy(HelpdeskKnowledgeEntry::class, HelpdeskKnowledgeEntryPolicy::class);
+        }
+
         // Inbound-Listener registrieren (Ticket-Erstellung bei E-Mail-Eingang)
         Event::listen(CommsInboundReceived::class, HandleCommsInbound::class);
 
@@ -154,6 +160,13 @@ class HelpdeskServiceProvider extends ServiceProvider
 
             // Kombi-Tool (Ticket + DODs + Repos in einem Call)
             $registry->register(new \Platform\Helpdesk\Tools\CreateTicketWithRelationsTool());
+
+            // Knowledge Base Tools
+            $registry->register(new \Platform\Helpdesk\Tools\ListKnowledgeEntriesTool());
+            $registry->register(new \Platform\Helpdesk\Tools\CreateKnowledgeEntryTool());
+            $registry->register(new \Platform\Helpdesk\Tools\UpdateKnowledgeEntryTool());
+            $registry->register(new \Platform\Helpdesk\Tools\DeleteKnowledgeEntryTool());
+            $registry->register(new \Platform\Helpdesk\Tools\SearchKnowledgeEntriesTool());
         } catch (\Throwable $e) {
             // Silent fail - ToolRegistry möglicherweise nicht verfügbar
             \Log::warning('Helpdesk: Tool-Registrierung fehlgeschlagen', ['error' => $e->getMessage()]);

@@ -82,6 +82,11 @@ class HelpdeskBoard extends Model implements HasDisplayName
         return $this->hasMany(HelpdeskErrorOccurrence::class, 'helpdesk_board_id');
     }
 
+    public function knowledgeEntries(): HasMany
+    {
+        return $this->hasMany(HelpdeskKnowledgeEntry::class, 'helpdesk_board_id');
+    }
+
     /**
      * Gibt den anzeigbaren Namen des Boards zurück.
      * 
