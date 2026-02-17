@@ -14,6 +14,7 @@ use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Models\HelpdeskTicketGroup;
+use Platform\Helpdesk\Tools\CreateTicketTool;
 use Platform\Helpdesk\Tools\Concerns\ResolvesHelpdeskTeam;
 
 class UpdateTicketTool implements ToolContract, ToolMetadataContract
@@ -42,8 +43,8 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 'description' => ['type' => 'string', 'description' => 'Deprecated: Verwende notes stattdessen.'],
                 'notes' => ['type' => 'string', 'description' => 'Anmerkung zum Ticket.'],
                 'dod' => [
-                    'type' => 'array',
-                    'description' => 'Definition of Done.',
+                    'type' => ['array', 'string'],
+                    'description' => 'Definition of Done. Entweder als Array von {text, checked} Objekten oder als String (z.B. "[ ] Item1\n[ ] Item2"). Setzt bestehende DoD komplett neu.',
                     'items' => [
                         'type' => 'object',
                         'properties' => [
@@ -129,20 +130,9 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 $update['notes'] = $arguments['description'] === '' ? null : $arguments['description'];
             }
 
-            // DoD aktualisieren
+            // DoD aktualisieren (Array oder String)
             if (array_key_exists('dod', $arguments)) {
-                if ($arguments['dod'] === null || $arguments['dod'] === '') {
-                    $update['dod'] = null;
-                } elseif (is_array($arguments['dod'])) {
-                    $dod = array_map(function ($item) {
-                        return [
-                            'text' => trim((string)($item['text'] ?? '')),
-                            'checked' => (bool)($item['checked'] ?? false),
-                        ];
-                    }, $arguments['dod']);
-                    // Leere Einträge entfernen
-                    $update['dod'] = array_values(array_filter($dod, fn($item) => $item['text'] !== ''));
-                }
+                $update['dod'] = CreateTicketTool::parseDod($arguments['dod']);
             }
 
             // Priority normalisieren/validieren (damit Enum-Cast nie knallt)

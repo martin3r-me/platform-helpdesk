@@ -40,8 +40,8 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                 'description' => ['type' => 'string', 'description' => 'Deprecated: Verwende notes stattdessen.'],
                 'notes' => ['type' => 'string', 'description' => 'Anmerkung zum Ticket.'],
                 'dod' => [
-                    'type' => 'array',
-                    'description' => 'Definition of Done.',
+                    'type' => ['array', 'string'],
+                    'description' => 'Definition of Done. Entweder als Array von {text, checked} Objekten oder als String (z.B. "[ ] Item1\n[ ] Item2").',
                     'items' => [
                         'type' => 'object',
                         'properties' => [
@@ -171,17 +171,10 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
             // notes/description: notes hat Priorität, description für Abwärtskompatibilität
             $notes = $arguments['notes'] ?? $arguments['description'] ?? null;
 
-            // DoD validieren falls vorhanden
+            // DoD validieren falls vorhanden (Array oder String)
             $dod = null;
-            if (isset($arguments['dod']) && is_array($arguments['dod'])) {
-                $dod = array_map(function ($item) {
-                    return [
-                        'text' => trim((string)($item['text'] ?? '')),
-                        'checked' => (bool)($item['checked'] ?? false),
-                    ];
-                }, $arguments['dod']);
-                // Leere Einträge entfernen
-                $dod = array_values(array_filter($dod, fn($item) => $item['text'] !== ''));
+            if (isset($arguments['dod'])) {
+                $dod = self::parseDod($arguments['dod']);
             }
 
             $ticket = HelpdeskTicket::create([
@@ -211,6 +204,93 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
         } catch (\Throwable $e) {
             return ToolResult::error('EXECUTION_ERROR', 'Fehler beim Erstellen des Tickets: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Parst einen DoD-Wert (Array oder String) in ein normalisiertes Array von {text, checked} Items.
+     * String-Format: "[ ] Item1\n[ ] Item2" oder "- Item1\n- Item2" oder einfacher Text pro Zeile.
+     *
+     * @param mixed $dod
+     * @return array|null
+     */
+    public static function parseDod(mixed $dod): ?array
+    {
+        if ($dod === null || $dod === '' || $dod === []) {
+            return null;
+        }
+
+        // Wenn bereits ein Array von Items vorliegt
+        if (is_array($dod)) {
+            $items = array_map(function ($item) {
+                return [
+                    'text' => trim((string)($item['text'] ?? '')),
+                    'checked' => (bool)($item['checked'] ?? false),
+                ];
+            }, $dod);
+            $items = array_values(array_filter($items, fn($item) => $item['text'] !== ''));
+            return !empty($items) ? $items : null;
+        }
+
+        // String-Format parsen
+        if (is_string($dod)) {
+            $dod = trim($dod);
+            if ($dod === '') {
+                return null;
+            }
+
+            // Versuche zuerst als JSON zu parsen
+            $decoded = json_decode($dod, true);
+            if (is_array($decoded) && !empty($decoded)) {
+                $firstItem = reset($decoded);
+                if (is_array($firstItem) && array_key_exists('text', $firstItem)) {
+                    return self::parseDod($decoded);
+                }
+            }
+
+            // Plaintext: Zeilen aufteilen und parsen
+            $lines = preg_split('/\r\n|\r|\n/', $dod);
+            $items = [];
+
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line)) {
+                    continue;
+                }
+
+                // Markdown-Checkbox-Format: "- [ ] Text" oder "- [x] Text" oder "* [x] Text"
+                if (preg_match('/^[-*]\s*\[([ xX])\]\s*(.+)$/', $line, $matches)) {
+                    $items[] = [
+                        'text' => trim($matches[2]),
+                        'checked' => strtolower($matches[1]) === 'x',
+                    ];
+                }
+                // Nur Checkbox ohne Listenpräfix: "[ ] Text" oder "[x] Text"
+                elseif (preg_match('/^\[([ xX])\]\s*(.+)$/', $line, $matches)) {
+                    $items[] = [
+                        'text' => trim($matches[2]),
+                        'checked' => strtolower($matches[1]) === 'x',
+                    ];
+                }
+                // Einfaches Listenformat: "- Text" oder "* Text"
+                elseif (preg_match('/^[-*]\s+(.+)$/', $line, $matches)) {
+                    $items[] = [
+                        'text' => trim($matches[1]),
+                        'checked' => false,
+                    ];
+                }
+                // Einfacher Text ohne Format
+                else {
+                    $items[] = [
+                        'text' => $line,
+                        'checked' => false,
+                    ];
+                }
+            }
+
+            return !empty($items) ? $items : null;
+        }
+
+        return null;
     }
 
     public function getMetadata(): array

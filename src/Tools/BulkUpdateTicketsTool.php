@@ -48,8 +48,8 @@ class BulkUpdateTicketsTool implements ToolContract, ToolMetadataContract
                             'notes' => ['type' => 'string'],
                             'description' => ['type' => 'string', 'description' => 'Deprecated: Verwende notes stattdessen.'],
                             'dod' => [
-                                'type' => 'array',
-                                'description' => 'Definition of Done.',
+                                'type' => ['array', 'string'],
+                                'description' => 'Definition of Done. Array von {text, checked} oder String (z.B. "[ ] Item1\n[ ] Item2"). Ersetzt bestehende DoD.',
                                 'items' => [
                                     'type' => 'object',
                                     'properties' => [

@@ -43,8 +43,8 @@ class CreateTicketWithRelationsTool implements ToolContract, ToolMetadataContrac
                 'notes' => ['type' => 'string', 'description' => 'Anmerkung zum Ticket.'],
                 'description' => ['type' => 'string', 'description' => 'Deprecated: Verwende notes stattdessen.'],
                 'dod' => [
-                    'type' => 'array',
-                    'description' => 'Definition of Done. Array von Einträgen.',
+                    'type' => ['array', 'string'],
+                    'description' => 'Definition of Done. Entweder als Array von {text, checked} Objekten oder als String (z.B. "[ ] Item1\n[ ] Item2").',
                     'items' => [
                         'type' => 'object',
                         'properties' => [
@@ -141,10 +141,10 @@ class CreateTicketWithRelationsTool implements ToolContract, ToolMetadataContrac
 
             // Zusammenfassung bauen
             $parts = ['Ticket erstellt'];
-            if (isset($arguments['dod']) && is_array($arguments['dod'])) {
-                $dodCount = count(array_filter($arguments['dod'], fn($item) => is_array($item) && trim((string)($item['text'] ?? '')) !== ''));
-                if ($dodCount > 0) {
-                    $parts[] = sprintf('%d DoD-Einträge gesetzt', $dodCount);
+            if (isset($arguments['dod'])) {
+                $parsedDod = CreateTicketTool::parseDod($arguments['dod']);
+                if ($parsedDod && count($parsedDod) > 0) {
+                    $parts[] = sprintf('%d DoD-Einträge gesetzt', count($parsedDod));
                 }
             }
             if (!empty($githubRepoIds) && $result['github_repositories']) {

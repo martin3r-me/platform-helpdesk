@@ -66,8 +66,8 @@ class BulkCreateTicketsTool implements ToolContract, ToolMetadataContract
                             'notes' => ['type' => 'string', 'description' => 'Anmerkung zum Ticket.'],
                             'description' => ['type' => 'string', 'description' => 'Deprecated: Verwende notes stattdessen.'],
                             'dod' => [
-                                'type' => 'array',
-                                'description' => 'Definition of Done.',
+                                'type' => ['array', 'string'],
+                                'description' => 'Definition of Done. Array von {text, checked} oder String (z.B. "[ ] Item1\n[ ] Item2").',
                                 'items' => [
                                     'type' => 'object',
                                     'properties' => [
