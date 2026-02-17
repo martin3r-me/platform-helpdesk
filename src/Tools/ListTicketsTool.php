@@ -111,6 +111,7 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
                     'priority' => (string)($t->priority?->value ?? $t->priority),
                     'story_points' => (string)($t->story_points?->value ?? $t->story_points),
                     'is_done' => (bool)$t->is_done,
+                    'is_locked' => (bool)$t->is_locked,
                     'due_date' => $t->due_date?->toDateString(),
                     'created_at' => $t->created_at?->toISOString(),
                     'updated_at' => $t->updated_at?->toISOString(),
