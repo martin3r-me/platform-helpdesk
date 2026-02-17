@@ -23,7 +23,26 @@ class TicketDodTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'Verwaltet die Definition of Done (DoD) eines Tickets. Operationen: list (anzeigen), add (hinzufügen), add_many (mehrere auf einmal hinzufügen), remove (entfernen), toggle (abhaken/abwählen), update (Text ändern), update_many (mehrere auf einmal updaten), move (verschieben).';
+        return 'Verwaltet die Definition of Done (DoD) eines Tickets. '
+            . 'ERFORDERLICH: ticket_id (integer) + operation (string). '
+            . 'Operationen und erwartete Parameter: '
+            . '(1) list – Keine weiteren Parameter. '
+            . '(2) add – text (string, ERFORDERLICH), checked (boolean, optional, default: false). '
+            . '(3) add_many – items (array von Objekten, ERFORDERLICH). Jedes Item: {text: string, checked?: boolean}. '
+            . '(4) remove – index (integer, 0-basiert, ERFORDERLICH). '
+            . '(5) toggle – index (integer, 0-basiert, ERFORDERLICH). Schaltet checked-Status um. '
+            . '(6) update – index (integer, 0-basiert, ERFORDERLICH), text (string, optional), checked (boolean, optional). Mindestens text oder checked angeben. '
+            . '(7) update_many – updates (array von Objekten, ERFORDERLICH). Jedes Item: {index: integer, text?: string, checked?: boolean}. '
+            . '(8) move – index (integer, 0-basiert, ERFORDERLICH), direction ("up"|"down", ERFORDERLICH). '
+            . 'Beispiele: '
+            . 'Einträge auflisten: {ticket_id: 42, operation: "list"}. '
+            . 'Einen Eintrag hinzufügen: {ticket_id: 42, operation: "add", text: "Unit-Tests schreiben"}. '
+            . 'Mehrere Einträge hinzufügen: {ticket_id: 42, operation: "add_many", items: [{text: "Tests schreiben"}, {text: "Code-Review durchführen"}]}. '
+            . 'Eintrag entfernen: {ticket_id: 42, operation: "remove", index: 0}. '
+            . 'Eintrag abhaken: {ticket_id: 42, operation: "toggle", index: 1}. '
+            . 'Eintrag aktualisieren: {ticket_id: 42, operation: "update", index: 0, text: "Neuer Text", checked: true}. '
+            . 'Mehrere aktualisieren: {ticket_id: 42, operation: "update_many", updates: [{index: 0, checked: true}, {index: 1, text: "Geändert"}]}. '
+            . 'Eintrag verschieben: {ticket_id: 42, operation: "move", index: 2, direction: "up"}.';
     }
 
     public function getSchema(): array
@@ -34,47 +53,47 @@ class TicketDodTool implements ToolContract, ToolMetadataContract
                 'ticket_id' => ['type' => 'integer', 'description' => 'ERFORDERLICH: ID des Tickets.'],
                 'operation' => [
                     'type' => 'string',
-                    'description' => 'ERFORDERLICH: Die auszuführende Operation.',
+                    'description' => 'ERFORDERLICH: Die auszuführende Operation. list=anzeigen, add=einen Eintrag hinzufügen, add_many=mehrere Einträge hinzufügen, remove=Eintrag entfernen, toggle=checked umschalten, update=einen Eintrag ändern, update_many=mehrere ändern, move=Reihenfolge ändern.',
                     'enum' => ['list', 'add', 'add_many', 'remove', 'toggle', 'update', 'update_many', 'move'],
                 ],
                 'index' => [
                     'type' => 'integer',
-                    'description' => 'Index des DoD-Eintrags (0-basiert). Erforderlich für: remove, toggle, update, move.',
+                    'description' => 'Index des DoD-Eintrags (0-basiert). ERFORDERLICH für: remove, toggle, update, move. Nutze zuerst operation "list", um die Indizes zu sehen.',
                 ],
                 'text' => [
                     'type' => 'string',
-                    'description' => 'Text des DoD-Eintrags. Erforderlich für: add. Optional für: update (neuer Text).',
+                    'description' => 'Text des DoD-Eintrags. ERFORDERLICH für: add. Optional für: update (neuer Text). Nicht verwenden bei: add_many (dort über items).',
                 ],
                 'checked' => [
                     'type' => 'boolean',
-                    'description' => 'Optional für add: Initialer Status (default: false). Optional für update: Neuer Status.',
+                    'description' => 'Status des DoD-Eintrags. Optional für: add (default: false), update. Nicht verwenden bei: toggle (schaltet automatisch um).',
                 ],
                 'direction' => [
                     'type' => 'string',
-                    'description' => 'Richtung für move-Operation.',
+                    'description' => 'ERFORDERLICH für: move. Richtung, in die der Eintrag verschoben wird.',
                     'enum' => ['up', 'down'],
                 ],
                 'items' => [
                     'type' => 'array',
-                    'description' => 'Array von DoD-Einträgen. Erforderlich für: add_many. Jedes Item: {text, checked?}.',
+                    'description' => 'ERFORDERLICH für: add_many. Array von Objekten mit {text: string, checked?: boolean}. Beispiel: [{text: "Tests schreiben"}, {text: "Dokumentation", checked: false}].',
                     'items' => [
                         'type' => 'object',
                         'properties' => [
-                            'text' => ['type' => 'string', 'description' => 'DoD-Eintrag Text (ERFORDERLICH).'],
-                            'checked' => ['type' => 'boolean', 'description' => 'Initialer Status (default: false).'],
+                            'text' => ['type' => 'string', 'description' => 'Text des DoD-Eintrags (ERFORDERLICH).'],
+                            'checked' => ['type' => 'boolean', 'description' => 'Initialer Status (optional, default: false).'],
                         ],
                         'required' => ['text'],
                     ],
                 ],
                 'updates' => [
                     'type' => 'array',
-                    'description' => 'Array von Updates. Erforderlich für: update_many. Jedes Item: {index, text?, checked?}.',
+                    'description' => 'ERFORDERLICH für: update_many. Array von Objekten mit {index: integer, text?: string, checked?: boolean}. Beispiel: [{index: 0, checked: true}, {index: 2, text: "Neuer Text"}].',
                     'items' => [
                         'type' => 'object',
                         'properties' => [
                             'index' => ['type' => 'integer', 'description' => 'Index des DoD-Eintrags (0-basiert, ERFORDERLICH).'],
-                            'text' => ['type' => 'string', 'description' => 'Neuer Text (optional).'],
-                            'checked' => ['type' => 'boolean', 'description' => 'Neuer Status (optional).'],
+                            'text' => ['type' => 'string', 'description' => 'Neuer Text (optional, mindestens text oder checked angeben).'],
+                            'checked' => ['type' => 'boolean', 'description' => 'Neuer Status (optional, mindestens text oder checked angeben).'],
                         ],
                         'required' => ['index'],
                     ],
