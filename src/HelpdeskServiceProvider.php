@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Livewire\Livewire;
 use Platform\Core\PlatformCore;
 use Platform\Core\Routing\ModuleRouter;
-use Platform\Core\Events\CommsInboundReceived;
+use Platform\Crm\Events\CommsInboundReceived;
 use Platform\Helpdesk\Listeners\HandleCommsInbound;
 
 // Optional: Models und Policies absichern

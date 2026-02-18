@@ -7,8 +7,8 @@ use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardServiceHours;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
 use Platform\Helpdesk\Models\HelpdeskBoardErrorSettings;
-use Platform\Core\Models\CommsChannel;
-use Platform\Core\Models\CommsChannelContext;
+use Platform\Crm\Models\CommsChannel;
+use Platform\Crm\Models\CommsChannelContext;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\On;
 

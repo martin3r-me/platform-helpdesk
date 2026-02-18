@@ -2,8 +2,8 @@
 
 namespace Platform\Helpdesk\Listeners;
 
-use Platform\Core\Events\CommsInboundReceived;
-use Platform\Core\Models\CommsChannelContext;
+use Platform\Crm\Events\CommsInboundReceived;
+use Platform\Crm\Models\CommsChannelContext;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Enums\TicketPriority;
