@@ -128,7 +128,11 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
 
     public function setDueDateAttribute($value)
     {
-        $this->attributes['due_date'] = empty($value) || $value === 'null' ? null : $value;
+        if (empty($value) || $value === 'null') {
+            $this->attributes['due_date'] = null;
+        } else {
+            $this->attributes['due_date'] = \Carbon\Carbon::parse($value)->format('Y-m-d');
+        }
     }
 
     public function user()
