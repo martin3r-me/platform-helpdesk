@@ -75,6 +75,7 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 ],
                 'user_in_charge_id' => ['type' => 'integer'],
                 'is_done' => ['type' => 'boolean'],
+                'is_locked' => ['type' => 'boolean', 'description' => 'Ticket sperren (true) oder entsperren (false).'],
             ],
             'required' => ['ticket_id'],
         ]);
@@ -108,6 +109,33 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
 
             if ((int)$ticket->team_id !== $teamId) {
                 return ToolResult::error('ACCESS_DENIED', 'Du hast keinen Zugriff auf dieses Ticket.');
+            }
+
+            // Lock/Unlock separat behandeln (eigene Policy-Gates + Model-Methoden)
+            if (array_key_exists('is_locked', $arguments)) {
+                $wantLock = (bool)$arguments['is_locked'];
+                if ($wantLock && !$ticket->isLocked()) {
+                    Gate::forUser($context->user)->authorize('lock', $ticket);
+                    $ticket->lock();
+                } elseif (!$wantLock && $ticket->isLocked()) {
+                    Gate::forUser($context->user)->authorize('unlock', $ticket);
+                    $ticket->unlock();
+                }
+                $ticket->refresh();
+
+                // Wenn nur is_locked geändert wird, direkt zurückgeben
+                $otherArgs = collect($arguments)->except(['ticket_id', 'id', 'team_id', 'is_locked'])->filter(fn($v) => $v !== null);
+                if ($otherArgs->isEmpty()) {
+                    return ToolResult::success([
+                        'id' => $ticket->id,
+                        'uuid' => $ticket->uuid,
+                        'title' => $ticket->title,
+                        'team_id' => $ticket->team_id,
+                        'is_done' => (bool)$ticket->is_done,
+                        'is_locked' => (bool)$ticket->is_locked,
+                        'message' => $wantLock ? 'Ticket gesperrt.' : 'Ticket entsperrt.',
+                    ]);
+                }
             }
 
             Gate::forUser($context->user)->authorize('update', $ticket);
@@ -241,10 +269,11 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 'title' => $ticket->title,
                 'team_id' => $ticket->team_id,
                 'is_done' => (bool)$ticket->is_done,
+                'is_locked' => (bool)$ticket->is_locked,
                 'message' => 'Ticket aktualisiert.',
             ]);
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return ToolResult::error('ACCESS_DENIED', 'Du darfst dieses Ticket nicht bearbeiten.');
+            return ToolResult::error('ACCESS_DENIED', 'Du darfst dieses Ticket nicht bearbeiten (ggf. gesperrt oder keine Berechtigung zum Sperren/Entsperren).');
         } catch (\Throwable $e) {
             return ToolResult::error('EXECUTION_ERROR', 'Fehler beim Aktualisieren des Tickets: ' . $e->getMessage());
         }

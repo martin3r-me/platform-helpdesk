@@ -80,6 +80,7 @@ class BulkUpdateTicketsTool implements ToolContract, ToolMetadataContract
                             ],
                             'user_in_charge_id' => ['type' => 'integer'],
                             'is_done' => ['type' => 'boolean'],
+                            'is_locked' => ['type' => 'boolean', 'description' => 'Ticket sperren (true) oder entsperren (false).'],
                         ],
                         'required' => ['ticket_id'],
                     ],
