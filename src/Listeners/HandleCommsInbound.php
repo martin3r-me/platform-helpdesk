@@ -38,7 +38,7 @@ class HandleCommsInbound
             ]);
 
             $event->thread->update([
-                'context_model' => HelpdeskTicket::class,
+                'context_model' => $ticket->getMorphClass(),
                 'context_model_id' => $ticket->id,
             ]);
         }
