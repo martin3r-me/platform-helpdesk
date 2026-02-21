@@ -81,8 +81,25 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
                 $query->where('user_in_charge_id', (int)$arguments['user_in_charge_id']);
             }
 
+            // Remap user-facing filter field names to database column names
+            // so LLMs can use slot_id/board_id/group_id in filters
+            if (!empty($arguments['filters']) && is_array($arguments['filters'])) {
+                $fieldMap = [
+                    'slot_id' => 'helpdesk_board_slot_id',
+                    'board_id' => 'helpdesk_board_id',
+                    'group_id' => 'helpdesk_ticket_group_id',
+                ];
+                foreach ($arguments['filters'] as &$filter) {
+                    if (isset($filter['field'], $fieldMap[$filter['field']])) {
+                        $filter['field'] = $fieldMap[$filter['field']];
+                    }
+                }
+                unset($filter);
+            }
+
             $this->applyStandardFilters($query, $arguments, [
                 'title', 'priority', 'is_done', 'due_date', 'created_at',
+                'helpdesk_board_slot_id', 'helpdesk_board_id', 'helpdesk_ticket_group_id',
             ]);
             $this->applyStandardSearch($query, $arguments, ['title', 'notes']);
             $this->applyStandardSort($query, $arguments, [
