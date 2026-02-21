@@ -28,7 +28,7 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'POST /helpdesk/tickets - Erstellt ein Ticket. Parameter: title (required), description (optional), board_id/slot_id/group_id (optional), due_date (optional), priority/story_points (optional), user_in_charge_id (optional).';
+        return 'POST /helpdesk/tickets - Erstellt ein Ticket. Parameter: title (required), description (optional), board_id/slot_id/group_id (optional), due_date (optional), priority/story_points (optional), user_in_charge_id (optional). BACKLOG: slot_id ist optional – wenn nicht gesetzt (null), landet das Ticket im Backlog (keinem Slot zugeordnet).';
     }
 
     public function getSchema(): array
@@ -52,7 +52,7 @@ class CreateTicketTool implements ToolContract, ToolMetadataContract
                     ],
                 ],
                 'board_id' => ['type' => 'integer'],
-                'slot_id' => ['type' => 'integer'],
+                'slot_id' => ['type' => 'integer', 'description' => 'Optional: Slot-ID. Wenn nicht gesetzt oder null, landet das Ticket im Backlog (keinem Slot zugeordnet).'],
                 'group_id' => ['type' => 'integer'],
                 'due_date' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
                 'priority' => [

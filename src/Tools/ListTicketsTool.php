@@ -24,7 +24,7 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'GET /helpdesk/tickets - Listet Tickets. Parameter: team_id (optional), board_id (optional), slot_id (optional), group_id (optional), is_done (optional), priority (optional), user_in_charge_id (optional), filters/search/sort/limit/offset (optional).';
+        return 'GET /helpdesk/tickets - Listet Tickets. Parameter: team_id (optional), board_id (optional), slot_id (optional), group_id (optional), is_done (optional), priority (optional), user_in_charge_id (optional), filters/search/sort/limit/offset (optional). BACKLOG: Tickets ohne slot_id (null) sind im Backlog. Um Backlog-Tickets zu filtern, nutze filters mit {field: "slot_id", op: "is_null"}.';
     }
 
     public function getSchema(): array
@@ -35,7 +35,7 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
                 'properties' => [
                     'team_id' => ['type' => 'integer'],
                     'board_id' => ['type' => 'integer'],
-                    'slot_id' => ['type' => 'integer'],
+                    'slot_id' => ['type' => 'integer', 'description' => 'Filter nach Slot-ID. Für Backlog-Tickets (ohne Slot) nutze filters: [{field: "slot_id", op: "is_null"}].'],
                     'group_id' => ['type' => 'integer'],
                     'is_done' => ['type' => 'boolean'],
                     'priority' => ['type' => 'string'],

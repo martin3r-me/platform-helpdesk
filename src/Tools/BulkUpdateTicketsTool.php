@@ -23,7 +23,7 @@ class BulkUpdateTicketsTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'PUT /helpdesk/tickets/bulk - Aktualisiert mehrere Tickets in einem Request. Nützlich für Batch-Operationen (z.B. mehrere Tickets abschließen/verschieben/Priorität setzen) ohne viele Toolcalls.';
+        return 'PUT /helpdesk/tickets/bulk - Aktualisiert mehrere Tickets in einem Request. Nützlich für Batch-Operationen (z.B. mehrere Tickets abschließen/verschieben/Priorität setzen) ohne viele Toolcalls. team_id ist pro Item optional – wenn nicht gesetzt, wird das aktuelle Team aus dem Kontext verwendet. BACKLOG: slot_id auf null setzen = Ticket in den Backlog verschieben.';
     }
 
     public function getSchema(): array
@@ -43,7 +43,7 @@ class BulkUpdateTicketsTool implements ToolContract, ToolMetadataContract
                         'properties' => [
                             'ticket_id' => ['type' => 'integer', 'description' => 'ERFORDERLICH: ID des Tickets.'],
                             'id' => ['type' => 'integer', 'description' => 'Alias für ticket_id (Deprecated).'],
-                            'team_id' => ['type' => 'integer'],
+                            'team_id' => ['type' => 'integer', 'description' => 'Optional: Team-ID. Wenn nicht gesetzt, wird das aktuelle Team aus dem Kontext verwendet.'],
                             'title' => ['type' => 'string'],
                             'notes' => ['type' => 'string'],
                             'description' => ['type' => 'string', 'description' => 'Deprecated: Verwende notes stattdessen.'],
@@ -60,7 +60,7 @@ class BulkUpdateTicketsTool implements ToolContract, ToolMetadataContract
                                 ],
                             ],
                             'board_id' => ['type' => 'integer'],
-                            'slot_id' => ['type' => 'integer'],
+                            'slot_id' => ['type' => 'integer', 'description' => 'Slot-ID. Auf null setzen = Ticket in den Backlog verschieben.'],
                             'group_id' => ['type' => 'integer'],
                             'due_date' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
                             'priority' => [
@@ -126,6 +126,12 @@ class BulkUpdateTicketsTool implements ToolContract, ToolMetadataContract
                             ], JSON_UNESCAPED_UNICODE));
                         }
                         continue;
+                    }
+
+                    // Leere/falsy team_id entfernen, damit resolveTeam() korrekt
+                    // auf den Team-Kontext zurückfällt (konsistent mit Einzel-PUT).
+                    if (array_key_exists('team_id', $u) && empty($u['team_id'])) {
+                        unset($u['team_id']);
                     }
 
                     $res = $singleTool->execute($u, $context);

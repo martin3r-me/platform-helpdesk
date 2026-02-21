@@ -29,7 +29,7 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'PUT /helpdesk/tickets/{id} - Aktualisiert ein Ticket. Parameter: ticket_id (required).';
+        return 'PUT /helpdesk/tickets/{id} - Aktualisiert ein Ticket. Parameter: ticket_id (required). BACKLOG: slot_id auf null setzen = Ticket zurück in den Backlog verschieben (keinem Slot zugeordnet).';
     }
 
     public function getSchema(): array
@@ -55,7 +55,7 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                     ],
                 ],
                 'board_id' => ['type' => 'integer'],
-                'slot_id' => ['type' => 'integer'],
+                'slot_id' => ['type' => 'integer', 'description' => 'Slot-ID. Auf null setzen = Ticket in den Backlog verschieben (keinem Slot zugeordnet).'],
                 'group_id' => ['type' => 'integer'],
                 'due_date' => ['type' => 'string'],
                 'priority' => [

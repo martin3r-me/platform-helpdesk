@@ -59,10 +59,17 @@ class HelpdeskOverviewTool implements ToolContract, ToolMetadataContract
                         'keys' => ['id', 'uuid', 'team_id', 'user_id', 'user_in_charge_id', 'title', 'priority', 'is_done'],
                     ],
                 ],
+                'backlog' => [
+                    'description' => 'Tickets ohne slot_id (null) befinden sich im Backlog – sie sind keinem Slot zugeordnet.',
+                    'create' => 'Ticket ohne slot_id erstellen = Backlog.',
+                    'move_to_backlog' => 'slot_id auf null setzen = Ticket zurück in den Backlog.',
+                    'filter_backlog' => 'Backlog-Tickets filtern: filters=[{field: "slot_id", op: "is_null"}].',
+                ],
                 'relationships' => [
                     'board -> slots -> tickets',
                     'ticket_group -> tickets',
                     'ticket belongsTo team + optional owner/assignee',
+                    'ticket ohne slot_id = Backlog (keinem Slot zugeordnet)',
                 ],
                 'related_tools' => [
                     'boards' => [
@@ -92,6 +99,9 @@ class HelpdeskOverviewTool implements ToolContract, ToolMetadataContract
                         'create' => 'helpdesk.tickets.POST',
                         'update' => 'helpdesk.tickets.PUT',
                         'delete' => 'helpdesk.tickets.DELETE',
+                        'bulk_update' => 'helpdesk.tickets.bulk.PUT',
+                        'bulk_create' => 'helpdesk.tickets.bulk.POST',
+                        'bulk_delete' => 'helpdesk.tickets.bulk.DELETE',
                     ],
                 ],
             ]);

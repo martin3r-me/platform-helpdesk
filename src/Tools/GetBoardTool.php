@@ -21,7 +21,7 @@ class GetBoardTool implements ToolContract, ToolMetadataContract
 
     public function getDescription(): string
     {
-        return 'GET /helpdesk/boards/{id} - Ruft ein Board ab. Parameter: board_id (required), team_id (optional), include_slots (optional), include_stats (optional).';
+        return 'GET /helpdesk/boards/{id} - Ruft ein Board ab. Parameter: board_id (required), team_id (optional), include_slots (optional), include_stats (optional). BACKLOG: Tickets mit slot_id = null gehören zum Backlog (keinem Slot zugeordnet). Bei include_stats=true wird tickets_backlog (Anzahl Backlog-Tickets) mit ausgegeben.';
     }
 
     public function getSchema(): array
@@ -89,6 +89,7 @@ class GetBoardTool implements ToolContract, ToolMetadataContract
                     'tickets_total' => $board->tickets()->count(),
                     'tickets_open' => $board->tickets()->where('is_done', false)->count(),
                     'tickets_done' => $board->tickets()->where('is_done', true)->count(),
+                    'tickets_backlog' => $board->tickets()->whereNull('helpdesk_board_slot_id')->count(),
                 ];
             }
 
