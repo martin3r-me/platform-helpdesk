@@ -103,11 +103,13 @@
         $githubRepoCount = $githubRepos->count();
     @endphp
     @if($githubRepoCount > 0)
-        <div class="mb-3">
-            <span class="inline-flex items-start gap-1 text-xs text-[var(--ui-muted)]" title="{{ $githubRepos->pluck('full_name')->join(', ') }}">
-                @svg('heroicon-o-code-bracket','w-3 h-3 mt-0.5')
-                <span>{{ $githubRepoCount }} {{ $githubRepoCount === 1 ? 'Repo' : 'Repos' }}</span>
-            </span>
+        <div class="mb-3 flex items-start gap-1">
+            @svg('heroicon-o-code-bracket','w-3 h-3 mt-0.5 shrink-0 text-[var(--ui-muted)]')
+            <div class="flex flex-wrap gap-1">
+                @foreach($githubRepos as $repo)
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] leading-tight bg-[var(--ui-muted-10)] text-[var(--ui-muted)] truncate max-w-[9rem]" title="{{ $repo->full_name }}">{{ $repo->name ?? $repo->full_name }}</span>
+                @endforeach
+            </div>
         </div>
     @endif
 
