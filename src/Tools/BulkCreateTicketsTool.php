@@ -47,7 +47,7 @@ class BulkCreateTicketsTool implements ToolContract, ToolMetadataContract
                         'due_date' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
                         'priority' => [
                             'type' => 'string',
-                            'enum' => ['low', 'normal', 'high'],
+                            'enum' => ['low', 'normal', 'medium', 'high'],
                         ],
                         'story_points' => [
                             'type' => 'string',
@@ -84,7 +84,7 @@ class BulkCreateTicketsTool implements ToolContract, ToolMetadataContract
                             'due_date' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
                             'priority' => [
                                 'type' => 'string',
-                                'enum' => ['low', 'normal', 'high'],
+                                'enum' => ['low', 'normal', 'medium', 'high'],
                             ],
                             'story_points' => [
                                 'type' => 'string',

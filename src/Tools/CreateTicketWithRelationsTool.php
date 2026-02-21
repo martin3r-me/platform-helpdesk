@@ -65,7 +65,8 @@ class CreateTicketWithRelationsTool implements ToolContract, ToolMetadataContrac
                 'due_date' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
                 'priority' => [
                     'type' => 'string',
-                    'enum' => ['low', 'normal', 'high'],
+                    'description' => 'Optional: Priorität (low|normal|medium|high). "medium" ist ein Alias für "normal".',
+                    'enum' => ['low', 'normal', 'medium', 'high'],
                 ],
                 'story_points' => [
                     'type' => 'string',

@@ -60,8 +60,8 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 'due_date' => ['type' => 'string'],
                 'priority' => [
                     'type' => 'string',
-                    'description' => 'Optional: Priorität (low|normal|high). Setze auf null/"" um zu entfernen.',
-                    'enum' => ['low', 'normal', 'high'],
+                    'description' => 'Optional: Priorität (low|normal|medium|high). "medium" ist ein Alias für "normal". Setze auf null/"" um zu entfernen.',
+                    'enum' => ['low', 'normal', 'medium', 'high'],
                 ],
                 'story_points' => [
                     'type' => 'string',
@@ -174,11 +174,11 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                     $update['priority'] = null;
                 } else {
                     $normalized = strtolower((string)$prio);
-                    $enum = TicketPriority::tryFrom($normalized);
+                    $enum = TicketPriority::tryFromWithAlias($normalized);
                     if (!$enum) {
                         return ToolResult::error(
                             'VALIDATION_ERROR',
-                            'Ungültige priority. Erlaubt: low|normal|high (oder null/"" zum Entfernen).'
+                            'Ungültige priority. Erlaubt: low|normal|medium|high (oder null/"" zum Entfernen).'
                         );
                     }
                     $update['priority'] = $enum->value;

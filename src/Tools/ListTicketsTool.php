@@ -8,6 +8,7 @@ use Platform\Core\Contracts\ToolContext;
 use Platform\Core\Contracts\ToolMetadataContract;
 use Platform\Core\Contracts\ToolResult;
 use Platform\Core\Tools\Concerns\HasStandardGetOperations;
+use Platform\Helpdesk\Enums\TicketPriority;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Tools\Concerns\ResolvesHelpdeskTeam;
 
@@ -72,7 +73,9 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
                 $query->where('is_done', (bool)$arguments['is_done']);
             }
             if (isset($arguments['priority'])) {
-                $query->where('priority', (string)$arguments['priority']);
+                $prio = strtolower((string)$arguments['priority']);
+                $enum = TicketPriority::tryFromWithAlias($prio);
+                $query->where('priority', $enum ? $enum->value : $prio);
             }
             if (isset($arguments['user_in_charge_id'])) {
                 $query->where('user_in_charge_id', (int)$arguments['user_in_charge_id']);

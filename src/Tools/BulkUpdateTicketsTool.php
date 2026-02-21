@@ -65,8 +65,8 @@ class BulkUpdateTicketsTool implements ToolContract, ToolMetadataContract
                             'due_date' => ['type' => 'string', 'description' => 'YYYY-MM-DD'],
                             'priority' => [
                                 'type' => 'string',
-                                'description' => 'Priorität (low|normal|high). Setze auf null/"" um zu entfernen.',
-                                'enum' => ['low', 'normal', 'high'],
+                                'description' => 'Priorität (low|normal|medium|high). "medium" ist ein Alias für "normal". Setze auf null/"" um zu entfernen.',
+                                'enum' => ['low', 'normal', 'medium', 'high'],
                             ],
                             'story_points' => [
                                 'type' => 'string',

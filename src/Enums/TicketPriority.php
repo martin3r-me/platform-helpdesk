@@ -26,5 +26,15 @@ enum TicketPriority: string
         };
     }
 
+    /**
+     * Like tryFrom(), but also accepts common aliases (e.g. "medium" → Normal).
+     */
+    public static function tryFromWithAlias(string $value): ?self
+    {
+        $aliases = [
+            'medium' => self::Normal,
+        ];
 
+        return self::tryFrom($value) ?? ($aliases[$value] ?? null);
+    }
 }
