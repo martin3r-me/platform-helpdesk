@@ -42,10 +42,8 @@ class Ticket extends Component
         $this->ticket = $helpdeskTicket;
         $this->ticket->load('helpdeskBoard');
 
-        // Extra-Felder laden (Definitionen vom Board, Werte vom Ticket)
-        if ($this->ticket->helpdeskBoard) {
-            $this->loadExtraFieldValuesFromParent($this->ticket, $this->ticket->helpdeskBoard);
-        }
+        // Extra-Felder laden (geerbte Definitionen vom Board + eigene Werte)
+        $this->loadExtraFieldValues($this->ticket);
 
         // Ticket automatisch sperren beim Öffnen (wenn nicht bereits gesperrt)
         if (!$this->ticket->isLocked()) {

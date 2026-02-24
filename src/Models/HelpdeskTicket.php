@@ -16,9 +16,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 use Platform\ActivityLog\Traits\LogsActivity;
+use Platform\Core\Contracts\InheritsExtraFields;
 use Platform\Core\Traits\HasExtraFields;
 
-class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, SocialMediaAccountLinkableInterface
+class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, SocialMediaAccountLinkableInterface, InheritsExtraFields
 {
     use HasFactory, SoftDeletes, LogsActivity, HasExtraFields;
 
@@ -282,5 +283,13 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
     public function getTeamId(): int
     {
         return $this->team_id ?? 0;
+    }
+
+    /**
+     * Tickets erben Extra-Felder vom zugeordneten Helpdesk-Board.
+     */
+    public function extraFieldParents(): array
+    {
+        return array_filter([$this->helpdeskBoard]);
     }
 }
