@@ -482,6 +482,7 @@
 
         <x-core-extra-fields-section
             :definitions="$this->extraFieldDefinitions"
+            :model="$ticket"
         />
 
         {{-- GitHub Repositories --}}
