@@ -485,6 +485,27 @@
             :model="$ticket"
         />
 
+        {{-- Dateien --}}
+        <x-ui-panel title="Dateien">
+            @livewire('core.inline-context-files', [
+                'contextType' => get_class($ticket),
+                'contextId' => $ticket->id,
+            ], key('context-files-' . $ticket->id))
+        </x-ui-panel>
+
+        {{-- Kommunikation (Email + WhatsApp) --}}
+        @if(class_exists(\Platform\Crm\Livewire\InlineComms::class))
+            <x-ui-panel title="Kommunikation">
+                <livewire:crm.inline-comms
+                    :context-type="get_class($ticket)"
+                    :context-id="$ticket->id"
+                    :subject="$ticket->title"
+                    :recipients="[]"
+                    :key="'inline-comms-' . $ticket->id"
+                />
+            </x-ui-panel>
+        @endif
+
         {{-- GitHub Repositories --}}
         @if($linkedGithubRepositories->count() > 0 || $availableGithubRepositories->count() > 0 || !empty($githubRepositorySearch))
             <x-ui-panel title="GitHub Repositories">
