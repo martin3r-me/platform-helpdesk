@@ -3,6 +3,26 @@
         <x-ui-page-navbar title="{{ $helpdeskBoard->name }}" />
     </x-slot>
 
+    <x-slot name="actionbar">
+        <x-ui-page-actionbar :breadcrumbs="[
+            ['label' => 'Helpdesk', 'href' => route('helpdesk.dashboard'), 'icon' => 'lifebuoy'],
+            ['label' => $helpdeskBoard->name],
+        ]">
+            <x-slot name="left">
+                <x-ui-button variant="ghost" size="sm" x-data @click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })">
+                    @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
+                    <span>Einstellungen</span>
+                </x-ui-button>
+            </x-slot>
+            @can('update', $helpdeskBoard)
+                <x-ui-button variant="ghost" size="sm" wire:click="createBoardSlot">
+                    @svg('heroicon-o-square-2-stack', 'w-4 h-4')
+                    <span>Spalte</span>
+                </x-ui-button>
+            @endcan
+        </x-ui-page-actionbar>
+    </x-slot>
+
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Board-Übersicht" width="w-80" :defaultOpen="true" side="left">
             <div class="p-6 space-y-6">
@@ -11,37 +31,6 @@
                     <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-2">{{ $helpdeskBoard->name }}</h3>
                     <div class="text-sm text-[var(--ui-muted)]">{{ $helpdeskBoard->description ?? 'Keine Beschreibung' }}</div>
                 </div>
-
-				{{-- Aktionen --}}
-				<div>
-					<h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Aktionen</h3>
-					<div class="space-y-2">
-						<x-ui-button
-							variant="secondary-outline"
-							size="sm"
-							@click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })"
-							class="w-full"
-						>
-							<span class="flex items-center gap-2">
-								@svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
-								Einstellungen
-							</span>
-						</x-ui-button>
-						@can('update', $helpdeskBoard)
-							<x-ui-button
-								variant="secondary-outline"
-								size="sm"
-								wire:click="createBoardSlot"
-								class="w-full"
-							>
-								<span class="flex items-center gap-2">
-									@svg('heroicon-o-square-2-stack', 'w-4 h-4')
-									Spalte hinzufügen
-								</span>
-							</x-ui-button>
-						@endcan
-					</div>
-				</div>
 
 				{{-- Ansicht --}}
 				<div>

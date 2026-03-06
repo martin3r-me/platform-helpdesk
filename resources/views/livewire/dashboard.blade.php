@@ -3,22 +3,15 @@
         <x-ui-page-navbar title="Helpdesk" />
     </x-slot>
 
+    <x-slot name="actionbar">
+        <x-ui-page-actionbar :breadcrumbs="[
+            ['label' => 'Helpdesk', 'icon' => 'lifebuoy'],
+        ]" />
+    </x-slot>
+
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Schnellzugriff" width="w-80" :defaultOpen="true">
             <div class="p-6 space-y-6">
-                {{-- Aktionen --}}
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Aktionen</h3>
-                    <div class="space-y-2">
-                        <x-ui-button variant="secondary-outline" size="sm" :href="route('helpdesk.my-tickets')" wire:navigate class="w-full">
-                            <span class="flex items-center gap-2">
-                                @svg('heroicon-o-ticket', 'w-4 h-4')
-                                Meine Tickets
-                            </span>
-                        </x-ui-button>
-                    </div>
-                </div>
-
                 {{-- Schnellstatistiken --}}
                 <div>
                     <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-3">Schnellstatistiken</h3>

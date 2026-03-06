@@ -3,6 +3,18 @@
         <x-ui-page-navbar title="SLA-Verwaltung" icon="heroicon-o-clock" />
     </x-slot>
 
+    <x-slot name="actionbar">
+        <x-ui-page-actionbar :breadcrumbs="[
+            ['label' => 'Helpdesk', 'href' => route('helpdesk.dashboard'), 'icon' => 'lifebuoy'],
+            ['label' => 'SLA-Verwaltung'],
+        ]">
+            <x-ui-button variant="primary" size="sm" wire:click="openCreateModal">
+                @svg('heroicon-o-plus', 'w-4 h-4')
+                <span>Neues SLA</span>
+            </x-ui-button>
+        </x-ui-page-actionbar>
+    </x-slot>
+
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Übersicht" width="w-72" defaultOpen="true" storeKey="sidebarOpen" side="left">
             <div class="p-4 space-y-4">
@@ -11,13 +23,6 @@
                 <div class="p-3 bg-[color:var(--ui-muted-5)] rounded-lg">
                     <h4 class="text-sm font-semibold text-[color:var(--ui-secondary)] mb-1">Statistik</h4>
                     <div class="text-sm text-[color:var(--ui-secondary)]">Gefundene SLAs: <strong>{{ $total }}</strong></div>
-                </div>
-
-                <div>
-                    <h4 class="text-sm font-semibold text-[color:var(--ui-secondary)] mb-2">Aktionen</h4>
-                    <x-ui-button variant="primary" size="sm" wire:click="openCreateModal" class="w-full">
-                        @svg('heroicon-o-plus', 'w-4 h-4 mr-2') Neues SLA
-                    </x-ui-button>
                 </div>
             </div>
         </x-ui-page-sidebar>

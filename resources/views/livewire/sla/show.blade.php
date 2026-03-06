@@ -1,54 +1,33 @@
 <x-ui-page>
     <x-slot name="navbar">
-        <x-ui-page-navbar title="{{ $sla->name }}" icon="heroicon-o-clock" />
+        <x-ui-page-navbar title="" />
+    </x-slot>
+
+    <x-slot name="actionbar">
+        <x-ui-page-actionbar :breadcrumbs="[
+            ['label' => 'Helpdesk', 'href' => route('helpdesk.dashboard'), 'icon' => 'lifebuoy'],
+            ['label' => 'SLA-Verwaltung', 'href' => route('helpdesk.slas.index')],
+            ['label' => $sla->name],
+        ]">
+            @if($this->isDirty)
+                <x-ui-button variant="primary" size="sm" wire:click="save">
+                    @svg('heroicon-o-check', 'w-4 h-4')
+                    <span>Speichern</span>
+                </x-ui-button>
+            @endif
+            <x-ui-confirm-button
+                action="deleteSla"
+                text="Löschen"
+                confirmText="Wirklich löschen?"
+                variant="danger"
+                :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
+            />
+        </x-ui-page-actionbar>
     </x-slot>
 
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Übersicht" width="w-80" defaultOpen="true" storeKey="sidebarOpen" side="left">
             <div class="p-6 space-y-6">
-                {{-- Navigation Buttons --}}
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Navigation</h3>
-                    <div class="space-y-2">
-                        <x-ui-button
-                            variant="secondary-outline"
-                            size="sm"
-                            :href="route('helpdesk.slas.index')"
-                            wire:navigate
-                            class="w-full"
-                        >
-                            <span class="flex items-center gap-2">
-                                @svg('heroicon-o-arrow-left', 'w-4 h-4')
-                                Zurück zu SLAs
-                            </span>
-                        </x-ui-button>
-                    </div>
-                </div>
-
-                {{-- Quick Actions --}}
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Aktionen</h3>
-                    <div class="space-y-2">
-                        @if($this->isDirty)
-                            <x-ui-button x-transition.opacity variant="primary" size="sm" wire:click="save" class="w-full">
-                                <span class="inline-flex items-center gap-2">
-                                    @svg('heroicon-o-check','w-4 h-4')
-                                    Speichern
-                                </span>
-                            </x-ui-button>
-                        @endif
-                        <x-ui-confirm-button
-                            action="deleteSla"
-                            text="SLA löschen"
-                            confirmText="Wirklich löschen?"
-                            variant="danger"
-                            size="sm"
-                            :icon="@svg('heroicon-o-trash', 'w-4 h-4')->toHtml()"
-                            class="w-full"
-                        />
-                    </div>
-                </div>
-
                 {{-- SLA Info --}}
                 <div>
                     <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">SLA Info</h3>
