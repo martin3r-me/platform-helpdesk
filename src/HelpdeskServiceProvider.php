@@ -12,7 +12,9 @@ use Livewire\Livewire;
 use Platform\Core\PlatformCore;
 use Platform\Core\Routing\ModuleRouter;
 use Platform\Crm\Events\CommsInboundReceived;
+use Platform\Crm\Events\CommsWhatsAppInboundReceived;
 use Platform\Helpdesk\Listeners\HandleCommsInbound;
+use Platform\Helpdesk\Listeners\HandleWhatsAppInbound;
 
 // Optional: Models und Policies absichern
 use Platform\Helpdesk\Models\HelpdeskTicket;
@@ -108,8 +110,9 @@ class HelpdeskServiceProvider extends ServiceProvider
             Gate::policy(HelpdeskKnowledgeEntry::class, HelpdeskKnowledgeEntryPolicy::class);
         }
 
-        // Inbound-Listener registrieren (Ticket-Erstellung bei E-Mail-Eingang)
+        // Inbound-Listener registrieren (Ticket-Erstellung bei E-Mail-/WhatsApp-Eingang)
         Event::listen(CommsInboundReceived::class, HandleCommsInbound::class);
+        Event::listen(CommsWhatsAppInboundReceived::class, HandleWhatsAppInbound::class);
 
         // Tools registrieren (loose gekoppelt - für AI/Chat)
         $this->registerTools();

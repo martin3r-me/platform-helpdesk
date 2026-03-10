@@ -3,24 +3,29 @@
 namespace Platform\Helpdesk\Listeners;
 
 use Illuminate\Support\Facades\Log;
-use Platform\Crm\Events\CommsInboundReceived;
+use Platform\Crm\Events\CommsWhatsAppInboundReceived;
 use Platform\Crm\Models\CommsChannelContext;
-use Platform\Crm\Models\CommsEmailInboundMail;
+use Platform\Crm\Models\CommsWhatsAppMessage;
+use Platform\Crm\Models\CommsWhatsAppThread;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Enums\TicketPriority;
 
-class HandleCommsInbound
+class HandleWhatsAppInbound
 {
-    public function handle(CommsInboundReceived $event): void
+    public function handle(CommsWhatsAppInboundReceived $event): void
     {
+        $channel = $event->channel;
+        $thread = $event->thread;
+        $message = $event->message;
+
         if (!$event->isNewThread) {
-            $this->handleFollowUp($event);
+            $this->handleFollowUp($thread, $message);
             return;
         }
 
         $contexts = CommsChannelContext::query()
-            ->where('comms_channel_id', $event->channel->id)
+            ->where('comms_channel_id', $channel->id)
             ->where('context_model', HelpdeskBoard::class)
             ->get();
 
@@ -31,29 +36,30 @@ class HandleCommsInbound
                 continue;
             }
 
+            $title = $message->body
+                ? mb_substr($message->body, 0, 100)
+                : 'Inbound WhatsApp';
+
             $ticket = HelpdeskTicket::create([
-                'title' => $event->mail->subject ?: 'Inbound E-Mail',
-                'notes' => $event->mail->text_body ? mb_substr($event->mail->text_body, 0, 5000) : null,
+                'title' => $title,
+                'notes' => $message->body ? mb_substr($message->body, 0, 5000) : null,
                 'helpdesk_board_id' => $board->id,
                 'team_id' => $board->team_id,
                 'user_id' => $board->user_id,
                 'priority' => TicketPriority::Normal,
             ]);
 
-            $event->thread->update([
+            $thread->update([
                 'context_model' => $ticket->getMorphClass(),
                 'context_model_id' => $ticket->id,
             ]);
 
-            // Attach email attachments (incl. CID inline images) to the ticket
-            $this->attachEmailFilesToTicket($event->mail, $event->thread, $ticket);
+            $this->attachWhatsAppFilesToTicket($message, $thread, $ticket);
         }
     }
 
-    private function handleFollowUp(CommsInboundReceived $event): void
+    private function handleFollowUp(CommsWhatsAppThread $thread, CommsWhatsAppMessage $message): void
     {
-        $thread = $event->thread;
-
         if ($thread->context_model !== (new HelpdeskTicket)->getMorphClass()) {
             return;
         }
@@ -64,24 +70,20 @@ class HandleCommsInbound
             return;
         }
 
-        $this->attachEmailFilesToTicket($event->mail, $thread, $ticket);
+        $this->attachWhatsAppFilesToTicket($message, $thread, $ticket);
     }
 
-    /**
-     * Attach email attachments to the ticket as ContextFiles.
-     * Pattern analog zu HandleCommsInboundForRecruiting::attachEmailFilesToApplicant()
-     */
-    private function attachEmailFilesToTicket(
-        CommsEmailInboundMail $mail,
-        $thread,
+    private function attachWhatsAppFilesToTicket(
+        CommsWhatsAppMessage $message,
+        CommsWhatsAppThread $thread,
         HelpdeskTicket $ticket,
     ): void {
-        if (!method_exists($mail, 'getFileReferencesArray')) {
+        if (!method_exists($message, 'getFileReferencesArray')) {
             return;
         }
 
         try {
-            $fileRefs = $mail->getFileReferencesArray();
+            $fileRefs = $message->getFileReferencesArray();
             if (empty($fileRefs)) {
                 return;
             }
@@ -94,18 +96,18 @@ class HandleCommsInbound
 
                 $ticket->addFileReference($contextFileId, [
                     'title' => $fileRef['title'] ?? 'Anhang',
-                    'source' => 'helpdesk_inbound_mail',
-                    'inbound_mail_id' => $mail->id,
+                    'source' => 'helpdesk_inbound_whatsapp',
+                    'whatsapp_message_id' => $message->id,
                     'thread_id' => $thread->id,
                 ]);
             }
 
-            Log::info('[Helpdesk] Email attachments linked to ticket', [
+            Log::info('[Helpdesk] WhatsApp attachments linked to ticket', [
                 'ticket_id' => $ticket->id,
                 'file_count' => count($fileRefs),
             ]);
         } catch (\Throwable $e) {
-            Log::warning('[Helpdesk] Failed to attach email files to ticket', [
+            Log::warning('[Helpdesk] Failed to attach WhatsApp files to ticket', [
                 'ticket_id' => $ticket->id,
                 'error' => $e->getMessage(),
             ]);
