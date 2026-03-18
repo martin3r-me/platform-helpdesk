@@ -800,19 +800,21 @@
     @if($ticket->isLocked() && $ticket->locked_by_user_id === auth()->id())
         @script
         <script>
-            // Unlock bei Browser-Navigation / Tab schließen
-            const handleBeforeUnload = () => {
-                $wire.call('unlockTicket');
+            const unlockUrl = @js(route('helpdesk.tickets.unlock', $ticket));
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+            const sendUnlock = () => {
+                const data = new FormData();
+                data.append('_token', csrfToken);
+                navigator.sendBeacon(unlockUrl, data);
             };
-            window.addEventListener('beforeunload', handleBeforeUnload);
 
-            // Unlock bei Livewire-Navigation (wire:navigate)
-            document.addEventListener('livewire:navigating', handleBeforeUnload);
+            window.addEventListener('beforeunload', sendUnlock);
+            document.addEventListener('livewire:navigating', sendUnlock);
 
-            // Cleanup wenn Komponente zerstört wird
             $cleanup(() => {
-                window.removeEventListener('beforeunload', handleBeforeUnload);
-                document.removeEventListener('livewire:navigating', handleBeforeUnload);
+                window.removeEventListener('beforeunload', sendUnlock);
+                document.removeEventListener('livewire:navigating', sendUnlock);
             });
         </script>
         @endscript

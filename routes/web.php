@@ -17,6 +17,13 @@ Route::get('/boards/{helpdeskBoard}', Board::class)
 Route::get('/tickets/{helpdeskTicket}', Ticket::class)
     ->name('helpdesk.tickets.show');
 
+Route::post('/tickets/{helpdeskTicket}/unlock', function(\Platform\Helpdesk\Models\HelpdeskTicket $helpdeskTicket) {
+    if ($helpdeskTicket->isLocked() && $helpdeskTicket->locked_by_user_id === \Illuminate\Support\Facades\Auth::id()) {
+        $helpdeskTicket->unlock();
+    }
+    return response()->noContent();
+})->name('helpdesk.tickets.unlock');
+
 Route::get('/slas', SlaIndex::class)->name('helpdesk.slas.index');
 Route::get('/slas/{helpdeskBoardSla}', SlaShow::class)->name('helpdesk.slas.show');
 
