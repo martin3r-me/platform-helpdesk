@@ -63,28 +63,28 @@
                         @endcan
 
                         {{-- Ticket Sperren/Entsperren --}}
-                        @can('lock', $ticket)
-                            @if($ticket->isLocked())
+                        @if($ticket->isLocked())
+                            @can('unlock', $ticket)
                                 <button type="button" wire:click="unlockTicket"
                                     class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-warning)] bg-[var(--ui-warning-5)] hover:bg-[var(--ui-warning-10)] transition-colors">
                                     <span class="text-sm font-medium text-[var(--ui-warning)]">Gesperrt</span>
                                     @svg('heroicon-o-lock-closed', 'w-5 h-5 text-[var(--ui-warning)]')
                                 </button>
                             @else
+                                <div class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-warning)] bg-[var(--ui-warning-5)]">
+                                    <span class="text-sm font-medium text-[var(--ui-warning)]">Gesperrt</span>
+                                    @svg('heroicon-o-lock-closed', 'w-5 h-5 text-[var(--ui-warning)]')
+                                </div>
+                            @endcan
+                        @else
+                            @can('lock', $ticket)
                                 <button type="button" wire:click="lockTicket"
                                     class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-muted-5)] hover:bg-[var(--ui-primary-5)] transition-colors">
                                     <span class="text-sm font-medium text-[var(--ui-secondary)]">Sperren</span>
                                     @svg('heroicon-o-lock-open', 'w-5 h-5 text-[var(--ui-muted)]')
                                 </button>
-                            @endif
-                        @else
-                            @if($ticket->isLocked())
-                                <div class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-warning)] bg-[var(--ui-warning-5)]">
-                                    <span class="text-sm font-medium text-[var(--ui-warning)]">Gesperrt</span>
-                                    @svg('heroicon-o-lock-closed', 'w-5 h-5 text-[var(--ui-warning)]')
-                                </div>
-                            @endif
-                        @endcan
+                            @endcan
+                        @endif
                     </div>
                 </div>
 
@@ -795,5 +795,27 @@
             </div>
         </x-slot>
     </x-ui-modal>
+
+    {{-- Auto-Unlock beim Verlassen der Seite --}}
+    @if($ticket->isLocked() && $ticket->locked_by_user_id === auth()->id())
+        @script
+        <script>
+            // Unlock bei Browser-Navigation / Tab schließen
+            const handleBeforeUnload = () => {
+                $wire.call('unlockTicket');
+            };
+            window.addEventListener('beforeunload', handleBeforeUnload);
+
+            // Unlock bei Livewire-Navigation (wire:navigate)
+            document.addEventListener('livewire:navigating', handleBeforeUnload);
+
+            // Cleanup wenn Komponente zerstört wird
+            $cleanup(() => {
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+                document.removeEventListener('livewire:navigating', handleBeforeUnload);
+            });
+        </script>
+        @endscript
+    @endif
 
 </x-ui-page>

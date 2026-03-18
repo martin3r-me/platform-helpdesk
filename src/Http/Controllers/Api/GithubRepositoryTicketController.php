@@ -315,7 +315,6 @@ class GithubRepositoryTicketController extends ApiController
 
         // Ticket entsperren (aber nicht als done markieren)
         $ticket->unlock();
-        $ticket->save();
 
         // Ticket-Daten formatieren
         $ticketData = [
@@ -368,7 +367,6 @@ class GithubRepositoryTicketController extends ApiController
 
         // Ticket entsperren
         $ticket->unlock();
-        $ticket->save();
 
         $ticketData = [
             'id' => $ticket->id,

@@ -285,6 +285,11 @@ class Ticket extends Component
 
     public function unlockTicket()
     {
+        // Nur entsperren wenn es vom aktuellen User gesperrt ist oder User berechtigt ist
+        if (!$this->ticket->isLocked()) {
+            return;
+        }
+
         $this->authorize('unlock', $this->ticket);
         $this->ticket->unlock();
         session()->flash('success', 'Ticket wurde entsperrt.');
