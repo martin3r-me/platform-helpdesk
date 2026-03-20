@@ -40,10 +40,13 @@ class HandleCommsInbound
                 'priority' => TicketPriority::Normal,
             ]);
 
-            $event->thread->update([
-                'context_model' => $ticket->getMorphClass(),
-                'context_model_id' => $ticket->id,
-            ]);
+            $event->thread->addContext($ticket->getMorphClass(), $ticket->id, 'helpdesk_inbound');
+            if (!$event->thread->context_model) {
+                $event->thread->updateQuietly([
+                    'context_model' => $ticket->getMorphClass(),
+                    'context_model_id' => $ticket->id,
+                ]);
+            }
 
             // Attach email attachments (incl. CID inline images) to the ticket
             $this->attachEmailFilesToTicket($event->mail, $event->thread, $ticket);
@@ -54,11 +57,17 @@ class HandleCommsInbound
     {
         $thread = $event->thread;
 
-        if ($thread->context_model !== (new HelpdeskTicket)->getMorphClass()) {
+        // Find the ticket context from the pivot table
+        $ticketMorphClass = (new HelpdeskTicket)->getMorphClass();
+        $ticketContext = $thread->contexts()
+            ->where('context_model', $ticketMorphClass)
+            ->first();
+
+        if (!$ticketContext) {
             return;
         }
 
-        $ticket = HelpdeskTicket::find($thread->context_model_id);
+        $ticket = HelpdeskTicket::find($ticketContext->context_model_id);
 
         if (!$ticket) {
             return;

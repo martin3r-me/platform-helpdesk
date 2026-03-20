@@ -49,10 +49,13 @@ class HandleWhatsAppInbound
                 'priority' => TicketPriority::Normal,
             ]);
 
-            $thread->update([
-                'context_model' => $ticket->getMorphClass(),
-                'context_model_id' => $ticket->id,
-            ]);
+            $thread->addContext($ticket->getMorphClass(), $ticket->id, 'helpdesk_inbound');
+            if (!$thread->context_model) {
+                $thread->updateQuietly([
+                    'context_model' => $ticket->getMorphClass(),
+                    'context_model_id' => $ticket->id,
+                ]);
+            }
 
             $this->attachWhatsAppFilesToTicket($message, $thread, $ticket);
         }
@@ -60,11 +63,17 @@ class HandleWhatsAppInbound
 
     private function handleFollowUp(CommsWhatsAppThread $thread, CommsWhatsAppMessage $message): void
     {
-        if ($thread->context_model !== (new HelpdeskTicket)->getMorphClass()) {
+        // Find the ticket context from the pivot table
+        $ticketMorphClass = (new HelpdeskTicket)->getMorphClass();
+        $ticketContext = $thread->contexts()
+            ->where('context_model', $ticketMorphClass)
+            ->first();
+
+        if (!$ticketContext) {
             return;
         }
 
-        $ticket = HelpdeskTicket::find($thread->context_model_id);
+        $ticket = HelpdeskTicket::find($ticketContext->context_model_id);
 
         if (!$ticket) {
             return;
