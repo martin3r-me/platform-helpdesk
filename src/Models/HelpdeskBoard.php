@@ -4,6 +4,7 @@ namespace Platform\Helpdesk\Models;
 
 use Platform\Core\Contracts\HasDisplayName;
 use Platform\Core\Traits\HasExtraFields;
+use Platform\Organization\Traits\HasOrganizationContexts;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class HelpdeskBoard extends Model implements HasDisplayName
 {
-    use HasExtraFields;
+    use HasExtraFields, HasOrganizationContexts;
     protected $fillable = [
         'uuid',
         'name',
