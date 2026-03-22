@@ -7,7 +7,6 @@ use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Enums\TicketEscalationLevel;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
 use Platform\Core\Contracts\HasDisplayName;
-use Platform\Core\Contracts\HasTimeAncestors;
 use Platform\Integrations\Contracts\SocialMediaAccountLinkableInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,7 +19,7 @@ use Platform\Core\Contracts\InheritsExtraFields;
 use Platform\Core\Traits\HasExtraFields;
 use Platform\Core\Traits\HasContextFileReferences;
 
-class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, SocialMediaAccountLinkableInterface, InheritsExtraFields
+class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccountLinkableInterface, InheritsExtraFields
 {
     use HasFactory, SoftDeletes, LogsActivity, HasExtraFields, HasContextFileReferences;
 
@@ -226,27 +225,6 @@ class HelpdeskTicket extends Model implements HasDisplayName, HasTimeAncestors, 
     public function isCritical(): bool
     {
         return $this->escalation_level?->isCritical() ?? false;
-    }
-
-    /**
-     * Gibt alle Vorfahren-Kontexte für die Zeitkaskade zurück.
-     * Ticket → Board (als Root)
-     */
-    public function timeAncestors(): array
-    {
-        $ancestors = [];
-
-        // Board als Root-Kontext (bei Tickets ist das Board immer der Root)
-        if ($this->helpdeskBoard) {
-            $ancestors[] = [
-                'type' => get_class($this->helpdeskBoard),
-                'id' => $this->helpdeskBoard->id,
-                'is_root' => true, // Board ist Root-Kontext für Tickets
-                'label' => $this->helpdeskBoard->getDisplayName() ?? $this->helpdeskBoard->name ?? 'Unbekanntes Board',
-            ];
-        }
-
-        return $ancestors;
     }
 
     /**
