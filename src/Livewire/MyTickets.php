@@ -54,7 +54,7 @@ class MyTickets extends Component
                       ->whereNotNull('helpdesk_board_slot_id'); // zuständiges Board-Ticket im Slot
                 });
             })
-            ->orderBy('order')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         $inbox = (object) [
@@ -79,7 +79,7 @@ class MyTickets extends Component
                         ->whereNotNull('helpdesk_board_slot_id');
                   });
               })
-              ->orderBy('order');
+              ->orderBy('created_at', 'desc');
         }])
         ->where('user_id', $userId)
         ->orderBy('order')

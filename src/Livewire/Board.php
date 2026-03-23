@@ -54,8 +54,7 @@ class Board extends Component
         $backlog->tasks = $this->helpdeskBoard->tickets()
             ->whereNull('helpdesk_board_slot_id')
             ->where('is_done', false)
-            ->orderBy('slot_order')
-            ->orderBy('order')
+            ->orderBy('created_at', 'desc')
             ->get();
         $this->groups->push($backlog);
 
@@ -68,8 +67,7 @@ class Board extends Component
             $slot->isBacklog = false;
             $slot->tasks = $slot->tickets()
                 ->where('is_done', false)
-                ->orderBy('slot_order')
-                ->orderBy('order')
+                ->orderBy('created_at', 'desc')
                 ->get();
             $this->groups->push($slot);
         });
