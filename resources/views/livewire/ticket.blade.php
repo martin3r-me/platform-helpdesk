@@ -249,13 +249,26 @@
                     </div>
         </x-ui-panel>
 
-        {{-- Dateien --}}
-        <x-ui-panel title="Dateien">
-            @livewire('core.inline-context-files', [
-                'contextType' => get_class($ticket),
-                'contextId' => $ticket->id,
-            ], key('context-files-' . $ticket->id))
-        </x-ui-panel>
+        {{-- Dateien (collapsible) --}}
+        <div x-data="{ open: localStorage.getItem('ticket-files-{{ $ticket->id }}') === 'true' }"
+             x-effect="localStorage.setItem('ticket-files-{{ $ticket->id }}', open)"
+             class="bg-surface rounded-lg shadow-sm border border-muted">
+            <button @click="open = !open" class="w-full flex items-center justify-between p-4 text-left hover:bg-[var(--ui-muted-5)] rounded-lg transition-colors">
+                <span class="flex items-center gap-2 text-sm font-semibold text-secondary">
+                    @svg('heroicon-o-paper-clip', 'w-4 h-4')
+                    Dateien
+                </span>
+                <svg :class="open && 'rotate-180'" class="w-4 h-4 text-[var(--ui-muted)] transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+            </button>
+            <div x-show="open" x-collapse>
+                <div class="px-4 pb-4">
+                    @livewire('core.inline-context-files', [
+                        'contextType' => get_class($ticket),
+                        'contextId' => $ticket->id,
+                    ], key('context-files-' . $ticket->id))
+                </div>
+            </div>
+        </div>
 
         {{-- Kommunikation (Email + WhatsApp) --}}
         @if(class_exists(\Platform\Crm\Livewire\InlineComms::class))
