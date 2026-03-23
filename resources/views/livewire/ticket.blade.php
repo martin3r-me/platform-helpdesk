@@ -132,11 +132,11 @@
 
     <x-ui-page-container spacing="space-y-8">
         {{-- Header Block --}}
-        <div class="bg-white rounded-lg border border-[var(--ui-border)]/60 p-8 {{ $ticket->isLocked() ? 'border-[var(--ui-warning)] bg-[var(--ui-warning-5)]' : '' }}">
+        <div class="bg-white rounded-lg border border-[var(--ui-border)]/60 py-3 px-5 {{ $ticket->isLocked() ? 'border-[var(--ui-warning)] bg-[var(--ui-warning-5)]' : '' }}">
             @if($ticket->isLocked())
-                <div class="mb-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--ui-warning)]/10 border border-[var(--ui-warning)]/30">
-                    @svg('heroicon-o-lock-closed', 'w-5 h-5 text-[var(--ui-warning)]')
-                    <span class="text-sm font-medium text-[var(--ui-warning)]">
+                <div class="mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--ui-warning)]/10 border border-[var(--ui-warning)]/30 max-h-9">
+                    @svg('heroicon-o-lock-closed', 'w-4 h-4 text-[var(--ui-warning)]')
+                    <span class="text-xs font-medium text-[var(--ui-warning)]">
                         Ticket ist gesperrt
                         @if($ticket->lockedByUser)
                             (von {{ $ticket->lockedByUser->name }})
@@ -149,7 +149,7 @@
             @endif
             <div class="flex items-start justify-between">
                 <div class="flex-1 min-w-0">
-                    <h1 class="text-3xl font-bold text-[var(--ui-secondary)] mb-4 tracking-tight">{{ $ticket->title }}</h1>
+                    <h2 class="text-xl font-bold text-[var(--ui-secondary)] mb-1.5 tracking-tight">{{ $ticket->title }}</h2>
                     <div class="flex items-center gap-6 text-sm text-[var(--ui-muted)]">
                         @if($ticket->helpdeskBoard)
                             <span class="flex items-center gap-2">
