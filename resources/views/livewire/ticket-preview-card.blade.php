@@ -4,6 +4,25 @@
     $isDone = $ticket->is_done ?? false;
     $isEscalated = $ticket->isEscalated() ?? false;
     $isCritical = $ticket->isCritical() ?? false;
+
+    // CRM Contact via EntityLink
+    $crmContact = null;
+    if (class_exists(\Platform\Crm\Models\CrmContact::class)) {
+        try {
+            $linkService = app(\Platform\Core\Services\EntityLinkService::class);
+            $links = $linkService->getLinked(
+                $ticket->team_id,
+                get_class($ticket),
+                $ticket->id,
+                \Platform\Crm\Models\CrmContact::class,
+                'crm_contact',
+            );
+            if ($links->isNotEmpty()) {
+                $linked = $links->first()->getLinkedEntity(get_class($ticket), $ticket->id);
+                $crmContact = \Platform\Crm\Models\CrmContact::find($linked['id']);
+            }
+        } catch (\Throwable $e) {}
+    }
 @endphp
 <x-ui-kanban-card
     :title="''"
@@ -93,6 +112,26 @@
             <span class="inline-flex items-start gap-1 text-xs text-[var(--ui-muted)] min-w-0">
                 @svg('heroicon-o-rectangle-stack','w-2.5 h-2.5 mt-0.5')
                 <span class="truncate max-w-[9rem]">{{ $ticket->helpdeskBoard->name }}</span>
+            </span>
+        </div>
+    @endif
+
+    <!-- Eingang -->
+    @if($ticket->created_at)
+        <div class="mb-3">
+            <span class="inline-flex items-start gap-1 text-xs text-[var(--ui-muted)]">
+                @svg('heroicon-o-clock','w-3 h-3 mt-0.5')
+                <span>{{ $ticket->created_at->format('d.m.Y H:i') }}</span>
+            </span>
+        </div>
+    @endif
+
+    <!-- CRM Kontakt -->
+    @if($crmContact)
+        <div class="mb-3">
+            <span class="inline-flex items-start gap-1 text-xs text-[var(--ui-muted)] min-w-0">
+                @svg('heroicon-o-user','w-3 h-3 mt-0.5')
+                <span class="truncate max-w-[9rem]">{{ $crmContact->first_name }} {{ $crmContact->last_name }}</span>
             </span>
         </div>
     @endif
