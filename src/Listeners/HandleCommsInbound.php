@@ -14,66 +14,83 @@ class HandleCommsInbound
 {
     public function handle(CommsInboundReceived $event): void
     {
-        if (!$event->isNewThread) {
-            $this->handleFollowUp($event);
-            return;
-        }
-
-        $contexts = CommsChannelContext::query()
-            ->where('comms_channel_id', $event->channel->id)
-            ->where('context_model', HelpdeskBoard::class)
-            ->get();
-
-        foreach ($contexts as $context) {
-            $board = HelpdeskBoard::find($context->context_model_id);
-
-            if (!$board) {
-                continue;
+        try {
+            if (!$event->isNewThread) {
+                $this->handleFollowUp($event);
+                return;
             }
 
-            $ticket = HelpdeskTicket::create([
-                'title' => $event->mail->subject ?: 'Inbound E-Mail',
-                'notes' => $event->mail->text_body ? mb_substr($event->mail->text_body, 0, 5000) : null,
-                'helpdesk_board_id' => $board->id,
-                'team_id' => $board->team_id,
-                'user_id' => $board->user_id,
-                'priority' => TicketPriority::Normal,
-            ]);
+            $contexts = CommsChannelContext::query()
+                ->where('comms_channel_id', $event->channel->id)
+                ->where('context_model', HelpdeskBoard::class)
+                ->get();
 
-            $event->thread->addContext($ticket->getMorphClass(), $ticket->id, 'helpdesk_inbound');
-            if (!$event->thread->context_model) {
-                $event->thread->updateQuietly([
-                    'context_model' => $ticket->getMorphClass(),
-                    'context_model_id' => $ticket->id,
+            foreach ($contexts as $context) {
+                $board = HelpdeskBoard::find($context->context_model_id);
+
+                if (!$board) {
+                    continue;
+                }
+
+                $ticket = HelpdeskTicket::create([
+                    'title' => $event->mail->subject ?: 'Inbound E-Mail',
+                    'notes' => $event->mail->text_body ? mb_substr($event->mail->text_body, 0, 5000) : null,
+                    'helpdesk_board_id' => $board->id,
+                    'team_id' => $board->team_id,
+                    'user_id' => $board->user_id,
+                    'priority' => TicketPriority::Normal,
                 ]);
-            }
 
-            // Attach email attachments (incl. CID inline images) to the ticket
-            $this->attachEmailFilesToTicket($event->mail, $event->thread, $ticket);
+                $event->thread->addContext($ticket->getMorphClass(), $ticket->id, 'helpdesk_inbound');
+                if (!$event->thread->context_model) {
+                    $event->thread->updateQuietly([
+                        'context_model' => $ticket->getMorphClass(),
+                        'context_model_id' => $ticket->id,
+                    ]);
+                }
+
+                // Attach email attachments (incl. CID inline images) to the ticket
+                $this->attachEmailFilesToTicket($event->mail, $event->thread, $ticket);
+            }
+        } catch (\Throwable $e) {
+            Log::error('[Helpdesk] Failed to process email inbound', [
+                'channel_id' => $event->channel->id,
+                'mail_id' => $event->mail->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
     private function handleFollowUp(CommsInboundReceived $event): void
     {
-        $thread = $event->thread;
+        try {
+            $thread = $event->thread;
 
-        // Find the ticket context from the pivot table
-        $ticketMorphClass = (new HelpdeskTicket)->getMorphClass();
-        $ticketContext = $thread->contexts()
-            ->where('context_model', $ticketMorphClass)
-            ->first();
+            // Find the ticket context from the pivot table
+            $ticketMorphClass = (new HelpdeskTicket)->getMorphClass();
+            $ticketContext = $thread->contexts()
+                ->where('context_model', $ticketMorphClass)
+                ->first();
 
-        if (!$ticketContext) {
-            return;
+            if (!$ticketContext) {
+                return;
+            }
+
+            $ticket = HelpdeskTicket::find($ticketContext->context_model_id);
+
+            if (!$ticket) {
+                return;
+            }
+
+            $this->attachEmailFilesToTicket($event->mail, $thread, $ticket);
+        } catch (\Throwable $e) {
+            Log::error('[Helpdesk] Failed to process email follow-up', [
+                'channel_id' => $event->channel->id,
+                'mail_id' => $event->mail->id,
+                'thread_id' => $event->thread->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
         }
-
-        $ticket = HelpdeskTicket::find($ticketContext->context_model_id);
-
-        if (!$ticket) {
-            return;
-        }
-
-        $this->attachEmailFilesToTicket($event->mail, $thread, $ticket);
     }
 
     /**
