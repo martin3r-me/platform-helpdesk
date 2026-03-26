@@ -52,6 +52,7 @@ class HelpdeskServiceProvider extends ServiceProvider
         // Morph-Map für Extra-Fields (damit core.extra_fields.PUT die Entity findet)
         Relation::morphMap([
             'helpdesk_ticket' => \Platform\Helpdesk\Models\HelpdeskTicket::class,
+            'helpdesk_board' => \Platform\Helpdesk\Models\HelpdeskBoard::class,
         ]);
 
         // Modul-Registrierung nur, wenn Config & Tabelle vorhanden
