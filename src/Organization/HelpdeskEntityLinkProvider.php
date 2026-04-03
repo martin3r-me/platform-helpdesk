@@ -3,6 +3,7 @@
 namespace Platform\Helpdesk\Organization;
 
 use Illuminate\Database\Eloquent\Builder;
+use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Organization\Contracts\EntityLinkProvider;
 
@@ -70,5 +71,45 @@ class HelpdeskEntityLinkProvider implements EntityLinkProvider
         return [
             'helpdesk_ticket' => [HelpdeskTicket::class, []],
         ];
+    }
+
+    public function metrics(string $morphAlias, array $linksByEntity): array
+    {
+        if ($morphAlias !== 'helpdesk_ticket') {
+            return [];
+        }
+
+        $allIds = [];
+        foreach ($linksByEntity as $ids) {
+            $allIds = array_merge($allIds, $ids);
+        }
+        $allIds = array_values(array_unique($allIds));
+
+        if (empty($allIds)) {
+            return [];
+        }
+
+        $doneIds = HelpdeskTicket::whereIn('id', $allIds)
+            ->where('is_done', true)
+            ->pluck('id')
+            ->flip()
+            ->toArray();
+
+        $result = [];
+        foreach ($linksByEntity as $entityId => $ids) {
+            $total = count($ids);
+            $done = 0;
+            foreach ($ids as $id) {
+                if (isset($doneIds[$id])) {
+                    $done++;
+                }
+            }
+            $result[$entityId] = [
+                'items_total' => $total,
+                'items_done' => $done,
+            ];
+        }
+
+        return $result;
     }
 }
