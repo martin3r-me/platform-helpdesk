@@ -38,7 +38,7 @@ class HelpdeskTicketObserver
                 'noticable_type' => HelpdeskTicket::class,
                 'noticable_id'   => $ticket->id,
                 'team_id'        => $ticket->team_id,
-                'metadata'       => ['url' => route('helpdesk.tickets.show', $ticket->id)],
+                'metadata'       => ['url' => $this->ticketUrl($ticket)],
             ],
             $recipients
         );
@@ -63,12 +63,24 @@ class HelpdeskTicketObserver
                             'noticable_type' => HelpdeskTicket::class,
                             'noticable_id'   => $ticket->id,
                             'team_id'        => $ticket->team_id,
-                            'metadata'       => ['url' => route('helpdesk.tickets.show', $ticket->id)],
+                            'metadata'       => ['url' => $this->ticketUrl($ticket)],
                         ],
                         [$recipient]
                     );
                 }
             }
+        }
+    }
+
+    /**
+     * URL zum Ticket — route() funktioniert nicht in non-web Kontexten (z.B. Inbound-Webhook).
+     */
+    private function ticketUrl(HelpdeskTicket $ticket): string
+    {
+        try {
+            return route('helpdesk.tickets.show', $ticket->id);
+        } catch (\Throwable) {
+            return rtrim(config('app.url'), '/') . '/helpdesk/tickets/' . $ticket->id;
         }
     }
 }
