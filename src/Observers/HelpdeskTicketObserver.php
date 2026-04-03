@@ -18,9 +18,13 @@ class HelpdeskTicketObserver
             return;
         }
 
-        $recipients = User::whereHas('teams', fn ($q) => $q->where('teams.id', $ticket->team_id))
-            ->where('id', '!=', Auth::id())
-            ->get();
+        $query = User::whereHas('teams', fn ($q) => $q->where('teams.id', $ticket->team_id));
+
+        if (Auth::id()) {
+            $query->where('id', '!=', Auth::id());
+        }
+
+        $recipients = $query->get();
 
         if ($recipients->isEmpty()) {
             return;
