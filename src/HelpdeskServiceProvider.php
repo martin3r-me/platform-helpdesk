@@ -55,6 +55,14 @@ class HelpdeskServiceProvider extends ServiceProvider
             'helpdesk_board' => \Platform\Helpdesk\Models\HelpdeskBoard::class,
         ]);
 
+        // EntityLinkProvider registrieren (loose Kopplung mit Organization-Modul)
+        try {
+            resolve(\Platform\Organization\Services\EntityLinkRegistry::class)
+                ->register(new \Platform\Helpdesk\Organization\HelpdeskEntityLinkProvider());
+        } catch (\Throwable $e) {
+            // Organization-Modul nicht geladen
+        }
+
         // Modul-Registrierung nur, wenn Config & Tabelle vorhanden
         if (
             Schema::hasTable('modules')
@@ -62,6 +70,7 @@ class HelpdeskServiceProvider extends ServiceProvider
             PlatformCore::registerModule([
                 'key'        => 'helpdesk',
                 'title'      => 'Helpdesk',
+                'group'      => 'tools',
                 'routing'    => config('helpdesk.routing'),
                 'guard'      => config('helpdesk.guard'),
                 'navigation' => config('helpdesk.navigation'),
