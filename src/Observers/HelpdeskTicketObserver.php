@@ -3,6 +3,7 @@
 namespace Platform\Helpdesk\Observers;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Platform\Core\Models\User;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Notifications\NotificationDispatcher;
@@ -14,7 +15,14 @@ class HelpdeskTicketObserver
      */
     public function created(HelpdeskTicket $ticket): void
     {
+        Log::info('[HelpdeskTicketObserver] created() fired', [
+            'ticket_id' => $ticket->id,
+            'team_id' => $ticket->team_id,
+            'auth_id' => Auth::id(),
+        ]);
+
         if (! $ticket->team_id) {
+            Log::warning('[HelpdeskTicketObserver] No team_id, skipping');
             return;
         }
 
@@ -26,11 +34,17 @@ class HelpdeskTicketObserver
 
         $recipients = $query->get();
 
+        Log::info('[HelpdeskTicketObserver] Recipients', [
+            'count' => $recipients->count(),
+            'ids' => $recipients->pluck('id')->toArray(),
+        ]);
+
         if ($recipients->isEmpty()) {
             return;
         }
 
-        app(NotificationDispatcher::class)->dispatch(
+        try {
+            app(NotificationDispatcher::class)->dispatch(
             'helpdesk.ticket.created',
             [
                 'title'          => 'Neues Ticket',
@@ -42,6 +56,13 @@ class HelpdeskTicketObserver
             ],
             $recipients
         );
+            Log::info('[HelpdeskTicketObserver] Dispatch successful');
+        } catch (\Throwable $e) {
+            Log::error('[HelpdeskTicketObserver] Dispatch failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
     }
 
     /**
