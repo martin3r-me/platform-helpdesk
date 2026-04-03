@@ -9,6 +9,7 @@ use Platform\Crm\Models\CommsEmailInboundMail;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Enums\TicketPriority;
+use Platform\Notifications\Models\NotificationsNotice;
 
 class HandleCommsInbound
 {
@@ -40,6 +41,9 @@ class HandleCommsInbound
                     'user_id' => $board->user_id,
                     'priority' => TicketPriority::Normal,
                 ]);
+
+                // Notify the responsible user (board owner) about the new ticket
+                $this->notifyNewTicket($ticket, $board, $event->mail->from);
 
                 $event->thread->addContext($ticket->getMorphClass(), $ticket->id, 'helpdesk_inbound');
                 if (!$event->thread->context_model) {
@@ -83,11 +87,67 @@ class HandleCommsInbound
             }
 
             $this->attachEmailFilesToTicket($event->mail, $thread, $ticket);
+
+            // Notify the responsible user about the follow-up
+            $notifyUserId = $ticket->user_in_charge_id ?: $ticket->user_id;
+            if ($notifyUserId) {
+                $this->createNotice(
+                    $ticket,
+                    $notifyUserId,
+                    $ticket->team_id,
+                    'Neue Antwort: ' . ($ticket->title ?: 'Ticket #' . $ticket->id),
+                    $event->mail->from,
+                );
+            }
         } catch (\Throwable $e) {
             Log::error('[Helpdesk] Failed to process email follow-up', [
                 'channel_id' => $event->channel->id,
                 'mail_id' => $event->mail->id,
                 'thread_id' => $event->thread->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function notifyNewTicket(HelpdeskTicket $ticket, HelpdeskBoard $board, ?string $from): void
+    {
+        $notifyUserId = $ticket->user_in_charge_id ?: $board->user_id;
+        if (!$notifyUserId) {
+            return;
+        }
+
+        $this->createNotice(
+            $ticket,
+            $notifyUserId,
+            $board->team_id,
+            $ticket->title ?: 'Neues Ticket',
+            $from,
+        );
+    }
+
+    private function createNotice(HelpdeskTicket $ticket, int $userId, ?int $teamId, string $message, ?string $from): void
+    {
+        try {
+            if (!class_exists(NotificationsNotice::class)) {
+                return;
+            }
+
+            NotificationsNotice::create([
+                'notice_type' => 'helpdesk_ticket',
+                'title' => 'Neues Helpdesk Ticket',
+                'message' => $message,
+                'user_id' => $userId,
+                'team_id' => $teamId,
+                'noticable_type' => $ticket->getMorphClass(),
+                'noticable_id' => $ticket->id,
+                'metadata' => [
+                    'source' => 'inbound_email',
+                    'from' => $from,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::warning('[Helpdesk] Failed to create ticket notification', [
+                'ticket_id' => $ticket->id,
                 'error' => $e->getMessage(),
             ]);
         }

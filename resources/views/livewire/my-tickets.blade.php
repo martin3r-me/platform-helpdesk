@@ -108,7 +108,15 @@
         {{-- INBOX (nicht sortierbar als Gruppe) --}}
         @php $inbox = $groups->first(fn($g) => ($g->isInbox ?? false)); @endphp
         @if($inbox)
-            <x-ui-kanban-column :title="($inbox->label ?? 'Posteingang')" :sortable-id="null" :scrollable="true" :muted="true">
+            <x-ui-kanban-column :sortable-id="null" :scrollable="true" :muted="true">
+                <x-slot name="title">
+                    <span class="flex items-center gap-1.5">
+                        {{ $inbox->label ?? 'Posteingang' }}
+                        @if(($unreadCount ?? 0) > 0)
+                            <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full">{{ $unreadCount }}</span>
+                        @endif
+                    </span>
+                </x-slot>
                 <x-slot name="headerActions">
                     <button
                         wire:click="createTicket(null)"

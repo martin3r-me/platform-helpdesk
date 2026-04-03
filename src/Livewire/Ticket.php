@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
 use Platform\Core\Livewire\Concerns\WithExtraFields;
 use Platform\Helpdesk\Models\HelpdeskTicket;
+use Platform\Notifications\Models\NotificationsNotice;
 
 class Ticket extends Component
 {
@@ -48,6 +49,15 @@ class Ticket extends Component
         // Ticket automatisch sperren beim Öffnen (wenn nicht bereits gesperrt)
         if (!$this->ticket->isLocked()) {
             $this->ticket->lock();
+        }
+
+        // Mark ticket notifications as read for this user
+        if (class_exists(NotificationsNotice::class)) {
+            NotificationsNotice::where('noticable_type', $helpdeskTicket->getMorphClass())
+                ->where('noticable_id', $helpdeskTicket->id)
+                ->where('user_id', Auth::id())
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
         }
     }
 

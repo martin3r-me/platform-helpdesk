@@ -6,6 +6,7 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Models\HelpdeskTicketGroup;
+use Platform\Notifications\Models\NotificationsNotice;
 use Livewire\Attributes\On;
 
 class MyTickets extends Component
@@ -122,7 +123,16 @@ class MyTickets extends Component
             'tasks' => $doneTickets,
         ];
 
-        // === 4. KOMPLETTE GRUPPENLISTE ===
+        // === 4. UNREAD COUNT ===
+        $unreadCount = 0;
+        if (class_exists(NotificationsNotice::class)) {
+            $unreadCount = NotificationsNotice::unread()
+                ->where('user_id', $userId)
+                ->where('notice_type', 'helpdesk_ticket')
+                ->count();
+        }
+
+        // === 5. KOMPLETTE GRUPPENLISTE ===
         $groups = collect([$inbox])->concat($grouped)->push($completedGroup);
 
         // === 5. PERFORMANCE-BERECHNUNG ===
@@ -162,6 +172,7 @@ class MyTickets extends Component
 
         return view('helpdesk::livewire.my-tickets', [
             'groups' => $groups,
+            'unreadCount' => $unreadCount,
             'monthlyPerformanceScore' => $monthlyPerformanceScore,
             'createdPoints' => $createdPoints,
             'donePoints' => $donePoints,
