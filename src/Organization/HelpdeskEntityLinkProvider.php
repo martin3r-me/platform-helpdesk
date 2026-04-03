@@ -17,8 +17,8 @@ class HelpdeskEntityLinkProvider implements EntityLinkProvider
     public function linkTypeConfig(): array
     {
         return [
-            'helpdesk_ticket' => ['label' => 'Tickets', 'icon' => 'ticket', 'route' => null],
-            'helpdesk_board' => ['label' => 'Helpdesk Boards', 'icon' => 'view-columns', 'route' => null],
+            'helpdesk_ticket' => ['label' => 'Tickets', 'singular' => 'Ticket', 'icon' => 'ticket', 'route' => null],
+            'helpdesk_board' => ['label' => 'Helpdesk Boards', 'singular' => 'Board', 'icon' => 'view-columns', 'route' => null],
         ];
     }
 
@@ -71,6 +71,11 @@ class HelpdeskEntityLinkProvider implements EntityLinkProvider
         return [
             'helpdesk_ticket' => [HelpdeskTicket::class, []],
         ];
+    }
+
+    public function activityChildren(string $morphAlias, array $linkableIds): array
+    {
+        return [];
     }
 
     public function metrics(string $morphAlias, array $linksByEntity): array
