@@ -7,6 +7,7 @@ use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
 use Platform\Helpdesk\Models\HelpdeskTicketGroup;
+use Platform\Notifications\Models\NotificationsNotice;
 use Illuminate\Support\Facades\Auth;
 
 class Board extends Component
@@ -44,6 +45,7 @@ class Board extends Component
     public function loadGroups()
     {
         $this->groups = collect();
+        $eagerLoad = ['userInCharge', 'team', 'helpdeskBoard'];
 
         // Backlog/Inbox (Tickets ohne Slot, nicht erledigt)
         $backlog = new HelpdeskBoardSlot();
@@ -52,6 +54,7 @@ class Board extends Component
         $backlog->label = 'BACKLOG / Inbox';
         $backlog->isBacklog = true;
         $backlog->tasks = $this->helpdeskBoard->tickets()
+            ->with($eagerLoad)
             ->whereNull('helpdesk_board_slot_id')
             ->where('is_done', false)
             ->orderBy('created_at', 'desc')
@@ -60,12 +63,13 @@ class Board extends Component
 
         // Lade alle Slots des Boards
         $slots = $this->helpdeskBoard->slots()->orderBy('order')->get();
-        
+
         // Erstelle Gruppen für jedes Slot
-        $slots->each(function ($slot) {
+        $slots->each(function ($slot) use ($eagerLoad) {
             $slot->label = $slot->name;
             $slot->isBacklog = false;
             $slot->tasks = $slot->tickets()
+                ->with($eagerLoad)
                 ->where('is_done', false)
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -79,10 +83,11 @@ class Board extends Component
         $doneGroup->label = 'ERLEDIGT';
         $doneGroup->isDoneGroup = true;
         $doneGroup->tasks = $this->helpdeskBoard->tickets()
+            ->with($eagerLoad)
             ->where('is_done', true)
             ->orderBy('done_at', 'desc')
             ->get();
-        
+
         $this->groups->push($doneGroup);
     }
 
@@ -187,6 +192,18 @@ class Board extends Component
 
     public function render()
     {
-        return view('helpdesk::livewire.board')->layout('platform::layouts.app');
+        $unreadCount = 0;
+        if (class_exists(NotificationsNotice::class)) {
+            $unreadCount = NotificationsNotice::unread()
+                ->where('user_id', Auth::id())
+                ->where('notice_type', 'helpdesk_ticket')
+                ->where('noticable_type', (new HelpdeskTicket)->getMorphClass())
+                ->whereIn('noticable_id', $this->helpdeskBoard->tickets()->pluck('id'))
+                ->count();
+        }
+
+        return view('helpdesk::livewire.board', [
+            'unreadCount' => $unreadCount,
+        ])->layout('platform::layouts.app');
     }
 }

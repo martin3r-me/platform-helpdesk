@@ -107,7 +107,15 @@
 		{{-- Mittlere Spalten (scrollable) --}}
 		@foreach($groups->filter(fn ($g) => !($g->isDoneGroup ?? false)) as $column)
             @php $isBacklog = $column->isBacklog ?? false; @endphp
-			<x-ui-kanban-column :title="($column->label ?? $column->name ?? 'Spalte')" :sortable-id="$column->id" :scrollable="true">
+			<x-ui-kanban-column :sortable-id="$column->id" :scrollable="true">
+                <x-slot name="title">
+                    <span class="flex items-center gap-1.5">
+                        {{ $column->label ?? $column->name ?? 'Spalte' }}
+                        @if($isBacklog && ($unreadCount ?? 0) > 0)
+                            <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold leading-none text-white bg-red-500 rounded-full">{{ $unreadCount }}</span>
+                        @endif
+                    </span>
+                </x-slot>
 				<x-slot name="headerActions">
 					@can('update', $helpdeskBoard)
                         @if(!$isBacklog)
