@@ -250,7 +250,7 @@
                                     x-init="autoGrow($el)"
                                     @input="autoGrow($el)"
                                     @focus="autoGrow($el)"
-                                    class="form-control border-primary focus:border-primary focus-ring-primary"
+                                    class="form-control border-primary focus:border-primary focus-ring-primary w-full"
                                     style="resize: vertical; min-height: 100px;"
                                 ></textarea>
                                 @error('ticket.notes')
