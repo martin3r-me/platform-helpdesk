@@ -28,6 +28,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Platform\Helpdesk\Contracts\ErrorTrackerContract;
 use Platform\Helpdesk\Services\ErrorTrackingService;
+use Platform\Notifications\NotificationTypeRegistry;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -124,6 +125,12 @@ class HelpdeskServiceProvider extends ServiceProvider
         Event::listen(CommsInboundReceived::class, HandleCommsInbound::class);
         Event::listen(CommsWhatsAppInboundReceived::class, HandleWhatsAppInbound::class);
 
+        // Observer registrieren
+        HelpdeskTicket::observe(\Platform\Helpdesk\Observers\HelpdeskTicketObserver::class);
+
+        // Notification-Typen registrieren (loose - für User-Preferences)
+        $this->registerNotificationTypes();
+
         // Tools registrieren (loose gekoppelt - für AI/Chat)
         $this->registerTools();
 
@@ -131,6 +138,30 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->registerErrorTracking();
     }
     
+    protected function registerNotificationTypes(): void
+    {
+        NotificationTypeRegistry::register('helpdesk.ticket.created', [
+            'label'            => 'Neues Ticket',
+            'description'      => 'Wenn ein neues Ticket erstellt wird',
+            'group'            => 'helpdesk',
+            'default_channels' => ['database', 'pushover'],
+        ]);
+
+        NotificationTypeRegistry::register('helpdesk.ticket.assigned', [
+            'label'            => 'Ticket zugewiesen',
+            'description'      => 'Wenn dir ein Ticket zugewiesen wird',
+            'group'            => 'helpdesk',
+            'default_channels' => ['database', 'pushover'],
+        ]);
+
+        NotificationTypeRegistry::register('helpdesk.ticket.escalated', [
+            'label'            => 'Ticket eskaliert',
+            'description'      => 'Wenn ein Ticket eskaliert wird',
+            'group'            => 'helpdesk',
+            'default_channels' => ['database', 'pushover'],
+        ]);
+    }
+
     /**
      * Registriert Helpdesk-Tools für die AI/Chat-Funktionalität
      * 
