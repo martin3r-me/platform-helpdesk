@@ -41,7 +41,10 @@ class MyTickets extends Component
         $startOfMonth = now()->startOfMonth();
 
         // === 1. INBOX ===
+        $eagerLoad = ['userInCharge', 'team', 'helpdeskBoard'];
+
         $inboxTickets = HelpdeskTicket::query()
+            ->with($eagerLoad)
             ->whereNull('helpdesk_ticket_group_id')
             ->where('is_done', false)
             ->where(function ($q) use ($userId) {
@@ -67,8 +70,9 @@ class MyTickets extends Component
         ];
 
         // === 2. GRUPPEN ===
-        $grouped = HelpdeskTicketGroup::with(['tickets' => function ($q) use ($userId) {
-            $q->where('is_done', false)
+        $grouped = HelpdeskTicketGroup::with(['tickets' => function ($q) use ($userId, $eagerLoad) {
+            $q->with($eagerLoad)
+              ->where('is_done', false)
               ->where(function ($q) use ($userId) {
                   $q->where(function ($q) use ($userId) {
                       $q->whereNull('helpdesk_board_id')
@@ -95,6 +99,7 @@ class MyTickets extends Component
 
         // === 3. ERLEDIGT ===
         $doneTickets = HelpdeskTicket::query()
+            ->with($eagerLoad)
             ->where('is_done', true)
             ->where(function ($q) use ($userId) {
                 $q->where(function ($q) use ($userId) {

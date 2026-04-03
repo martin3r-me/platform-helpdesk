@@ -231,15 +231,32 @@
             <div class="mt-6">
                 <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Anmerkungen</h4>
                         @can('update', $ticket)
-                            <x-ui-input-textarea
-                                name="ticket.notes"
-                                :disabled="$this->isLockedForCurrentUser()"
-                                label="Anmerkung"
-                                wire:model.live.debounce.500ms="ticket.notes"
-                                placeholder="Anmerkung eingeben..."
-                                rows="4"
-                                :errorKey="'ticket.notes'"
-                            />
+                            <div class="form-group" wire:ignore.self
+                                x-data="{
+                                    autoGrow(el) {
+                                        el.style.height = 'auto';
+                                        el.style.height = (el.scrollHeight) + 'px';
+                                    }
+                                }"
+                            >
+                                <x-ui-label for="ticket.notes" text="Anmerkung" variant="primary" size="md" class="mb-1"/>
+                                <textarea
+                                    id="ticket.notes"
+                                    name="ticket.notes"
+                                    rows="4"
+                                    wire:model.live.debounce.500ms="ticket.notes"
+                                    placeholder="Anmerkung eingeben..."
+                                    @if($this->isLockedForCurrentUser()) disabled @endif
+                                    x-init="autoGrow($el)"
+                                    @input="autoGrow($el)"
+                                    @focus="autoGrow($el)"
+                                    class="form-control border-primary focus:border-primary focus-ring-primary"
+                                    style="resize: vertical; min-height: 100px;"
+                                ></textarea>
+                                @error('ticket.notes')
+                                    <span class="form-error mt-1">{{ $message }}</span>
+                                @enderror
+                            </div>
                         @else
                             <div>
                         <label class="font-semibold text-[var(--ui-secondary)]">Anmerkung:</label>
