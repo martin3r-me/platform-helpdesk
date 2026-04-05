@@ -64,6 +64,14 @@ class HelpdeskServiceProvider extends ServiceProvider
             // Organization-Modul nicht geladen
         }
 
+        // PersonActivityProvider registrieren (Dashboard Person-Metriken)
+        try {
+            resolve(\Platform\Organization\Services\PersonActivityRegistry::class)
+                ->register(new \Platform\Helpdesk\Organization\HelpdeskPersonActivityProvider());
+        } catch (\Throwable $e) {
+            // Organization-Modul nicht geladen
+        }
+
         // Modul-Registrierung nur, wenn Config & Tabelle vorhanden
         if (
             Schema::hasTable('modules')
