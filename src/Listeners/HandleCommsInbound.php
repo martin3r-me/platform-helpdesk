@@ -53,6 +53,23 @@ class HandleCommsInbound
                     ]);
                 }
 
+                // Stamp ticket marker [#ID] on thread + inbound mail subject immediately,
+                // so that the conversation is tagged from the very first inbound message
+                // (not only after the first outbound reply).
+                $marker = "[#{$ticket->id}]";
+                $threadSubject = (string) ($event->thread->subject ?? '');
+                if (!preg_match('/\[#\d+\]/', $threadSubject)) {
+                    $event->thread->updateQuietly([
+                        'subject' => trim($marker . ' ' . $threadSubject),
+                    ]);
+                }
+                $mailSubject = (string) ($event->mail->subject ?? '');
+                if (!preg_match('/\[#\d+\]/', $mailSubject)) {
+                    $event->mail->updateQuietly([
+                        'subject' => trim($marker . ' ' . $mailSubject),
+                    ]);
+                }
+
                 // Attach email attachments (incl. CID inline images) to the ticket
                 $this->attachEmailFilesToTicket($event->mail, $event->thread, $ticket);
             }
