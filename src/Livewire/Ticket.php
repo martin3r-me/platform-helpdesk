@@ -81,11 +81,8 @@ class Ticket extends Component
             'allow_dimensions' => false,
         ]);
 
-        // Files-Kontext setzen - ermöglicht Datei-Upload für dieses Ticket
-        $this->dispatch('files', [
-            'context_type' => get_class($this->ticket),
-            'context_id' => $this->ticket->id,
-        ]);
+        // Files-Tab im Terminal aktivieren
+        $this->dispatch('terminal:app:files');
 
         // Comms-Kontext setzen - ermöglicht Kommunikation im Ticket-Kontext
         $this->dispatch('comms', [
