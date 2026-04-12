@@ -50,12 +50,6 @@ class HandleWhatsAppInbound
             ]);
 
             $thread->addContext($ticket->getMorphClass(), $ticket->id, 'helpdesk_inbound');
-            if (!$thread->context_model) {
-                $thread->updateQuietly([
-                    'context_model' => $ticket->getMorphClass(),
-                    'context_model_id' => $ticket->id,
-                ]);
-            }
 
             $this->attachWhatsAppFilesToTicket($message, $thread, $ticket);
         }

@@ -46,12 +46,6 @@ class HandleCommsInbound
                 $this->notifyNewTicket($ticket, $board, $event->mail->from);
 
                 $event->thread->addContext($ticket->getMorphClass(), $ticket->id, 'helpdesk_inbound');
-                if (!$event->thread->context_model) {
-                    $event->thread->updateQuietly([
-                        'context_model' => $ticket->getMorphClass(),
-                        'context_model_id' => $ticket->id,
-                    ]);
-                }
 
                 // Stamp ticket marker [#ID] on thread + inbound mail subject immediately,
                 // so that the conversation is tagged from the very first inbound message
