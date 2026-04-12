@@ -3,6 +3,7 @@
 namespace Platform\Helpdesk\Models;
 
 use Platform\Core\Contracts\HasDisplayName;
+use Platform\Core\Contracts\AgendaRenderable;
 use Platform\Core\Traits\HasExtraFields;
 use Platform\Organization\Traits\HasOrganizationContexts;
 use Platform\ActivityLog\Traits\LogsActivity;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Symfony\Component\Uid\UuidV7;
 use Illuminate\Support\Facades\Log;
 
-class HelpdeskBoard extends Model implements HasDisplayName
+class HelpdeskBoard extends Model implements HasDisplayName, AgendaRenderable
 {
     use HasExtraFields, HasOrganizationContexts, LogsActivity;
     protected $fillable = [
@@ -91,11 +92,27 @@ class HelpdeskBoard extends Model implements HasDisplayName
 
     /**
      * Gibt den anzeigbaren Namen des Boards zurück.
-     * 
+     *
      * @return string|null
      */
     public function getDisplayName(): ?string
     {
         return $this->name;
+    }
+
+    // ── AgendaRenderable ──────────────────────────────────────
+
+    public function toAgendaItem(): array
+    {
+        return [
+            'title' => $this->name,
+            'description' => $this->description ? \Illuminate\Support\Str::limit($this->description, 120) : null,
+            'icon' => '📋',
+            'color' => null,
+            'status' => null,
+            'status_color' => null,
+            'url' => route('helpdesk.boards.show', $this),
+            'meta' => [],
+        ];
     }
 }

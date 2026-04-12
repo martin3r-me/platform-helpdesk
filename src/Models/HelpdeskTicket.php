@@ -7,6 +7,7 @@ use Platform\Helpdesk\Enums\TicketStoryPoints;
 use Platform\Helpdesk\Enums\TicketEscalationLevel;
 use Platform\Helpdesk\Models\HelpdeskBoardSla;
 use Platform\Core\Contracts\HasDisplayName;
+use Platform\Core\Contracts\AgendaRenderable;
 use Platform\Integrations\Contracts\SocialMediaAccountLinkableInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +20,7 @@ use Platform\Core\Contracts\InheritsExtraFields;
 use Platform\Core\Traits\HasExtraFields;
 use Platform\Core\Traits\HasContextFileReferences;
 
-class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccountLinkableInterface, InheritsExtraFields
+class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccountLinkableInterface, InheritsExtraFields, AgendaRenderable
 {
     use HasFactory, SoftDeletes, LogsActivity, HasExtraFields, HasContextFileReferences;
 
@@ -270,5 +271,24 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
     public function extraFieldParents(): array
     {
         return array_filter([$this->helpdeskBoard]);
+    }
+
+    // ── AgendaRenderable ──────────────────────────────────────
+
+    public function toAgendaItem(): array
+    {
+        return [
+            'title' => $this->title,
+            'description' => null,
+            'icon' => '🎫',
+            'color' => null,
+            'status' => $this->is_done ? 'Erledigt' : 'Offen',
+            'status_color' => $this->is_done ? 'green' : 'orange',
+            'url' => route('helpdesk.tickets.show', $this),
+            'meta' => [
+                'priority' => $this->priority?->value,
+                'escalation_level' => $this->escalation_level?->value,
+            ],
+        ];
     }
 }
