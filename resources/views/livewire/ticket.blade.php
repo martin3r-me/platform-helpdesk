@@ -33,59 +33,56 @@
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Übersicht" width="w-80" :defaultOpen="true" storeKey="sidebarOpen" side="left">
             <div class="p-6 space-y-6">
-                {{-- Status Cards --}}
-                <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Status</h3>
-                    <div class="space-y-3">
-                        @can('update', $ticket)
-                            <button type="button" wire:click="toggleDone"
-                                class="w-full flex items-center justify-between py-3 px-4 rounded-lg border transition-colors"
-                                :class="{
-                                    'border-[var(--ui-success)] bg-[var(--ui-success-5)] hover:bg-[var(--ui-success-10)]': {{ $ticket->is_done ? 'true' : 'false' }},
-                                    'border-[var(--ui-border)]/40 bg-[var(--ui-muted-5)] hover:bg-[var(--ui-primary-5)]': !({{ $ticket->is_done ? 'true' : 'false' }})
-                                }">
-                                <span class="text-sm font-medium" :class="{ 'text-[var(--ui-success)]': {{ $ticket->is_done ? 'true' : 'false' }}, 'text-[var(--ui-secondary)]': !({{ $ticket->is_done ? 'true' : 'false' }}) }">Erledigt</span>
-                                @if($ticket->is_done)
-                                    @svg('heroicon-o-check-circle', 'w-5 h-5 text-[var(--ui-success)]')
-                                @else
-                                    @svg('heroicon-o-circle-stack', 'w-5 h-5 text-[var(--ui-muted)]')
-                                @endif
+                {{-- Status --}}
+                <div class="space-y-2">
+                    @can('update', $ticket)
+                        <button type="button" wire:click="toggleDone" class="w-full text-left flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40 hover:bg-[var(--ui-primary-5)] transition-colors cursor-pointer">
+                            <div class="flex items-center gap-2">
+                                @svg('heroicon-o-check-circle', 'w-4 h-4 text-[var(--ui-success)]')
+                                <span class="text-sm text-[var(--ui-secondary)]">Status</span>
+                            </div>
+                            <span class="text-sm font-semibold text-[var(--ui-secondary)]">{{ $ticket->is_done ? 'Erledigt' : 'Offen' }}</span>
+                        </button>
+                    @else
+                        <div class="w-full flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40">
+                            <div class="flex items-center gap-2">
+                                @svg('heroicon-o-check-circle', 'w-4 h-4 text-[var(--ui-success)]')
+                                <span class="text-sm text-[var(--ui-secondary)]">Status</span>
+                            </div>
+                            <span class="text-sm font-semibold text-[var(--ui-secondary)]">{{ $ticket->is_done ? 'Erledigt' : 'Offen' }}</span>
+                        </div>
+                    @endcan
+
+                    {{-- Ticket Sperren/Entsperren --}}
+                    @if($ticket->isLocked())
+                        @can('unlock', $ticket)
+                            <button type="button" wire:click="unlockTicket" class="w-full text-left flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40 hover:bg-[var(--ui-primary-5)] transition-colors cursor-pointer">
+                                <div class="flex items-center gap-2">
+                                    @svg('heroicon-o-lock-closed', 'w-4 h-4 text-[var(--ui-warning)]')
+                                    <span class="text-sm text-[var(--ui-secondary)]">Sperre</span>
+                                </div>
+                                <span class="text-sm font-semibold text-[var(--ui-warning)]">Gesperrt</span>
                             </button>
                         @else
-                            <div class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-muted-5)]">
-                                <span class="text-sm font-medium text-[var(--ui-secondary)]">Erledigt</span>
-                                @if($ticket->is_done)
-                                    @svg('heroicon-o-check-circle', 'w-5 h-5 text-[var(--ui-success)]')
-                                @else
-                                    @svg('heroicon-o-circle-stack', 'w-5 h-5 text-[var(--ui-muted)]')
-                                @endif
+                            <div class="w-full flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40">
+                                <div class="flex items-center gap-2">
+                                    @svg('heroicon-o-lock-closed', 'w-4 h-4 text-[var(--ui-warning)]')
+                                    <span class="text-sm text-[var(--ui-secondary)]">Sperre</span>
+                                </div>
+                                <span class="text-sm font-semibold text-[var(--ui-warning)]">Gesperrt</span>
                             </div>
                         @endcan
-
-                        {{-- Ticket Sperren/Entsperren --}}
-                        @if($ticket->isLocked())
-                            @can('unlock', $ticket)
-                                <button type="button" wire:click="unlockTicket"
-                                    class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-warning)] bg-[var(--ui-warning-5)] hover:bg-[var(--ui-warning-10)] transition-colors">
-                                    <span class="text-sm font-medium text-[var(--ui-warning)]">Gesperrt</span>
-                                    @svg('heroicon-o-lock-closed', 'w-5 h-5 text-[var(--ui-warning)]')
-                                </button>
-                            @else
-                                <div class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-warning)] bg-[var(--ui-warning-5)]">
-                                    <span class="text-sm font-medium text-[var(--ui-warning)]">Gesperrt</span>
-                                    @svg('heroicon-o-lock-closed', 'w-5 h-5 text-[var(--ui-warning)]')
+                    @else
+                        @can('lock', $ticket)
+                            <button type="button" wire:click="lockTicket" class="w-full text-left flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40 hover:bg-[var(--ui-primary-5)] transition-colors cursor-pointer">
+                                <div class="flex items-center gap-2">
+                                    @svg('heroicon-o-lock-open', 'w-4 h-4 text-[var(--ui-muted)]')
+                                    <span class="text-sm text-[var(--ui-secondary)]">Sperre</span>
                                 </div>
-                            @endcan
-                        @else
-                            @can('lock', $ticket)
-                                <button type="button" wire:click="lockTicket"
-                                    class="w-full flex items-center justify-between py-3 px-4 rounded-lg border border-[var(--ui-border)]/40 bg-[var(--ui-muted-5)] hover:bg-[var(--ui-primary-5)] transition-colors">
-                                    <span class="text-sm font-medium text-[var(--ui-secondary)]">Sperren</span>
-                                    @svg('heroicon-o-lock-open', 'w-5 h-5 text-[var(--ui-muted)]')
-                                </button>
-                            @endcan
-                        @endif
-                    </div>
+                                <span class="text-sm font-semibold text-[var(--ui-secondary)]">Offen</span>
+                            </button>
+                        @endcan
+                    @endif
                 </div>
 
                 {{-- Ticket Info --}}
@@ -130,64 +127,90 @@
         </x-ui-page-sidebar>
     </x-slot>
 
-    <x-ui-page-container spacing="space-y-8">
+    <x-ui-page-container spacing="space-y-6">
         {{-- Header Block --}}
-        <div class="bg-white rounded-lg border border-[var(--ui-border)]/60 py-3 px-5 {{ $ticket->isLocked() ? 'border-[var(--ui-warning)] bg-[var(--ui-warning-5)]' : '' }}">
-            @if($ticket->isLocked())
-                <div class="mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--ui-warning)]/10 border border-[var(--ui-warning)]/30 max-h-9">
-                    @svg('heroicon-o-lock-closed', 'w-4 h-4 text-[var(--ui-warning)]')
-                    <span class="text-xs font-medium text-[var(--ui-warning)]">
-                        Ticket ist gesperrt
-                        @if($ticket->lockedByUser)
-                            (von {{ $ticket->lockedByUser->name }})
-                        @endif
-                        @if($ticket->locked_at)
-                            am {{ $ticket->locked_at->format('d.m.Y H:i') }}
-                        @endif
-                    </span>
-                </div>
-            @endif
-            <div class="flex items-start justify-between">
-                <div class="flex-1 min-w-0">
-                    <h2 class="text-xl font-bold text-[var(--ui-secondary)] mb-1.5 tracking-tight">{{ $ticket->title }}</h2>
-                    <div class="flex items-center gap-6 text-sm text-[var(--ui-muted)]">
-                        @if($ticket->helpdeskBoard)
-                            <span class="flex items-center gap-2">
-                                @svg('heroicon-o-rectangle-stack', 'w-4 h-4')
-                                {{ $ticket->helpdeskBoard->name }}
-                            </span>
-                        @endif
-                        @if($ticket->userInCharge)
-                            <span class="flex items-center gap-2">
-                                @svg('heroicon-o-user', 'w-4 h-4')
-                                {{ $ticket->userInCharge->name }}
-                            </span>
-                        @endif
-                        @if($ticket->due_date)
-                            <span class="flex items-center gap-2">
-                                @svg('heroicon-o-calendar', 'w-4 h-4')
-                                {{ $ticket->due_date->format('d.m.Y H:i') }}
-                            </span>
-                        @endif
-                        @if($ticket->story_points)
-                            <span class="flex items-center gap-2">
-                                @svg('heroicon-o-sparkles', 'w-4 h-4')
-                                {{ $ticket->story_points->points() ?? $ticket->story_points }} SP
-                            </span>
+        <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden {{ $ticket->isLocked() ? 'border-[var(--ui-warning)] bg-[var(--ui-warning-5)]' : '' }}">
+            <div class="p-6 lg:p-8">
+                @if($ticket->isLocked())
+                    <div class="mb-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--ui-warning)]/10 border border-[var(--ui-warning)]/30 max-h-9">
+                        @svg('heroicon-o-lock-closed', 'w-4 h-4 text-[var(--ui-warning)]')
+                        <span class="text-xs font-medium text-[var(--ui-warning)]">
+                            Ticket ist gesperrt
+                            @if($ticket->lockedByUser)
+                                (von {{ $ticket->lockedByUser->name }})
+                            @endif
+                            @if($ticket->locked_at)
+                                am {{ $ticket->locked_at->format('d.m.Y H:i') }}
+                            @endif
+                        </span>
+                    </div>
+                @endif
+                <div class="flex items-start justify-between gap-4 mb-4">
+                    <div class="flex-1 min-w-0">
+                        <h1 class="text-3xl font-bold text-[var(--ui-secondary)] mb-4 tracking-tight leading-tight">{{ $ticket->title }}</h1>
+
+                        <div class="space-y-2">
+                            {{-- Erste Zeile: Board --}}
+                            <div class="flex flex-wrap items-center gap-6 text-sm text-[var(--ui-muted)]">
+                                @if($ticket->helpdeskBoard)
+                                    <span class="flex items-center gap-2">
+                                        @svg('heroicon-o-rectangle-stack', 'w-4 h-4')
+                                        <span>Board: <span class="text-[var(--ui-secondary)]">{{ $ticket->helpdeskBoard->name }}</span></span>
+                                    </span>
+                                @endif
+                            </div>
+
+                            {{-- Zweite Zeile: Personen & Details --}}
+                            <div class="flex flex-wrap items-center gap-6 text-sm text-[var(--ui-muted)]">
+                                @if($ticket->user)
+                                    <span class="flex items-center gap-2">
+                                        @svg('heroicon-o-user-circle', 'w-4 h-4')
+                                        <span>Erstellt von: <span class="text-[var(--ui-secondary)]">{{ $ticket->user->fullname ?? $ticket->user->name }}</span></span>
+                                    </span>
+                                @endif
+                                @if($ticket->userInCharge)
+                                    <span class="flex items-center gap-2">
+                                        @svg('heroicon-o-user', 'w-4 h-4')
+                                        <span>Zugewiesen: <span class="text-[var(--ui-secondary)]">{{ $ticket->userInCharge->fullname ?? $ticket->userInCharge->name }}</span></span>
+                                    </span>
+                                @endif
+                                @if($ticket->due_date)
+                                    @php
+                                        $isOverdue = $ticket->due_date->isPast() && !$ticket->is_done;
+                                        $isToday = $ticket->due_date->isToday();
+                                        $isTomorrow = $ticket->due_date->isTomorrow();
+                                        $dueDateColor = $isOverdue ? 'text-[var(--ui-danger)]' : ($isToday || $isTomorrow ? 'text-[var(--ui-warning)]' : 'text-[var(--ui-muted)]');
+                                        $dueDateTextColor = $isOverdue ? 'text-[var(--ui-danger)]' : ($isToday || $isTomorrow ? 'text-[var(--ui-warning)]' : 'text-[var(--ui-secondary)]');
+                                    @endphp
+                                    <span class="flex items-center gap-2">
+                                        @svg('heroicon-o-calendar', 'w-4 h-4 ' . $dueDateColor)
+                                        <span>Fällig: <span class="{{ $dueDateTextColor }}">{{ $ticket->due_date->format('d.m.Y H:i') }}</span></span>
+                                    </span>
+                                @endif
+                                @if($ticket->story_points)
+                                    <span class="flex items-center gap-2">
+                                        @svg('heroicon-o-sparkles', 'w-4 h-4')
+                                        <span>Story Points: <span class="text-[var(--ui-secondary)] font-medium">{{ $ticket->story_points->points() ?? $ticket->story_points }} SP</span></span>
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Status Badges --}}
+                    <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                        @if($ticket->is_done)
+                            <x-ui-badge variant="success" size="sm">Erledigt</x-ui-badge>
                         @endif
                     </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    @if($ticket->is_done)
-                        <x-ui-badge variant="success" size="lg">Erledigt</x-ui-badge>
-                    @endif
                 </div>
             </div>
         </div>
 
-            {{-- Ticket Details --}}
-        <x-ui-panel title="Ticket-Details">
-            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Grunddaten</h4>
+        {{-- Ticket Details --}}
+        <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden">
+            <div class="p-6 lg:p-8">
+            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Grunddaten</h2>
             <x-ui-form-grid :cols="2" :gap="6">
                         @can('update', $ticket)
                             <x-ui-input-text
@@ -228,8 +251,8 @@
                 @endcan
             </x-ui-form-grid>
             
-            <div class="mt-6">
-                <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Anmerkungen</h4>
+            <div class="mt-8">
+                <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Anmerkungen</h2>
                         @can('update', $ticket)
                             <div class="form-group" wire:ignore.self
                                 x-data="{
@@ -264,12 +287,15 @@
                             </div>
                         @endcan
                     </div>
-        </x-ui-panel>
+            </div>
+        </div>
 
         {{-- Dateien (collapsible) --}}
         {{-- Kommunikation (Email + WhatsApp) --}}
         @if(class_exists(\Platform\Crm\Livewire\InlineComms::class))
-            <x-ui-panel title="Kommunikation">
+            <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden">
+                <div class="p-6 lg:p-8">
+                    <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Kommunikation</h2>
                 <livewire:crm.inline-comms
                     :context-type="get_class($ticket)"
                     :context-id="$ticket->id"
@@ -277,11 +303,14 @@
                     :recipients="[]"
                     :key="'inline-comms-' . $ticket->id"
                 />
-            </x-ui-panel>
+                </div>
+            </div>
         @endif
 
         {{-- Definition of Done (DoD) --}}
-        <x-ui-panel title="Definition of Done (DoD)">
+        <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden">
+            <div class="p-6 lg:p-8">
+            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Definition of Done (DoD)</h2>
             @php
                 $dodProgress = $ticket->dod_progress;
                 $dod = $ticket->dod ?? [];
@@ -306,7 +335,7 @@
             @endif
 
             {{-- DoD-Liste --}}
-            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Checkliste</h4>
+            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Checkliste</h2>
             <div class="space-y-2">
                 @forelse($dod as $index => $item)
                     <div class="flex items-start gap-3 p-3 rounded-lg border border-[var(--ui-border)]/40 bg-white hover:border-[var(--ui-primary)]/30 transition-colors group {{ ($item['checked'] ?? false) ? 'bg-[var(--ui-success-5)] border-[var(--ui-success)]/30' : '' }}">
@@ -400,11 +429,13 @@
                     </div>
                 @endif
             @endcan
-        </x-ui-panel>
+            </div>
+        </div>
 
         {{-- Metadaten --}}
-        <x-ui-panel title="Metadaten">
-            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Priorität</h4>
+        <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden">
+            <div class="p-6 lg:p-8">
+            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Priorität</h2>
             <x-ui-form-grid :cols="2" :gap="6">
                             @can('update', $ticket)
                                 <x-ui-input-select
@@ -428,7 +459,7 @@
             </x-ui-form-grid>
 
             {{-- Story Points & Fälligkeitsdatum --}}
-            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3 mt-6">Planung</h4>
+            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4 mt-8">Planung</h2>
             <x-ui-form-grid :cols="2" :gap="6">
                             @can('update', $ticket)
                                 <x-ui-input-select
@@ -479,7 +510,8 @@
                                 </div>
                             @endcan
             </x-ui-form-grid>
-        </x-ui-panel>
+            </div>
+        </div>
 
         <x-core-extra-fields-section
             :definitions="$this->extraFieldDefinitions"
@@ -490,7 +522,7 @@
         @if($linkedGithubRepositories->count() > 0 || $availableGithubRepositories->count() > 0 || !empty($githubRepositorySearch))
             <div x-data="{ open: localStorage.getItem('ticket-repos-{{ $ticket->id }}') === 'true' }"
                  x-effect="localStorage.setItem('ticket-repos-{{ $ticket->id }}', open)"
-                 class="bg-surface rounded-lg shadow-sm border border-muted">
+                 class="bg-surface rounded-xl shadow-sm border border-muted">
                 <button @click="open = !open" class="w-full flex items-center justify-between p-4 text-left hover:bg-[var(--ui-muted-5)] rounded-lg transition-colors">
                     <span class="flex items-center gap-2 text-sm font-semibold text-secondary">
                         @svg('heroicon-o-code-bracket', 'w-4 h-4')

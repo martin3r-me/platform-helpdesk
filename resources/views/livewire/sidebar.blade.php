@@ -1,5 +1,14 @@
 {{-- Helpdesk Sidebar - Organisationsstruktur-Gruppierung --}}
-<div>
+<div
+    x-data="{
+        init() {
+            const savedState = localStorage.getItem('helpdesk.showAllBoards');
+            if (savedState !== null) {
+                @this.set('showAllBoards', savedState === 'true');
+            }
+        }
+    }"
+>
     {{-- Modul Header --}}
     <div x-show="!collapsed" class="p-3 text-sm italic text-[var(--ui-secondary)] uppercase border-b border-[var(--ui-border)] mb-2">
         Helpdesk
@@ -52,40 +61,14 @@
     {{-- Abschnitt: Helpdesk Boards (Entity-basierte Gruppierung) --}}
     <div>
         <div class="mt-2" x-show="!collapsed">
-            {{-- Entity Type Gruppen --}}
+            {{-- Entity Type Gruppen (Baum-Darstellung) --}}
             @foreach($entityTypeGroups as $typeGroup)
-                <x-ui-sidebar-list :label="$typeGroup['type_name']">
-                    @foreach($typeGroup['entities'] as $entityGroup)
-                        {{-- Entity mit aufklappbaren Boards --}}
-                        <div x-data="{ open: localStorage.getItem('helpdesk.entity.' + {{ $entityGroup['entity_id'] }}) === 'true' }"
-                             class="flex flex-col">
-                            <button type="button"
-                                    @click="open = !open; localStorage.setItem('helpdesk.entity.' + {{ $entityGroup['entity_id'] }}, open)"
-                                    class="flex items-center p-2 rounded-md text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)] transition w-full text-left">
-                                <span class="w-4 h-4 flex-shrink-0 flex items-center justify-center transition-transform"
-                                      :class="open ? 'rotate-90' : ''">
-                                    @svg('heroicon-o-chevron-right', 'w-3 h-3')
-                                </span>
-                                @php $icon = $typeGroup['type_icon'] ?? null; @endphp
-                                @if($icon && str_starts_with($icon, 'heroicon-'))
-                                    @svg($icon, 'w-4 h-4 flex-shrink-0 ml-1 text-[var(--ui-muted)]')
-                                @else
-                                    @svg('heroicon-o-rectangle-group', 'w-4 h-4 flex-shrink-0 ml-1 text-[var(--ui-muted)]')
-                                @endif
-                                <span class="ml-1.5 text-sm font-medium truncate">{{ $entityGroup['entity_name'] }}</span>
-                                <span class="ml-auto text-xs text-[var(--ui-muted)]">{{ $entityGroup['boards']->count() }}</span>
-                            </button>
-                            <div x-show="open" x-collapse class="flex flex-col gap-0.5 pl-4">
-                                @foreach($entityGroup['boards'] as $board)
-                                    <x-ui-sidebar-item :href="route('helpdesk.boards.show', ['helpdeskBoard' => $board])" :title="$board->name">
-                                        @svg('heroicon-o-folder', 'w-5 h-5 flex-shrink-0 text-[var(--ui-secondary)]')
-                                        <div class="flex-1 min-w-0 ml-2">
-                                            <span class="truncate text-sm font-medium">{{ $board->name }}</span>
-                                        </div>
-                                    </x-ui-sidebar-item>
-                                @endforeach
-                            </div>
-                        </div>
+                <x-ui-sidebar-list wire:key="type-group-{{ $typeGroup['type_id'] }}" :label="$typeGroup['type_name']">
+                    @foreach($typeGroup['entities'] as $entityNode)
+                        @include('helpdesk::livewire.partials.sidebar-entity-node', [
+                            'node' => $entityNode,
+                            'typeIcon' => $typeGroup['type_icon'] ?? null,
+                        ])
                     @endforeach
                 </x-ui-sidebar-list>
             @endforeach
@@ -94,20 +77,46 @@
             @if($unlinkedBoards->isNotEmpty())
                 <x-ui-sidebar-list label="Unverknüpft">
                     @foreach($unlinkedBoards as $board)
-                        <x-ui-sidebar-item :href="route('helpdesk.boards.show', ['helpdeskBoard' => $board])" :title="$board->name">
-                            @svg('heroicon-o-folder', 'w-5 h-5 flex-shrink-0 text-[var(--ui-secondary)]')
-                            <div class="flex-1 min-w-0 ml-2">
-                                <span class="truncate text-sm font-medium">{{ $board->name }}</span>
-                            </div>
-                        </x-ui-sidebar-item>
+                        <a wire:key="unlinked-board-{{ $board->id }}"
+                           href="{{ route('helpdesk.boards.show', ['helpdeskBoard' => $board]) }}"
+                           wire:navigate
+                           title="{{ $board->name }}"
+                           class="flex items-center gap-1.5 py-0.5 pl-3 pr-2 text-[var(--ui-secondary)] hover:text-[var(--ui-primary)] transition truncate">
+                            <span class="w-1 h-1 rounded-full flex-shrink-0 bg-[var(--ui-muted)] opacity-40"></span>
+                            <span class="truncate text-[11px]">{{ $board->name }}</span>
+                        </a>
                     @endforeach
                 </x-ui-sidebar-list>
+            @endif
+
+            {{-- Button zum Ein-/Ausblenden aller Boards --}}
+            @if($hasMoreBoards)
+                <div class="px-3 py-2">
+                    <button
+                        type="button"
+                        wire:click="toggleShowAllBoards"
+                        x-on:click="localStorage.setItem('helpdesk.showAllBoards', (!$wire.showAllBoards).toString())"
+                        class="flex items-center gap-2 text-xs text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors"
+                    >
+                        @if($showAllBoards)
+                            @svg('heroicon-o-eye-slash', 'w-4 h-4')
+                            <span>Nur meine Boards</span>
+                        @else
+                            @svg('heroicon-o-eye', 'w-4 h-4')
+                            <span>Alle Boards anzeigen</span>
+                        @endif
+                    </button>
+                </div>
             @endif
 
             {{-- Keine Boards --}}
             @if($entityTypeGroups->isEmpty() && $unlinkedBoards->isEmpty())
                 <div class="px-3 py-1 text-xs text-[var(--ui-muted)]">
-                    Keine Helpdesk Boards vorhanden
+                    @if($showAllBoards)
+                        Keine Helpdesk Boards vorhanden
+                    @else
+                        Keine Boards mit Tickets
+                    @endif
                 </div>
             @endif
         </div>
