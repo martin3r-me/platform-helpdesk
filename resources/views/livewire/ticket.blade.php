@@ -130,9 +130,9 @@
     <x-ui-page-container spacing="space-y-6">
         {{-- Header Block --}}
         <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden {{ $ticket->isLocked() ? 'border-[var(--ui-warning)] bg-[var(--ui-warning-5)]' : '' }}">
-            <div class="p-6 lg:p-8">
+            <div class="py-4 px-6">
                 @if($ticket->isLocked())
-                    <div class="mb-4 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--ui-warning)]/10 border border-[var(--ui-warning)]/30 max-h-9">
+                    <div class="mb-3 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--ui-warning)]/10 border border-[var(--ui-warning)]/30 max-h-9">
                         @svg('heroicon-o-lock-closed', 'w-4 h-4 text-[var(--ui-warning)]')
                         <span class="text-xs font-medium text-[var(--ui-warning)]">
                             Ticket ist gesperrt
@@ -145,60 +145,43 @@
                         </span>
                     </div>
                 @endif
-                <div class="flex items-start justify-between gap-4 mb-4">
+                <div class="flex items-start justify-between gap-4">
                     <div class="flex-1 min-w-0">
-                        <h1 class="text-3xl font-bold text-[var(--ui-secondary)] mb-4 tracking-tight leading-tight">{{ $ticket->title }}</h1>
-
-                        <div class="space-y-2">
-                            {{-- Erste Zeile: Board --}}
-                            <div class="flex flex-wrap items-center gap-6 text-sm text-[var(--ui-muted)]">
-                                @if($ticket->helpdeskBoard)
-                                    <span class="flex items-center gap-2">
-                                        @svg('heroicon-o-rectangle-stack', 'w-4 h-4')
-                                        <span>Board: <span class="text-[var(--ui-secondary)]">{{ $ticket->helpdeskBoard->name }}</span></span>
-                                    </span>
-                                @endif
-                            </div>
-
-                            {{-- Zweite Zeile: Personen & Details --}}
-                            <div class="flex flex-wrap items-center gap-6 text-sm text-[var(--ui-muted)]">
-                                @if($ticket->user)
-                                    <span class="flex items-center gap-2">
-                                        @svg('heroicon-o-user-circle', 'w-4 h-4')
-                                        <span>Erstellt von: <span class="text-[var(--ui-secondary)]">{{ $ticket->user->fullname ?? $ticket->user->name }}</span></span>
-                                    </span>
-                                @endif
-                                @if($ticket->userInCharge)
-                                    <span class="flex items-center gap-2">
-                                        @svg('heroicon-o-user', 'w-4 h-4')
-                                        <span>Zugewiesen: <span class="text-[var(--ui-secondary)]">{{ $ticket->userInCharge->fullname ?? $ticket->userInCharge->name }}</span></span>
-                                    </span>
-                                @endif
-                                @if($ticket->due_date)
-                                    @php
-                                        $isOverdue = $ticket->due_date->isPast() && !$ticket->is_done;
-                                        $isToday = $ticket->due_date->isToday();
-                                        $isTomorrow = $ticket->due_date->isTomorrow();
-                                        $dueDateColor = $isOverdue ? 'text-[var(--ui-danger)]' : ($isToday || $isTomorrow ? 'text-[var(--ui-warning)]' : 'text-[var(--ui-muted)]');
-                                        $dueDateTextColor = $isOverdue ? 'text-[var(--ui-danger)]' : ($isToday || $isTomorrow ? 'text-[var(--ui-warning)]' : 'text-[var(--ui-secondary)]');
-                                    @endphp
-                                    <span class="flex items-center gap-2">
-                                        @svg('heroicon-o-calendar', 'w-4 h-4 ' . $dueDateColor)
-                                        <span>Fällig: <span class="{{ $dueDateTextColor }}">{{ $ticket->due_date->format('d.m.Y H:i') }}</span></span>
-                                    </span>
-                                @endif
-                                @if($ticket->story_points)
-                                    <span class="flex items-center gap-2">
-                                        @svg('heroicon-o-sparkles', 'w-4 h-4')
-                                        <span>Story Points: <span class="text-[var(--ui-secondary)] font-medium">{{ $ticket->story_points->points() ?? $ticket->story_points }} SP</span></span>
-                                    </span>
-                                @endif
-                            </div>
+                        <h1 class="text-xl font-bold text-[var(--ui-secondary)] mb-2 tracking-tight">{{ $ticket->title }}</h1>
+                        <div class="flex flex-wrap items-center gap-5 text-sm text-[var(--ui-muted)]">
+                            @if($ticket->helpdeskBoard)
+                                <span class="flex items-center gap-1.5">
+                                    @svg('heroicon-o-rectangle-stack', 'w-4 h-4')
+                                    {{ $ticket->helpdeskBoard->name }}
+                                </span>
+                            @endif
+                            @if($ticket->userInCharge)
+                                <span class="flex items-center gap-1.5">
+                                    @svg('heroicon-o-user', 'w-4 h-4')
+                                    {{ $ticket->userInCharge->name }}
+                                </span>
+                            @endif
+                            @if($ticket->due_date)
+                                @php
+                                    $isOverdue = $ticket->due_date->isPast() && !$ticket->is_done;
+                                    $isToday = $ticket->due_date->isToday();
+                                    $isTomorrow = $ticket->due_date->isTomorrow();
+                                    $dueDateColor = $isOverdue ? 'text-[var(--ui-danger)]' : ($isToday || $isTomorrow ? 'text-[var(--ui-warning)]' : '');
+                                @endphp
+                                <span class="flex items-center gap-1.5 {{ $dueDateColor }}">
+                                    @svg('heroicon-o-calendar', 'w-4 h-4')
+                                    {{ $ticket->due_date->format('d.m.Y H:i') }}
+                                </span>
+                            @endif
+                            @if($ticket->story_points)
+                                <span class="flex items-center gap-1.5">
+                                    @svg('heroicon-o-sparkles', 'w-4 h-4')
+                                    {{ $ticket->story_points->points() ?? $ticket->story_points }} SP
+                                </span>
+                            @endif
                         </div>
                     </div>
-
-                    {{-- Status Badges --}}
-                    <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                    <div class="flex items-center gap-2 flex-shrink-0">
                         @if($ticket->is_done)
                             <x-ui-badge variant="success" size="sm">Erledigt</x-ui-badge>
                         @endif
@@ -209,8 +192,8 @@
 
         {{-- Ticket Details --}}
         <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden">
-            <div class="p-6 lg:p-8">
-            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Grunddaten</h2>
+            <div class="p-5">
+            <h4 class="text-sm font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Grunddaten</h4>
             <x-ui-form-grid :cols="2" :gap="6">
                         @can('update', $ticket)
                             <x-ui-input-text
@@ -251,8 +234,8 @@
                 @endcan
             </x-ui-form-grid>
             
-            <div class="mt-8">
-                <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Anmerkungen</h2>
+            <div class="mt-6">
+                <h4 class="text-sm font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Anmerkungen</h4>
                         @can('update', $ticket)
                             <div class="form-group" wire:ignore.self
                                 x-data="{
@@ -294,8 +277,8 @@
         {{-- Kommunikation (Email + WhatsApp) --}}
         @if(class_exists(\Platform\Crm\Livewire\InlineComms::class))
             <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden">
-                <div class="p-6 lg:p-8">
-                    <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Kommunikation</h2>
+                <div class="p-5">
+                    <h4 class="text-sm font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Kommunikation</h4>
                 <livewire:crm.inline-comms
                     :context-type="get_class($ticket)"
                     :context-id="$ticket->id"
@@ -309,8 +292,8 @@
 
         {{-- Definition of Done (DoD) --}}
         <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden">
-            <div class="p-6 lg:p-8">
-            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Definition of Done (DoD)</h2>
+            <div class="p-5">
+            <h4 class="text-sm font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Definition of Done (DoD)</h4>
             @php
                 $dodProgress = $ticket->dod_progress;
                 $dod = $ticket->dod ?? [];
@@ -335,7 +318,7 @@
             @endif
 
             {{-- DoD-Liste --}}
-            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Checkliste</h2>
+            <h4 class="text-xs font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Checkliste</h4>
             <div class="space-y-2">
                 @forelse($dod as $index => $item)
                     <div class="flex items-start gap-3 p-3 rounded-lg border border-[var(--ui-border)]/40 bg-white hover:border-[var(--ui-primary)]/30 transition-colors group {{ ($item['checked'] ?? false) ? 'bg-[var(--ui-success-5)] border-[var(--ui-success)]/30' : '' }}">
@@ -434,8 +417,8 @@
 
         {{-- Metadaten --}}
         <div class="bg-white rounded-xl border border-[var(--ui-border)]/60 shadow-sm overflow-hidden">
-            <div class="p-6 lg:p-8">
-            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4">Priorität</h2>
+            <div class="p-5">
+            <h4 class="text-sm font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3">Priorität</h4>
             <x-ui-form-grid :cols="2" :gap="6">
                             @can('update', $ticket)
                                 <x-ui-input-select
@@ -459,7 +442,7 @@
             </x-ui-form-grid>
 
             {{-- Story Points & Fälligkeitsdatum --}}
-            <h2 class="text-lg font-semibold text-[var(--ui-secondary)] mb-4 mt-8">Planung</h2>
+            <h4 class="text-sm font-semibold text-[var(--ui-muted)] uppercase tracking-wider mb-3 mt-6">Planung</h4>
             <x-ui-form-grid :cols="2" :gap="6">
                             @can('update', $ticket)
                                 <x-ui-input-select
