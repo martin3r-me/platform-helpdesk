@@ -142,6 +142,12 @@ class HelpdeskServiceProvider extends ServiceProvider
         // Tools registrieren (loose gekoppelt - für AI/Chat)
         $this->registerTools();
 
+        // Error Reporter Registration
+        try {
+            resolve(\Platform\Core\Services\ErrorReporterRegistry::class)
+                ->register('helpdesk', 'Platform\\Helpdesk');
+        } catch (\Throwable $e) {}
+
         // Error Tracking in Exception Handler integrieren
         $this->registerErrorTracking();
     }
