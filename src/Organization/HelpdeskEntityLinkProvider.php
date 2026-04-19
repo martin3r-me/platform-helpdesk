@@ -6,8 +6,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Organization\Contracts\EntityLinkProvider;
+use Platform\Organization\Contracts\HasMetricDefinitions;
 
-class HelpdeskEntityLinkProvider implements EntityLinkProvider
+class HelpdeskEntityLinkProvider implements EntityLinkProvider, HasMetricDefinitions
 {
     public function morphAliases(): array
     {
@@ -116,5 +117,13 @@ class HelpdeskEntityLinkProvider implements EntityLinkProvider
         }
 
         return $result;
+    }
+
+    public function metricDefinitions(): array
+    {
+        return [
+            'items_total' => ['label' => 'Items (gesamt)', 'group' => 'work', 'direction' => 'neutral', 'unit' => 'count'],
+            'items_done'  => ['label' => 'Items (erledigt)', 'group' => 'work', 'direction' => 'up', 'unit' => 'count', 'pair' => 'items_total'],
+        ];
     }
 }
