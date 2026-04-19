@@ -95,24 +95,35 @@ class HelpdeskEntityLinkProvider implements EntityLinkProvider, HasMetricDefinit
             return [];
         }
 
-        $doneIds = HelpdeskTicket::whereIn('id', $allIds)
-            ->where('is_done', true)
-            ->pluck('id')
-            ->flip()
-            ->toArray();
+        $tickets = HelpdeskTicket::whereIn('id', $allIds)
+            ->select('id', 'is_done', 'story_points')
+            ->get()
+            ->keyBy('id');
 
         $result = [];
         foreach ($linksByEntity as $entityId => $ids) {
-            $total = count($ids);
+            $total = 0;
             $done = 0;
+            $spTotal = 0;
+            $spDone = 0;
             foreach ($ids as $id) {
-                if (isset($doneIds[$id])) {
+                $ticket = $tickets[$id] ?? null;
+                if (!$ticket) {
+                    continue;
+                }
+                $total++;
+                $sp = $ticket->story_points?->points() ?? 0;
+                $spTotal += $sp;
+                if ($ticket->is_done) {
                     $done++;
+                    $spDone += $sp;
                 }
             }
             $result[$entityId] = [
                 'items_total' => $total,
                 'items_done' => $done,
+                'story_points_total' => $spTotal,
+                'story_points_done' => $spDone,
             ];
         }
 
@@ -122,8 +133,10 @@ class HelpdeskEntityLinkProvider implements EntityLinkProvider, HasMetricDefinit
     public function metricDefinitions(): array
     {
         return [
-            'items_total' => ['label' => 'Items (gesamt)', 'group' => 'work', 'direction' => 'neutral', 'unit' => 'count'],
-            'items_done'  => ['label' => 'Items (erledigt)', 'group' => 'work', 'direction' => 'up', 'unit' => 'count', 'pair' => 'items_total'],
+            'items_total'        => ['label' => 'Items (gesamt)', 'group' => 'work', 'direction' => 'neutral', 'unit' => 'count'],
+            'items_done'         => ['label' => 'Items (erledigt)', 'group' => 'work', 'direction' => 'up', 'unit' => 'count', 'pair' => 'items_total'],
+            'story_points_total' => ['label' => 'Story Points (gesamt)', 'group' => 'work', 'direction' => 'neutral', 'unit' => 'points'],
+            'story_points_done'  => ['label' => 'Story Points (erledigt)', 'group' => 'work', 'direction' => 'up', 'unit' => 'points', 'pair' => 'story_points_total'],
         ];
     }
 }
