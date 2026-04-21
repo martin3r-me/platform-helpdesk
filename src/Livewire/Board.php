@@ -30,6 +30,24 @@ class Board extends Component
             'context_id' => $this->helpdeskBoard->id,
         ]);
 
+        // Comms-Kontext setzen - ermöglicht Kommunikation im Board-Kontext
+        $this->dispatch('comms', [
+            'model' => get_class($this->helpdeskBoard),
+            'modelId' => $this->helpdeskBoard->id,
+            'subject' => $this->helpdeskBoard->name,
+            'description' => $this->helpdeskBoard->description ?? '',
+            'url' => route('helpdesk.boards.show', $this->helpdeskBoard),
+            'source' => 'helpdesk.board.view',
+            'recipients' => [],
+            'capabilities' => [
+                'manage_channels' => true,
+                'threads' => true,
+            ],
+            'meta' => [
+                'ticket_count' => $this->helpdeskBoard->tickets()->count(),
+            ],
+        ]);
+
         // Organization-Kontext setzen - beides erlauben: Zeiten + Entity-Verknüpfung (analog zu Project)
         $this->dispatch('organization', [
             'context_type' => get_class($this->helpdeskBoard),
