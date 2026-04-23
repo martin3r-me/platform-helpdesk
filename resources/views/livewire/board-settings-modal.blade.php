@@ -6,44 +6,44 @@
     @if($board)
         <div class="flex-grow-1 overflow-y-auto">
             {{-- Tabs --}}
-            <div class="border-b border-[var(--ui-border)]/40 mb-6 px-4 pt-4">
+            <div class="border-b border-gray-200 mb-6 px-4 pt-4">
                 <nav class="-mb-px flex space-x-6" aria-label="Tabs">
                     <button
                         @click="$wire.set('activeTab', 'general')"
-                        :class="$wire.activeTab === 'general' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
-                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        :class="$wire.activeTab === 'general' ? 'border-[#049b5c] text-[#049b5c]' : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-[13px] font-medium transition-colors"
                         wire:click="$set('activeTab', 'general')"
                     >
                         Allgemein
                     </button>
                     <button
                         @click="$wire.set('activeTab', 'service-hours')"
-                        :class="$wire.activeTab === 'service-hours' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
-                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        :class="$wire.activeTab === 'service-hours' ? 'border-[#049b5c] text-[#049b5c]' : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-[13px] font-medium transition-colors"
                         wire:click="$set('activeTab', 'service-hours')"
                     >
                         Service Hours
                     </button>
                     <button
                         @click="$wire.set('activeTab', 'sla')"
-                        :class="$wire.activeTab === 'sla' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
-                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        :class="$wire.activeTab === 'sla' ? 'border-[#049b5c] text-[#049b5c]' : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-[13px] font-medium transition-colors"
                         wire:click="$set('activeTab', 'sla')"
                     >
                         SLA
                     </button>
                     <button
                         @click="$wire.set('activeTab', 'error-tracking')"
-                        :class="$wire.activeTab === 'error-tracking' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
-                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        :class="$wire.activeTab === 'error-tracking' ? 'border-[#049b5c] text-[#049b5c]' : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-[13px] font-medium transition-colors"
                         wire:click="$set('activeTab', 'error-tracking')"
                     >
                         Error Tracking
                     </button>
                     <button
                         @click="$wire.set('activeTab', 'channels')"
-                        :class="$wire.activeTab === 'channels' ? 'border-[var(--ui-primary)] text-[var(--ui-primary)]' : 'border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] hover:border-[var(--ui-border)]'"
-                        class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors"
+                        :class="$wire.activeTab === 'channels' ? 'border-[#049b5c] text-[#049b5c]' : 'border-transparent text-gray-400 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap border-b-2 py-4 px-1 text-[13px] font-medium transition-colors"
                         wire:click="$set('activeTab', 'channels')"
                     >
                         Kanäle
@@ -55,26 +55,34 @@
             @if($activeTab === 'general')
             {{-- Board Grunddaten --}}
             <div class="space-y-4">
-                <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Grunddaten</h3>
-                
+                <h3 class="text-sm font-semibold text-gray-900">Grunddaten</h3>
+
                 <div class="space-y-4">
-                    <x-ui-input-text
-                        name="board.name"
-                        label="Board Name"
-                        wire:model="board.name"
-                        placeholder="z. B. IT Support, Buchhaltung"
-                        required
-                        :errorKey="'board.name'"
-                    />
-                    
-                    <x-ui-input-textarea
-                        name="board.description"
-                        label="Beschreibung"
-                        wire:model="board.description"
-                        rows="3"
-                        placeholder="Beschreibung des Helpdesk Boards..."
-                        :errorKey="'board.description'"
-                    />
+                    <div>
+                        <label for="board.name" class="block text-[11px] font-medium text-gray-500 mb-1">Board Name</label>
+                        <input type="text" id="board.name" name="board.name"
+                            wire:model="board.name"
+                            placeholder="z. B. IT Support, Buchhaltung"
+                            required
+                            class="w-full px-3 py-2 text-[13px] rounded-md border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c] transition-colors"
+                        >
+                        @error('board.name')
+                            <span class="text-xs text-red-600 mt-1">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="board.description" class="block text-[11px] font-medium text-gray-500 mb-1">Beschreibung</label>
+                        <textarea id="board.description" name="board.description"
+                            wire:model="board.description"
+                            rows="3"
+                            placeholder="Beschreibung des Helpdesk Boards..."
+                            class="w-full px-3 py-2 text-[13px] rounded-md border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c] transition-colors"
+                        ></textarea>
+                        @error('board.description')
+                            <span class="text-xs text-red-600 mt-1">{{ $message }}</span>
+                        @enderror
+                    </div>
                 </div>
             </div>
 
@@ -82,77 +90,82 @@
             {{-- Service-Zeiten --}}
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Service Hours</h3>
-                    <x-ui-button variant="primary-outline" size="sm" wire:click="toggleServiceHoursForm">
+                    <h3 class="text-sm font-semibold text-gray-900">Service Hours</h3>
+                    <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#049b5c] text-[#049b5c] text-[13px] font-medium hover:bg-emerald-50 transition-colors" wire:click="toggleServiceHoursForm">
                         {{ $showServiceHoursForm ? 'Abbrechen' : '+ Service Hours hinzufügen' }}
-                    </x-ui-button>
+                    </button>
                 </div>
 
                 @if($showServiceHoursForm)
-                    <div class="bg-[var(--ui-muted-5)] p-4 rounded-lg space-y-4 border border-[var(--ui-border)]/60">
+                    <div class="bg-gray-50 p-4 rounded-lg space-y-4 border border-gray-200">
                         <x-ui-form-grid :cols="2" :gap="4">
-                            <x-ui-input-text
-                                name="newServiceZeit.name"
-                                label="Name"
-                                wire:model="newServiceZeit.name"
-                                placeholder="z. B. Mo-Fr 9-17 Uhr"
-                                required
-                                :errorKey="'newServiceZeit.name'"
-                            />
-                            
-                            <x-ui-input-text
-                                name="newServiceZeit.description"
-                                label="Beschreibung"
-                                wire:model="newServiceZeit.description"
-                                placeholder="Optionale Beschreibung"
-                                :errorKey="'newServiceZeit.description'"
-                            />
+                            <div>
+                                <label for="newServiceZeit.name" class="block text-[11px] font-medium text-gray-500 mb-1">Name</label>
+                                <input type="text" id="newServiceZeit.name" name="newServiceZeit.name"
+                                    wire:model="newServiceZeit.name"
+                                    placeholder="z. B. Mo-Fr 9-17 Uhr"
+                                    required
+                                    class="w-full px-3 py-2 text-[13px] rounded-md border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c] transition-colors"
+                                >
+                                @error('newServiceZeit.name')
+                                    <span class="text-xs text-red-600 mt-1">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="newServiceZeit.description" class="block text-[11px] font-medium text-gray-500 mb-1">Beschreibung</label>
+                                <input type="text" id="newServiceZeit.description" name="newServiceZeit.description"
+                                    wire:model="newServiceZeit.description"
+                                    placeholder="Optionale Beschreibung"
+                                    class="w-full px-3 py-2 text-[13px] rounded-md border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c] transition-colors"
+                                >
+                            </div>
                         </x-ui-form-grid>
 
                         <div class="flex items-center gap-4">
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" 
-                                       wire:model="newServiceZeit.is_active" 
-                                       class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                                <span class="text-sm text-[var(--ui-secondary)]">Aktiv</span>
+                                <input type="checkbox"
+                                       wire:model="newServiceZeit.is_active"
+                                       class="w-4 h-4 rounded border-gray-300 text-[#049b5c] focus:ring-[#049b5c] focus:ring-offset-0">
+                                <span class="text-[13px] text-gray-700">Aktiv</span>
                             </label>
-                            
+
                             <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" 
-                                       wire:model="newServiceZeit.use_auto_messages" 
-                                       class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                                <span class="text-sm text-[var(--ui-secondary)]">Auto-Nachrichten verwenden</span>
+                                <input type="checkbox"
+                                       wire:model="newServiceZeit.use_auto_messages"
+                                       class="w-4 h-4 rounded border-gray-300 text-[#049b5c] focus:ring-[#049b5c] focus:ring-offset-0">
+                                <span class="text-[13px] text-gray-700">Auto-Nachrichten verwenden</span>
                             </label>
                         </div>
 
                         {{-- Service Hours Zeitplan --}}
                         <div class="space-y-3">
-                            <h4 class="text-sm font-medium text-[var(--ui-secondary)]">Öffnungszeiten</h4>
+                            <h4 class="text-[13px] font-medium text-gray-900">Öffnungszeiten</h4>
                             <div class="space-y-2">
                                 @foreach(['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'] as $index => $dayName)
                                     @php
-                                        $dayIndex = $index === 6 ? 0 : $index + 1; // Sonntag = 0
+                                        $dayIndex = $index === 6 ? 0 : $index + 1;
                                     @endphp
-                                    <div class="flex items-center justify-between p-3 bg-[var(--ui-surface)] border border-[var(--ui-border)]/40">
+                                    <div class="flex items-center justify-between p-3 bg-white border border-gray-200">
                                         <div class="flex items-center gap-3 flex-1">
                                             <label class="flex items-center gap-2 cursor-pointer">
-                                                <input type="checkbox" 
-                                                       wire:model="newServiceZeit.service_hours.{{ $index }}.enabled" 
-                                                       class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                                                <span class="text-sm font-medium text-[var(--ui-secondary)] w-24">{{ $dayName }}</span>
+                                                <input type="checkbox"
+                                                       wire:model="newServiceZeit.service_hours.{{ $index }}.enabled"
+                                                       class="w-4 h-4 rounded border-gray-300 text-[#049b5c] focus:ring-[#049b5c] focus:ring-offset-0">
+                                                <span class="text-[13px] font-medium text-gray-700 w-24">{{ $dayName }}</span>
                                             </label>
                                         </div>
                                         <div class="flex items-center gap-2">
-                                            <input type="time" 
+                                            <input type="time"
                                                    wire:model="newServiceZeit.service_hours.{{ $index }}.start"
-                                                   class="px-3 py-1.5 text-sm border border-[var(--ui-border)] rounded-md bg-[var(--ui-surface)] text-[var(--ui-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-primary)]/20 focus:border-[var(--ui-primary)]">
-                                            <span class="text-sm text-[var(--ui-muted)]">bis</span>
-                                            <input type="time" 
+                                                   class="px-3 py-1.5 text-[13px] border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c]">
+                                            <span class="text-[13px] text-gray-400">bis</span>
+                                            <input type="time"
                                                    wire:model="newServiceZeit.service_hours.{{ $index }}.end"
-                                                   class="px-3 py-1.5 text-sm border border-[var(--ui-border)] rounded-md bg-[var(--ui-surface)] text-[var(--ui-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-primary)]/20 focus:border-[var(--ui-primary)]">
+                                                   class="px-3 py-1.5 text-[13px] border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c]">
                                         </div>
-                                        <input type="hidden" 
-                                               wire:model="newServiceZeit.service_hours.{{ $index }}.day" 
+                                        <input type="hidden"
+                                               wire:model="newServiceZeit.service_hours.{{ $index }}.day"
                                                value="{{ $dayIndex }}">
                                     </div>
                                 @endforeach
@@ -161,30 +174,32 @@
 
                         @if($newServiceZeit['use_auto_messages'])
                             <div class="space-y-4">
-                                <x-ui-input-textarea
-                                    name="newServiceZeit.auto_message_inside"
-                                    label="Nachricht während Service-Zeit"
-                                    wire:model="newServiceZeit.auto_message_inside"
-                                    rows="2"
-                                    placeholder="z. B. Vielen Dank für Ihr Ticket. Wir bearbeiten es innerhalb der nächsten 2 Stunden."
-                                    :errorKey="'newServiceZeit.auto_message_inside'"
-                                />
-                                
-                                <x-ui-input-textarea
-                                    name="newServiceZeit.auto_message_outside"
-                                    label="Nachricht außerhalb Service-Zeit"
-                                    wire:model="newServiceZeit.auto_message_outside"
-                                    rows="2"
-                                    placeholder="z. B. Vielen Dank für Ihr Ticket. Wir bearbeiten es am nächsten Werktag."
-                                    :errorKey="'newServiceZeit.auto_message_outside'"
-                                />
+                                <div>
+                                    <label for="newServiceZeit.auto_message_inside" class="block text-[11px] font-medium text-gray-500 mb-1">Nachricht während Service-Zeit</label>
+                                    <textarea id="newServiceZeit.auto_message_inside" name="newServiceZeit.auto_message_inside"
+                                        wire:model="newServiceZeit.auto_message_inside"
+                                        rows="2"
+                                        placeholder="z. B. Vielen Dank für Ihr Ticket. Wir bearbeiten es innerhalb der nächsten 2 Stunden."
+                                        class="w-full px-3 py-2 text-[13px] rounded-md border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c] transition-colors"
+                                    ></textarea>
+                                </div>
+
+                                <div>
+                                    <label for="newServiceZeit.auto_message_outside" class="block text-[11px] font-medium text-gray-500 mb-1">Nachricht außerhalb Service-Zeit</label>
+                                    <textarea id="newServiceZeit.auto_message_outside" name="newServiceZeit.auto_message_outside"
+                                        wire:model="newServiceZeit.auto_message_outside"
+                                        rows="2"
+                                        placeholder="z. B. Vielen Dank für Ihr Ticket. Wir bearbeiten es am nächsten Werktag."
+                                        class="w-full px-3 py-2 text-[13px] rounded-md border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c] transition-colors"
+                                    ></textarea>
+                                </div>
                             </div>
                         @endif
 
-                        <div class="d-flex justify-end">
-                            <x-ui-button variant="success" size="sm" wire:click="addServiceHours">
+                        <div class="flex justify-end">
+                            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#049b5c] text-white text-[13px] font-medium hover:bg-[#038a52] transition-colors" wire:click="addServiceHours">
                                 Service Hours hinzufügen
-                            </x-ui-button>
+                            </button>
                         </div>
                     </div>
                 @endif
@@ -192,31 +207,31 @@
                 {{-- Bestehende Service Hours --}}
                 <div class="space-y-2">
                     @forelse($serviceHours as $serviceHour)
-                        <div class="flex items-center justify-between p-3 bg-[var(--ui-surface)] border border-[var(--ui-border)]/40">
+                        <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
                             <div class="flex items-center gap-3 flex-1 min-w-0">
-                                <div class="w-3 h-3 rounded-full flex-shrink-0 {{ $serviceHour->is_active ? 'bg-[var(--ui-success)]' : 'bg-[var(--ui-muted)]' }}"></div>
+                                <div class="w-3 h-3 rounded-full flex-shrink-0 {{ $serviceHour->is_active ? 'bg-green-500' : 'bg-gray-400' }}"></div>
                                 <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-medium text-[var(--ui-secondary)]">{{ $serviceHour->name }}</div>
+                                    <div class="text-[13px] font-medium text-gray-900">{{ $serviceHour->name }}</div>
                                     @if($serviceHour->description)
-                                        <div class="text-xs text-[var(--ui-muted)] mt-0.5">{{ $serviceHour->description }}</div>
+                                        <div class="text-xs text-gray-400 mt-0.5">{{ $serviceHour->description }}</div>
                                     @endif
-                                    <div class="text-xs text-[var(--ui-muted)] mt-1">
+                                    <div class="text-xs text-gray-400 mt-1">
                                         {{ $serviceHour->getFormattedSchedule() }}
                                     </div>
                                     @if($serviceHour->use_auto_messages)
-                                        <div class="text-xs text-[var(--ui-primary)] mt-1">Auto-Nachrichten aktiv</div>
+                                        <div class="text-xs text-[#049b5c] mt-1">Auto-Nachrichten aktiv</div>
                                     @endif
                                 </div>
                             </div>
-                            <button wire:click="deleteServiceHours({{ $serviceHour->id }})" 
-                                    class="text-[var(--ui-danger)] hover:text-[var(--ui-danger)]/80 transition-colors flex-shrink-0 ml-3"
+                            <button wire:click="deleteServiceHours({{ $serviceHour->id }})"
+                                    class="text-red-600 hover:text-red-700 transition-colors flex-shrink-0 ml-3"
                                     title="Löschen">
                                 @svg('heroicon-o-trash', 'w-4 h-4')
                             </button>
                         </div>
                     @empty
-                        <div class="text-center py-8 text-[var(--ui-muted)]">
-                            <p class="text-sm">Noch keine Service Hours definiert</p>
+                        <div class="text-center py-8 text-gray-400">
+                            <p class="text-[13px]">Noch keine Service Hours definiert</p>
                         </div>
                     @endforelse
                 </div>
@@ -226,21 +241,21 @@
             {{-- SLA-Auswahl --}}
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Service Level Agreement (SLA)</h3>
-                    <x-ui-button variant="primary-outline" size="sm" :href="route('helpdesk.slas.index')" wire:navigate>
+                    <h3 class="text-sm font-semibold text-gray-900">Service Level Agreement (SLA)</h3>
+                    <a href="{{ route('helpdesk.slas.index') }}" wire:navigate class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#049b5c] text-[#049b5c] text-[13px] font-medium hover:bg-emerald-50 transition-colors">
                         SLAs verwalten
-                    </x-ui-button>
+                    </a>
                 </div>
-                
+
                 <div class="space-y-4">
                     @if($board->sla)
-                        <div class="flex items-center justify-between p-3 bg-[var(--ui-surface)] border border-[var(--ui-border)]/40">
+                        <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
                             <div class="flex-1 min-w-0">
-                                <div class="text-sm font-medium text-[var(--ui-secondary)]">{{ $board->sla->name }}</div>
+                                <div class="text-[13px] font-medium text-gray-900">{{ $board->sla->name }}</div>
                                 @if($board->sla->description)
-                                    <div class="text-xs text-[var(--ui-muted)] mt-0.5">{{ $board->sla->description }}</div>
+                                    <div class="text-xs text-gray-400 mt-0.5">{{ $board->sla->description }}</div>
                                 @endif
-                                <div class="text-xs text-[var(--ui-muted)] mt-1">
+                                <div class="text-xs text-gray-400 mt-1">
                                     @if($board->sla->response_time_hours)
                                         Reaktion: {{ $board->sla->response_time_hours }}h
                                     @endif
@@ -252,65 +267,65 @@
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0 ml-3">
                                 @if($board->sla->is_active)
-                                    <x-ui-badge variant="success" size="xs">Aktiv</x-ui-badge>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800">Aktiv</span>
                                 @else
-                                    <x-ui-badge variant="secondary" size="xs">Inaktiv</x-ui-badge>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-700">Inaktiv</span>
                                 @endif
                             </div>
                         </div>
                     @else
-                        <div class="text-center py-8 text-[var(--ui-muted)]">
-                            <p class="text-sm">Kein SLA zugewiesen</p>
+                        <div class="text-center py-8 text-gray-400">
+                            <p class="text-[13px]">Kein SLA zugewiesen</p>
                         </div>
                     @endif
-                    
-                    <x-ui-input-select
-                        name="board.helpdesk_board_sla_id"
-                        label="SLA auswählen"
-                        :options="$availableSlas"
-                        optionValue="id"
-                        optionLabel="name"
-                        :nullable="true"
-                        nullLabel="– SLA auswählen –"
-                        wire:model.live="board.helpdesk_board_sla_id"
-                    />
+
+                    <div>
+                        <label for="board.helpdesk_board_sla_id" class="block text-[11px] font-medium text-gray-500 mb-1">SLA auswählen</label>
+                        <select id="board.helpdesk_board_sla_id" name="board.helpdesk_board_sla_id"
+                            wire:model.live="board.helpdesk_board_sla_id"
+                            class="w-full px-3 py-2 text-[13px] rounded-md border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c] transition-colors"
+                        >
+                            <option value="">– SLA auswählen –</option>
+                            @foreach($availableSlas as $sla)
+                                <option value="{{ $sla->id }}">{{ $sla->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             </div>
 
             @elseif($activeTab === 'error-tracking' && $errorSettings)
             {{-- Error Tracking Einstellungen --}}
             <div class="space-y-6">
-                {{-- Aktivierung --}}
                 <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Error Tracking</h3>
+                    <h3 class="text-sm font-semibold text-gray-900">Error Tracking</h3>
 
-                    <div class="p-4 bg-[var(--ui-muted-5)] rounded-lg border border-[var(--ui-border)]/40">
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <label class="flex items-center gap-3 cursor-pointer">
                             <input type="checkbox"
                                    wire:model="errorSettings.enabled"
-                                   class="w-5 h-5 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
+                                   class="w-5 h-5 rounded border-gray-300 text-[#049b5c] focus:ring-[#049b5c] focus:ring-offset-0">
                             <div>
-                                <span class="text-sm font-medium text-[var(--ui-secondary)]">Error Tracking aktivieren</span>
-                                <p class="text-xs text-[var(--ui-muted)] mt-0.5">Systemfehler werden automatisch als Tickets erfasst</p>
+                                <span class="text-[13px] font-medium text-gray-900">Error Tracking aktivieren</span>
+                                <p class="text-xs text-gray-400 mt-0.5">Systemfehler werden automatisch als Tickets erfasst</p>
                             </div>
                         </label>
                     </div>
                 </div>
 
-                {{-- HTTP Codes --}}
                 <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">HTTP-Codes erfassen</h3>
-                    <p class="text-sm text-[var(--ui-muted)]">Wählen Sie die HTTP-Statuscodes, die als Fehler erfasst werden sollen.</p>
+                    <h3 class="text-sm font-semibold text-gray-900">HTTP-Codes erfassen</h3>
+                    <p class="text-[13px] text-gray-400">Wählen Sie die HTTP-Statuscodes, die als Fehler erfasst werden sollen.</p>
 
                     <div class="flex flex-wrap gap-2">
                         @foreach($availableHttpCodes as $code)
                             <button
                                 type="button"
                                 wire:click="toggleHttpCode({{ $code }})"
-                                class="px-3 py-1.5 text-sm font-medium rounded-full border transition-colors
+                                class="px-3 py-1.5 text-[13px] font-medium rounded-full border transition-colors
                                     {{ $this->isHttpCodeEnabled($code)
-                                        ? 'bg-[var(--ui-primary)] text-white border-[var(--ui-primary)]'
-                                        : 'bg-[var(--ui-surface)] text-[var(--ui-muted)] border-[var(--ui-border)] hover:border-[var(--ui-primary)] hover:text-[var(--ui-secondary)]' }}"
+                                        ? 'bg-[#049b5c] text-white border-[#049b5c]'
+                                        : 'bg-white text-gray-400 border-gray-300 hover:border-[#049b5c] hover:text-gray-700' }}"
                             >
                                 {{ $code }}
                                 @if($code >= 500)
@@ -323,64 +338,56 @@
                     </div>
                 </div>
 
-                {{-- Deduplizierung --}}
                 <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Deduplizierung</h3>
-
+                    <h3 class="text-sm font-semibold text-gray-900">Deduplizierung</h3>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
-                                Dedupe-Fenster (Stunden)
-                            </label>
+                            <label class="block text-[11px] font-medium text-gray-500 mb-1">Dedupe-Fenster (Stunden)</label>
                             <input type="number"
                                    wire:model="errorSettings.dedupe_window_hours"
                                    min="1"
                                    max="720"
-                                   class="w-32 px-3 py-2 text-sm border border-[var(--ui-border)] rounded-md bg-[var(--ui-surface)] text-[var(--ui-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-primary)]/20 focus:border-[var(--ui-primary)]">
-                            <p class="mt-1 text-xs text-[var(--ui-muted)]">Gleiche Fehler werden innerhalb dieses Zeitraums zusammengefasst</p>
+                                   class="w-32 px-3 py-2 text-[13px] rounded-md border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c]">
+                            <p class="mt-1 text-xs text-gray-400">Gleiche Fehler werden innerhalb dieses Zeitraums zusammengefasst</p>
                         </div>
                     </div>
                 </div>
 
-                {{-- Optionen --}}
                 <div class="space-y-4">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Optionen</h3>
-
+                    <h3 class="text-sm font-semibold text-gray-900">Optionen</h3>
                     <div class="space-y-3">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox"
                                    wire:model="errorSettings.capture_console_errors"
-                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                            <span class="text-sm text-[var(--ui-secondary)]">Console-/Scheduler-Fehler erfassen</span>
+                                   class="w-4 h-4 rounded border-gray-300 text-[#049b5c] focus:ring-[#049b5c] focus:ring-offset-0">
+                            <span class="text-[13px] text-gray-700">Console-/Scheduler-Fehler erfassen</span>
                         </label>
-                        <p class="text-xs text-[var(--ui-muted)] ml-6">Fehler aus Artisan-Commands und Scheduler-Jobs werden ebenfalls erfasst (ohne User-Kontext)</p>
+                        <p class="text-xs text-gray-400 ml-6">Fehler aus Artisan-Commands und Scheduler-Jobs werden ebenfalls erfasst (ohne User-Kontext)</p>
 
                         <label class="flex items-center gap-2 cursor-pointer mt-4">
                             <input type="checkbox"
                                    wire:model="errorSettings.auto_create_ticket"
-                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                            <span class="text-sm text-[var(--ui-secondary)]">Automatisch Tickets erstellen</span>
+                                   class="w-4 h-4 rounded border-gray-300 text-[#049b5c] focus:ring-[#049b5c] focus:ring-offset-0">
+                            <span class="text-[13px] text-gray-700">Automatisch Tickets erstellen</span>
                         </label>
-                        <p class="text-xs text-[var(--ui-muted)] ml-6">Bei neuen Fehlern wird automatisch ein Ticket angelegt</p>
+                        <p class="text-xs text-gray-400 ml-6">Bei neuen Fehlern wird automatisch ein Ticket angelegt</p>
 
                         <label class="flex items-center gap-2 cursor-pointer mt-4">
                             <input type="checkbox"
                                    wire:model="errorSettings.include_stack_trace"
-                                   class="w-4 h-4 text-[var(--ui-primary)] border-[var(--ui-border)] rounded focus:ring-[var(--ui-primary)]">
-                            <span class="text-sm text-[var(--ui-secondary)]">Stack Trace erfassen</span>
+                                   class="w-4 h-4 rounded border-gray-300 text-[#049b5c] focus:ring-[#049b5c] focus:ring-offset-0">
+                            <span class="text-[13px] text-gray-700">Stack Trace erfassen</span>
                         </label>
-                        <p class="text-xs text-[var(--ui-muted)] ml-6">Stack Trace wird in den Fehlerdaten gespeichert</p>
+                        <p class="text-xs text-gray-400 ml-6">Stack Trace wird in den Fehlerdaten gespeichert</p>
 
                         @if($errorSettings->include_stack_trace)
                             <div class="ml-6 mt-2">
-                                <label class="block text-sm font-medium text-[var(--ui-secondary)] mb-2">
-                                    Stack Trace Limit (Frames)
-                                </label>
+                                <label class="block text-[11px] font-medium text-gray-500 mb-1">Stack Trace Limit (Frames)</label>
                                 <input type="number"
                                        wire:model="errorSettings.stack_trace_limit"
                                        min="1"
                                        max="200"
-                                       class="w-24 px-3 py-2 text-sm border border-[var(--ui-border)] rounded-md bg-[var(--ui-surface)] text-[var(--ui-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-primary)]/20 focus:border-[var(--ui-primary)]">
+                                       class="w-24 px-3 py-2 text-[13px] rounded-md border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20 focus:border-[#049b5c]">
                             </div>
                         @endif
                     </div>
@@ -391,10 +398,10 @@
             {{-- Kanäle --}}
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-[var(--ui-secondary)]">Verknüpfte Kanäle</h3>
+                    <h3 class="text-sm font-semibold text-gray-900">Verknüpfte Kanäle</h3>
                 </div>
 
-                <p class="text-sm text-[var(--ui-muted)]">
+                <p class="text-[13px] text-gray-400">
                     Eingehende E-Mails auf verknüpften Kanälen erstellen automatisch ein Ticket in diesem Board.
                 </p>
 
@@ -403,28 +410,28 @@
                         @php
                             $isLinked = in_array($channel['id'], $linkedChannelIds);
                         @endphp
-                        <div class="flex items-center justify-between p-3 bg-[var(--ui-surface)] border border-[var(--ui-border)]/40 rounded-lg">
+                        <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
                             <div class="flex items-center gap-3 flex-1 min-w-0">
-                                <div class="w-3 h-3 rounded-full flex-shrink-0 {{ $isLinked ? 'bg-[var(--ui-success)]' : 'bg-[var(--ui-muted)]' }}"></div>
+                                <div class="w-3 h-3 rounded-full flex-shrink-0 {{ $isLinked ? 'bg-green-500' : 'bg-gray-400' }}"></div>
                                 <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-medium text-[var(--ui-secondary)]">{{ $channel['sender_identifier'] }}</div>
+                                    <div class="text-[13px] font-medium text-gray-900">{{ $channel['sender_identifier'] }}</div>
                                     @if($channel['name'])
-                                        <div class="text-xs text-[var(--ui-muted)] mt-0.5">{{ $channel['name'] }}</div>
+                                        <div class="text-xs text-gray-400 mt-0.5">{{ $channel['name'] }}</div>
                                     @endif
                                 </div>
                             </div>
                             <button
                                 wire:click="toggleChannel({{ $channel['id'] }})"
-                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--ui-primary)]/20
-                                    {{ $isLinked ? 'bg-[var(--ui-primary)]' : 'bg-[var(--ui-muted-5)]' }}"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#049b5c]/20
+                                    {{ $isLinked ? 'bg-[#049b5c]' : 'bg-gray-200' }}"
                             >
                                 <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out
                                     {{ $isLinked ? 'translate-x-5' : 'translate-x-0' }}"></span>
                             </button>
                         </div>
                     @empty
-                        <div class="text-center py-8 text-[var(--ui-muted)]">
-                            <p class="text-sm">Keine E-Mail-Kanäle verfügbar</p>
+                        <div class="text-center py-8 text-gray-400">
+                            <p class="text-[13px]">Keine E-Mail-Kanäle verfügbar</p>
                             <p class="text-xs mt-1">Erstellen Sie zuerst einen E-Mail-Kanal in den Kommunikations-Einstellungen.</p>
                         </div>
                     @endforelse
@@ -432,7 +439,7 @@
             </div>
             @endif
 
-            <hr class="border-[var(--ui-border)]/40">
+            <hr class="border-gray-200">
 
             {{-- Löschen Button --}}
             <div class="flex justify-end">
@@ -443,6 +450,6 @@
     @endif
 
     <x-slot name="footer">
-        <x-ui-button variant="success" wire:click="save">Speichern</x-ui-button>
+        <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#049b5c] text-white text-[13px] font-medium hover:bg-[#038a52] transition-colors" wire:click="save">Speichern</button>
     </x-slot>
 </x-ui-modal>

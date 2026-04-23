@@ -7,25 +7,25 @@
     {{-- Entity-Zeile --}}
     <button type="button"
             @click="open = !open; localStorage.setItem('helpdesk.entity.' + {{ $node['entity_id'] }}, open)"
-            class="flex items-center gap-1 py-1 px-2 rounded-md text-[var(--ui-secondary)] hover:bg-[var(--ui-muted-5)] transition w-full text-left group">
-        <span class="w-3 h-3 flex-shrink-0 flex items-center justify-center transition-transform text-[var(--ui-muted)]"
+            class="flex items-center gap-1 py-1 px-2 rounded-md text-gray-700 hover:bg-emerald-50 transition w-full text-left group">
+        <span class="w-3 h-3 flex-shrink-0 flex items-center justify-center transition-transform text-gray-400"
               :class="open ? 'rotate-90' : ''">
             @svg('heroicon-o-chevron-right', 'w-2.5 h-2.5')
         </span>
         <span class="truncate text-xs font-medium">{{ $node['entity_name'] }}</span>
-        <span class="ml-auto text-[10px] tabular-nums text-[var(--ui-muted)] opacity-60">{{ $node['total_boards'] }}</span>
+        <span class="ml-auto text-[10px] tabular-nums text-gray-400 opacity-60">{{ $node['total_boards'] }}</span>
     </button>
 
     {{-- Aufgeklappter Inhalt --}}
-    <div x-show="open" x-collapse class="flex flex-col ml-3 border-l border-[var(--ui-border)]">
+    <div x-show="open" x-collapse class="flex flex-col ml-3 border-l border-gray-200">
         {{-- 1. Eigene Boards --}}
         @foreach($node['boards'] as $board)
             <a wire:key="entity-{{ $node['entity_id'] }}-board-{{ $board->id }}"
                href="{{ route('helpdesk.boards.show', ['helpdeskBoard' => $board]) }}"
                wire:navigate
                title="{{ $board->name }}"
-               class="flex items-center gap-1.5 py-0.5 pl-3 pr-2 text-[var(--ui-secondary)] hover:text-[var(--ui-primary)] transition truncate">
-                <span class="w-1 h-1 rounded-full flex-shrink-0 bg-[var(--ui-muted)] opacity-40"></span>
+               class="flex items-center gap-1.5 py-0.5 pl-3 pr-2 text-gray-600 hover:text-[#049b5c] transition truncate">
+                <span class="w-1 h-1 rounded-full flex-shrink-0 bg-gray-300"></span>
                 <span class="truncate text-[11px]">{{ $board->name }}</span>
             </a>
         @endforeach
@@ -40,11 +40,11 @@
                     <button type="button"
                             @click="groupOpen = !groupOpen; localStorage.setItem('helpdesk.entity.' + {{ $node['entity_id'] }} + '.type.' + {{ $typeGroup['type_id'] }}, groupOpen)"
                             class="flex items-center gap-1 mt-1 mb-0.5 pl-2.5 pr-2 w-full text-left group cursor-pointer">
-                        <span class="w-2.5 h-2.5 flex-shrink-0 flex items-center justify-center transition-transform text-[var(--ui-muted)] opacity-50"
+                        <span class="w-2.5 h-2.5 flex-shrink-0 flex items-center justify-center transition-transform text-gray-400 opacity-50"
                               :class="groupOpen ? 'rotate-90' : ''">
                             @svg('heroicon-o-chevron-right', 'w-2 h-2')
                         </span>
-                        <span class="text-[9px] uppercase tracking-wider text-[var(--ui-muted)] opacity-60 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] uppercase tracking-wider text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity">
                             {{ $typeGroup['type_name'] }}
                         </span>
                     </button>

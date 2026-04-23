@@ -9,92 +9,119 @@
             ['label' => $helpdeskBoard->name],
         ]">
             <x-slot name="left">
-                <x-ui-button variant="ghost" size="sm" x-data @click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })">
+                <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-[13px]" x-data @click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })">
                     @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
                     <span>Einstellungen</span>
-                </x-ui-button>
+                </button>
             </x-slot>
             @can('update', $helpdeskBoard)
-                <x-ui-button variant="ghost" size="sm" wire:click="createBoardSlot">
+                <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-[13px]" wire:click="createBoardSlot">
                     @svg('heroicon-o-square-2-stack', 'w-4 h-4')
                     <span>Spalte</span>
-                </x-ui-button>
+                </button>
             @endcan
         </x-ui-page-actionbar>
     </x-slot>
 
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Board-Übersicht" width="w-80" :defaultOpen="true" side="left">
-            <div class="p-6 space-y-6">
-				{{-- Board-Info --}}
+            <div class="p-4 space-y-5">
+                {{-- Board-Info --}}
                 <div>
-                    <h3 class="text-lg font-semibold text-[var(--ui-secondary)] mb-2">{{ $helpdeskBoard->name }}</h3>
-                    <div class="text-sm text-[var(--ui-muted)]">{{ $helpdeskBoard->description ?? 'Keine Beschreibung' }}</div>
+                    <h3 class="text-sm font-semibold text-gray-900 mb-2">{{ $helpdeskBoard->name }}</h3>
+                    <div class="text-[13px] text-gray-500">{{ $helpdeskBoard->description ?? 'Keine Beschreibung' }}</div>
                 </div>
 
-				{{-- Ansicht --}}
-				<div>
-					<h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Ansicht</h3>
-					<div class="space-y-2">
-						<label class="flex items-center gap-3 cursor-pointer">
-							<input
-								type="checkbox"
-								wire:click="toggleShowDone"
-								@if($showDone) checked @endif
-								class="w-4 h-4 rounded border-[var(--ui-border)] text-[var(--ui-primary)] focus:ring-[var(--ui-primary)] focus:ring-offset-0"
-							>
-							<span class="text-sm text-[var(--ui-secondary)]">Erledigte Tickets anzeigen</span>
-						</label>
-					</div>
-				</div>
+                {{-- Ansicht --}}
+                <div>
+                    <div class="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Ansicht</div>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                wire:click="toggleShowDone"
+                                @if($showDone) checked @endif
+                                class="w-4 h-4 rounded border-gray-300 text-[#049b5c] focus:ring-[#049b5c] focus:ring-offset-0"
+                            >
+                            <span class="text-[13px] text-gray-700">Erledigte Tickets anzeigen</span>
+                        </label>
+                    </div>
+                </div>
 
-				{{-- Statistiken --}}
-                <div class="grid grid-cols-2 gap-2">
-					<x-ui-dashboard-tile title="Story Points (offen)" :count="$groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0)" icon="chart-bar" variant="warning" size="sm" />
-					<x-ui-dashboard-tile title="Story Points (erledigt)" :count="$groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0)" icon="check-circle" variant="success" size="sm" />
-					<x-ui-dashboard-tile title="Offen" :count="$groups->filter(fn($g) => !($g->isDoneGroup ?? false))->sum(fn($g) => $g->tasks->count())" icon="clock" variant="warning" size="sm" />
-					<x-ui-dashboard-tile title="Gesamt" :count="$groups->flatMap(fn($g) => $g->tasks)->count()" icon="document-text" variant="secondary" size="sm" />
-					<x-ui-dashboard-tile title="Erledigt" :count="$groups->filter(fn($g) => $g->isDoneGroup ?? false)->sum(fn($g) => $g->tasks->count())" icon="check-circle" variant="success" size="sm" />
-					<x-ui-dashboard-tile title="Ohne Fälligkeit" :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => !$t->due_date)->count()" icon="calendar" variant="neutral" size="sm" />
-					<x-ui-dashboard-tile title="Frösche" :count="0" icon="exclamation-triangle" variant="danger" size="sm" />
-					<x-ui-dashboard-tile title="Überfällig" :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->is_done)->count()" icon="exclamation-circle" variant="danger" size="sm" />
-				</div>
+                {{-- Statistiken --}}
+                <div>
+                    <div class="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Statistiken</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">SP (offen)</div>
+                            <div class="text-base font-bold text-amber-600 tabular-nums">{{ $groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0) }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">SP (erledigt)</div>
+                            <div class="text-base font-bold text-green-600 tabular-nums">{{ $groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0) }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Offen</div>
+                            <div class="text-base font-bold text-amber-600 tabular-nums">{{ $groups->filter(fn($g) => !($g->isDoneGroup ?? false))->sum(fn($g) => $g->tasks->count()) }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Gesamt</div>
+                            <div class="text-base font-bold text-gray-900 tabular-nums">{{ $groups->flatMap(fn($g) => $g->tasks)->count() }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Erledigt</div>
+                            <div class="text-base font-bold text-green-600 tabular-nums">{{ $groups->filter(fn($g) => $g->isDoneGroup ?? false)->sum(fn($g) => $g->tasks->count()) }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Ohne Fälligk.</div>
+                            <div class="text-base font-bold text-gray-900 tabular-nums">{{ $groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => !$t->due_date)->count() }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Frösche</div>
+                            <div class="text-base font-bold text-red-600 tabular-nums">0</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Überfällig</div>
+                            <div class="text-base font-bold text-red-600 tabular-nums">{{ $groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->is_done)->count() }}</div>
+                        </div>
+                    </div>
+                </div>
 
-				{{-- Erledigte Tickets --}}
-				@php $completedTickets = $groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks); @endphp
-				@if($completedTickets->count() > 0)
-					<div>
-                        <h4 class="font-medium text-[var(--ui-secondary)] mb-3">Erledigte Tickets ({{ $completedTickets->count() }})</h4>
+                {{-- Erledigte Tickets --}}
+                @php $completedTickets = $groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks); @endphp
+                @if($completedTickets->count() > 0)
+                    <div>
+                        <h4 class="text-[13px] font-medium text-gray-900 mb-3">Erledigte Tickets ({{ $completedTickets->count() }})</h4>
                         <div class="space-y-1 max-h-60 overflow-y-auto">
-							@foreach($completedTickets->take(10) as $ticket)
-                                <a href="{{ route('helpdesk.tickets.show', $ticket) }}" class="block p-2 rounded text-sm border border-[var(--ui-border)]/60 bg-[var(--ui-muted-5)] hover:bg-[var(--ui-primary-5)] transition" wire:navigate>
-									<div class="d-flex items-center gap-2">
-                                        <x-heroicon-o-check-circle class="w-4 h-4 text-[var(--ui-success)]"/>
-										<span class="truncate">{{ $ticket->title }}</span>
-									</div>
-								</a>
-							@endforeach
+                            @foreach($completedTickets->take(10) as $ticket)
+                                <a href="{{ route('helpdesk.tickets.show', $ticket) }}" class="block p-2 rounded-lg text-[13px] border border-gray-200 bg-gray-50 hover:bg-emerald-50/50 transition" wire:navigate>
+                                    <div class="flex items-center gap-2">
+                                        <x-heroicon-o-check-circle class="w-4 h-4 text-green-500"/>
+                                        <span class="truncate">{{ $ticket->title }}</span>
+                                    </div>
+                                </a>
+                            @endforeach
                             @if($completedTickets->count() > 10)
-                                <div class="text-xs text-[var(--ui-muted)] italic text-center">+{{ $completedTickets->count() - 10 }} weitere</div>
-							@endif
-						</div>
-					</div>
-				@else
-                    <div class="text-sm text-[var(--ui-muted)] italic">Noch keine erledigten Tickets</div>
-				@endif
+                                <div class="text-xs text-gray-400 italic text-center">+{{ $completedTickets->count() - 10 }} weitere</div>
+                            @endif
+                        </div>
+                    </div>
+                @else
+                    <div class="text-[13px] text-gray-400 italic">Noch keine erledigten Tickets</div>
+                @endif
             </div>
-		</x-ui-page-sidebar>
+        </x-ui-page-sidebar>
     </x-slot>
 
     <x-slot name="activity">
         <x-ui-page-sidebar title="Aktivitäten" width="w-80" defaultOpen="false" storeKey="activityOpen" side="right">
             <div class="p-4 space-y-4">
-                <div class="text-sm text-[var(--ui-muted)]">Letzte Aktivitäten</div>
-                <div class="space-y-3 text-sm">
+                <div class="text-[13px] text-gray-400">Letzte Aktivitäten</div>
+                <div class="space-y-3 text-[13px]">
                     @foreach(($activities ?? []) as $activity)
-                        <div class="p-2 rounded border border-[var(--ui-border)]/60 bg-[var(--ui-muted-5)]">
-                            <div class="font-medium text-[var(--ui-secondary)] truncate">{{ $activity['title'] ?? 'Aktivität' }}</div>
-                            <div class="text-[var(--ui-muted)]">{{ $activity['time'] ?? '' }}</div>
+                        <div class="p-2 rounded-lg border border-gray-200 bg-gray-50">
+                            <div class="font-medium text-gray-900 truncate">{{ $activity['title'] ?? 'Aktivität' }}</div>
+                            <div class="text-gray-400">{{ $activity['time'] ?? '' }}</div>
                         </div>
                     @endforeach
                 </div>
@@ -104,10 +131,10 @@
 
     <!-- Kanban-Board (Planner-kompatibel) -->
     <x-ui-kanban-container class="h-full" sortable="updateTicketGroupOrder" sortable-group="updateTicketOrder">
-		{{-- Mittlere Spalten (scrollable) --}}
-		@foreach($groups->filter(fn ($g) => !($g->isDoneGroup ?? false)) as $column)
+        {{-- Mittlere Spalten (scrollable) --}}
+        @foreach($groups->filter(fn ($g) => !($g->isDoneGroup ?? false)) as $column)
             @php $isBacklog = $column->isBacklog ?? false; @endphp
-			<x-ui-kanban-column :sortable-id="$column->id" :scrollable="true">
+            <x-ui-kanban-column :sortable-id="$column->id" :scrollable="true">
                 <x-slot name="title">
                     <span class="flex items-center gap-1.5">
                         {{ $column->label ?? $column->name ?? 'Spalte' }}
@@ -116,49 +143,49 @@
                         @endif
                     </span>
                 </x-slot>
-				<x-slot name="headerActions">
-					@can('update', $helpdeskBoard)
+                <x-slot name="headerActions">
+                    @can('update', $helpdeskBoard)
                         @if(!$isBacklog)
-                            <button 
-                                wire:click="createTicket('{{ $column->id }}')" 
-                                class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
+                            <button
+                                wire:click="createTicket('{{ $column->id }}')"
+                                class="text-gray-400 hover:text-gray-700 transition-colors"
                                 title="Neues Ticket">
                                 @svg('heroicon-o-plus-circle', 'w-4 h-4')
                             </button>
-                            <button 
-                                @click="$dispatch('open-modal-board-slot-settings', { boardSlotId: {{ $column->id }} })" 
-                                class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
+                            <button
+                                @click="$dispatch('open-modal-board-slot-settings', { boardSlotId: {{ $column->id }} })"
+                                class="text-gray-400 hover:text-gray-700 transition-colors"
                                 title="Einstellungen">
                                 @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
                             </button>
                         @else
-                            <button 
-                                wire:click="createTicket(null)" 
-                                class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors" 
+                            <button
+                                wire:click="createTicket(null)"
+                                class="text-gray-400 hover:text-gray-700 transition-colors"
                                 title="Ticket in Backlog erstellen">
                                 @svg('heroicon-o-plus-circle', 'w-4 h-4')
                             </button>
                         @endif
-					@endcan
-				</x-slot>
+                    @endcan
+                </x-slot>
 
-				@foreach($column->tasks as $ticket)
-					@include('helpdesk::livewire.ticket-preview-card', ['ticket' => $ticket])
-				@endforeach
-			</x-ui-kanban-column>
-		@endforeach
+                @foreach($column->tasks as $ticket)
+                    @include('helpdesk::livewire.ticket-preview-card', ['ticket' => $ticket])
+                @endforeach
+            </x-ui-kanban-column>
+        @endforeach
 
-		{{-- ERLEDIGT Spalte (muted, nicht sortierbar als Gruppe) - nur anzeigen wenn $showDone aktiv --}}
-		@if($showDone)
-			@php $doneGroup = $groups->first(fn($g) => ($g->isDoneGroup ?? false)); @endphp
-			@if($doneGroup)
-				<x-ui-kanban-column :title="($doneGroup->label ?? 'Erledigt')" :sortable-id="null" :scrollable="true" :muted="true">
-					@foreach($doneGroup->tasks as $ticket)
-						@include('helpdesk::livewire.ticket-preview-card', ['ticket' => $ticket])
-					@endforeach
-				</x-ui-kanban-column>
-			@endif
-		@endif
+        {{-- ERLEDIGT Spalte (muted, nicht sortierbar als Gruppe) - nur anzeigen wenn $showDone aktiv --}}
+        @if($showDone)
+            @php $doneGroup = $groups->first(fn($g) => ($g->isDoneGroup ?? false)); @endphp
+            @if($doneGroup)
+                <x-ui-kanban-column :title="($doneGroup->label ?? 'Erledigt')" :sortable-id="null" :scrollable="true" :muted="true">
+                    @foreach($doneGroup->tasks as $ticket)
+                        @include('helpdesk::livewire.ticket-preview-card', ['ticket' => $ticket])
+                    @endforeach
+                </x-ui-kanban-column>
+            @endif
+        @endif
     </x-ui-kanban-container>
 
     <livewire:helpdesk.board-settings-modal wire:key="helpdesk-board-settings-modal"/>

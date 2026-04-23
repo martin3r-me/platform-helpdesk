@@ -8,41 +8,41 @@
             ['label' => 'Helpdesk', 'href' => route('helpdesk.dashboard'), 'icon' => 'lifebuoy'],
             ['label' => 'Meine Tickets'],
         ]">
-            <x-ui-button variant="primary" size="sm" wire:click="createTicket(null)">
+            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#049b5c] text-white text-[13px] font-medium hover:bg-[#038a52] transition-colors" wire:click="createTicket(null)">
                 @svg('heroicon-o-plus', 'w-4 h-4')
                 <span>Ticket</span>
-            </x-ui-button>
-            <x-ui-button variant="ghost" size="sm" wire:click="createTicketGroup">
+            </button>
+            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-[13px]" wire:click="createTicketGroup">
                 @svg('heroicon-o-square-2-stack', 'w-4 h-4')
                 <span>Spalte</span>
-            </x-ui-button>
+            </button>
         </x-ui-page-actionbar>
     </x-slot>
 
     <x-slot name="sidebar">
         <x-ui-page-sidebar title="Übersicht" width="w-80" :defaultOpen="true">
-            <div class="p-6 space-y-6">
+            <div class="p-4 space-y-5">
                 {{-- Monatliche Performance --}}
                 <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Monatliche Performance</h3>
-                    <div class="p-4 rounded-lg bg-[var(--ui-muted-5)] border border-[var(--ui-border)]/40">
+                    <div class="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Monatliche Performance</div>
+                    <div class="p-4 rounded-lg bg-gray-50 border border-gray-200">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm text-[var(--ui-muted)]">Erstellt</span>
-                            <span class="text-sm font-semibold text-[var(--ui-warning)]">{{ $createdPoints }} SP</span>
+                            <span class="text-[13px] text-gray-500">Erstellt</span>
+                            <span class="text-[13px] font-semibold text-amber-600">{{ $createdPoints }} SP</span>
                         </div>
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm text-[var(--ui-muted)]">Erledigt</span>
-                            <span class="text-sm font-semibold text-[var(--ui-success)]">{{ $donePoints }} SP</span>
+                            <span class="text-[13px] text-gray-500">Erledigt</span>
+                            <span class="text-[13px] font-semibold text-green-600">{{ $donePoints }} SP</span>
                         </div>
-                        <div class="border-t border-[var(--ui-border)]/40 pt-2 mt-2">
+                        <div class="border-t border-gray-200 pt-2 mt-2">
                             <div class="flex items-center justify-between">
-                                <span class="text-sm text-[var(--ui-secondary)]">Performance-Score</span>
+                                <span class="text-[13px] text-gray-900">Performance-Score</span>
                                 @if($monthlyPerformanceScore !== null)
-                                    <span class="text-sm font-bold {{ $monthlyPerformanceScore >= 1 ? 'text-[var(--ui-success)]' : 'text-[var(--ui-warning)]' }}">
+                                    <span class="text-[13px] font-bold {{ $monthlyPerformanceScore >= 1 ? 'text-green-600' : 'text-amber-600' }}">
                                         {{ number_format($monthlyPerformanceScore * 100, 0) }}%
                                     </span>
                                 @else
-                                    <span class="text-sm text-[var(--ui-muted)]">-</span>
+                                    <span class="text-[13px] text-gray-400">-</span>
                                 @endif
                             </div>
                         </div>
@@ -51,15 +51,36 @@
 
                 {{-- Statistiken --}}
                 <div>
-                    <h3 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Statistiken</h3>
+                    <div class="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Statistiken</div>
                     <div class="grid grid-cols-2 gap-2">
-                        <x-ui-dashboard-tile title="Story Points (offen)" :count="$groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0)" icon="chart-bar" variant="warning" size="sm" />
-                        <x-ui-dashboard-tile title="Story Points (erledigt)" :count="($groups->first(fn($g)=>($g->isDoneGroup ?? false))?->tasks ?? collect())->sum(fn($t) => $t->story_points?->points() ?? 0)" icon="check-circle" variant="success" size="sm" />
-                        <x-ui-dashboard-tile title="Offen" :count="$groups->filter(fn($g) => !($g->isDoneGroup ?? false))->sum(fn($g) => $g->tasks->count())" icon="clock" variant="warning" size="sm" />
-                        <x-ui-dashboard-tile title="Gesamt" :count="$groups->flatMap(fn($g) => $g->tasks)->count()" icon="document-text" variant="secondary" size="sm" />
-                        <x-ui-dashboard-tile title="Erledigt" :count="($groups->first(fn($g)=>($g->isDoneGroup ?? false))?->tasks ?? collect())->count()" icon="check-circle" variant="success" size="sm" />
-                        <x-ui-dashboard-tile title="Ohne Fälligkeit" :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => !$t->due_date)->count()" icon="calendar" variant="neutral" size="sm" />
-                        <x-ui-dashboard-tile title="Überfällig" :count="$groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->is_done)->count()" icon="exclamation-circle" variant="danger" size="sm" />
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">SP (offen)</div>
+                            <div class="text-base font-bold text-amber-600 tabular-nums">{{ $groups->filter(fn($g) => !($g->isDoneGroup ?? false))->flatMap(fn($g) => $g->tasks)->sum(fn($t) => $t->story_points?->points() ?? 0) }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">SP (erledigt)</div>
+                            <div class="text-base font-bold text-green-600 tabular-nums">{{ ($groups->first(fn($g)=>($g->isDoneGroup ?? false))?->tasks ?? collect())->sum(fn($t) => $t->story_points?->points() ?? 0) }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Offen</div>
+                            <div class="text-base font-bold text-amber-600 tabular-nums">{{ $groups->filter(fn($g) => !($g->isDoneGroup ?? false))->sum(fn($g) => $g->tasks->count()) }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Gesamt</div>
+                            <div class="text-base font-bold text-gray-900 tabular-nums">{{ $groups->flatMap(fn($g) => $g->tasks)->count() }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Erledigt</div>
+                            <div class="text-base font-bold text-green-600 tabular-nums">{{ ($groups->first(fn($g)=>($g->isDoneGroup ?? false))?->tasks ?? collect())->count() }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Ohne Fälligk.</div>
+                            <div class="text-base font-bold text-gray-900 tabular-nums">{{ $groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => !$t->due_date)->count() }}</div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 p-2.5">
+                            <div class="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-0.5">Überfällig</div>
+                            <div class="text-base font-bold text-red-600 tabular-nums">{{ $groups->flatMap(fn($g) => $g->tasks)->filter(fn($t) => $t->due_date && $t->due_date->isPast() && !$t->is_done)->count() }}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -67,23 +88,23 @@
                 @php $completedTickets = $groups->filter(fn($g) => $g->isDoneGroup ?? false)->flatMap(fn($g) => $g->tasks); @endphp
                 @if($completedTickets->count() > 0)
                     <div>
-                        <h4 class="text-sm font-bold text-[var(--ui-secondary)] uppercase tracking-wider mb-4">Erledigte Tickets ({{ $completedTickets->count() }})</h4>
+                        <div class="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Erledigte Tickets ({{ $completedTickets->count() }})</div>
                         <div class="space-y-1 max-h-60 overflow-y-auto">
                             @foreach($completedTickets->take(10) as $ticket)
-                                <a href="{{ route('helpdesk.tickets.show', $ticket) }}" class="block p-2 rounded text-sm border border-[var(--ui-border)]/60 bg-[var(--ui-muted-5)] hover:bg-[var(--ui-primary-5)] transition" wire:navigate>
+                                <a href="{{ route('helpdesk.tickets.show', $ticket) }}" class="block p-2 rounded-lg text-[13px] border border-gray-200 bg-gray-50 hover:bg-emerald-50/50 transition" wire:navigate>
                                     <div class="flex items-center gap-2">
-                                        <x-heroicon-o-check-circle class="w-4 h-4 text-[var(--ui-success)]"/>
+                                        <x-heroicon-o-check-circle class="w-4 h-4 text-green-500"/>
                                         <span class="truncate">{{ $ticket->title }}</span>
                                     </div>
                                 </a>
                             @endforeach
                             @if($completedTickets->count() > 10)
-                                <div class="text-xs text-[var(--ui-muted)] italic text-center">+{{ $completedTickets->count() - 10 }} weitere</div>
+                                <div class="text-xs text-gray-400 italic text-center">+{{ $completedTickets->count() - 10 }} weitere</div>
                             @endif
                         </div>
                     </div>
                 @else
-                    <div class="text-sm text-[var(--ui-muted)] italic">Noch keine erledigten Tickets</div>
+                    <div class="text-[13px] text-gray-400 italic">Noch keine erledigten Tickets</div>
                 @endif
             </div>
         </x-ui-page-sidebar>
@@ -92,11 +113,11 @@
     <x-slot name="activity">
         <x-ui-page-sidebar title="Aktivitäten" width="w-80" :defaultOpen="false" storeKey="activityOpen" side="right">
             <div class="p-4 space-y-4">
-                <div class="text-sm text-[var(--ui-muted)]">Letzte Aktivitäten</div>
-                <div class="space-y-3 text-sm">
-                    <div class="p-2 rounded border border-[var(--ui-border)]/60 bg-[var(--ui-muted-5)]">
-                        <div class="font-medium text-[var(--ui-secondary)] truncate">Meine Tickets geladen</div>
-                        <div class="text-[var(--ui-muted)]">gerade eben</div>
+                <div class="text-[13px] text-gray-400">Letzte Aktivitäten</div>
+                <div class="space-y-3 text-[13px]">
+                    <div class="p-2 rounded-lg border border-gray-200 bg-gray-50">
+                        <div class="font-medium text-gray-900 truncate">Meine Tickets geladen</div>
+                        <div class="text-gray-400">gerade eben</div>
                     </div>
                 </div>
             </div>
@@ -120,7 +141,7 @@
                 <x-slot name="headerActions">
                     <button
                         wire:click="createTicket(null)"
-                        class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors"
+                        class="text-gray-400 hover:text-gray-700 transition-colors"
                         title="Neues Ticket in INBOX erstellen">
                         @svg('heroicon-o-plus-circle', 'w-4 h-4')
                     </button>
@@ -137,13 +158,13 @@
                 <x-slot name="headerActions">
                     <button
                         wire:click="createTicket('{{ $column->id }}')"
-                        class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors"
+                        class="text-gray-400 hover:text-gray-700 transition-colors"
                         title="Neues Ticket in dieser Gruppe erstellen">
                         @svg('heroicon-o-plus-circle', 'w-4 h-4')
                     </button>
                     <button
                         @click="$dispatch('open-modal-ticket-group-settings', { ticketGroupId: {{ $column->id }} })"
-                        class="text-[var(--ui-muted)] hover:text-[var(--ui-secondary)] transition-colors"
+                        class="text-gray-400 hover:text-gray-700 transition-colors"
                         title="Gruppen-Einstellungen"
                     >
                         @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
