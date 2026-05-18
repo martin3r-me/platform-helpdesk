@@ -20,13 +20,13 @@ class Dashboard extends Component
         $endOfMonth = now()->endOfMonth();
 
         // === BOARDS (nur Team-Boards) ===
-        $boards = HelpdeskBoard::where('team_id', $team->id)->orderBy('name')->get();
+        $boards = HelpdeskBoard::withStale()->where('team_id', $team->id)->orderBy('name')->get();
         $activeBoards = $boards->count();
         $totalBoards = $boards->count();
 
         if ($this->perspective === 'personal') {
             // === PERSÖNLICHE TICKETS ===
-            $myTickets = HelpdeskTicket::query()
+            $myTickets = HelpdeskTicket::withStale()
                 ->where('user_in_charge_id', $user->id)
                 ->where('team_id', $team->id)
                 ->get();
@@ -40,13 +40,13 @@ class Dashboard extends Component
                 ->count();
 
             // === PERSÖNLICHE MONATLICHE PERFORMANCE ===
-            $monthlyCreatedTickets = HelpdeskTicket::query()
+            $monthlyCreatedTickets = HelpdeskTicket::withStale()
                 ->where('team_id', $team->id)
                 ->where('user_in_charge_id', $user->id)
                 ->whereDate('created_at', '>=', $startOfMonth)
                 ->count();
 
-            $monthlyCompletedTickets = HelpdeskTicket::query()
+            $monthlyCompletedTickets = HelpdeskTicket::withStale()
                 ->where('team_id', $team->id)
                 ->where('user_in_charge_id', $user->id)
                 ->whereDate('done_at', '>=', $startOfMonth)
@@ -94,7 +94,7 @@ class Dashboard extends Component
 
         } else {
             // === TEAM-TICKETS ===
-            $teamTickets = HelpdeskTicket::query()
+            $teamTickets = HelpdeskTicket::withStale()
                 ->where('team_id', $team->id)
                 ->get();
 
@@ -107,12 +107,12 @@ class Dashboard extends Component
                 ->count();
 
             // === TEAM MONATLICHE PERFORMANCE ===
-            $monthlyCreatedTickets = HelpdeskTicket::query()
+            $monthlyCreatedTickets = HelpdeskTicket::withStale()
                 ->where('team_id', $team->id)
                 ->whereDate('created_at', '>=', $startOfMonth)
                 ->count();
 
-            $monthlyCompletedTickets = HelpdeskTicket::query()
+            $monthlyCompletedTickets = HelpdeskTicket::withStale()
                 ->where('team_id', $team->id)
                 ->whereDate('done_at', '>=', $startOfMonth)
                 ->count();

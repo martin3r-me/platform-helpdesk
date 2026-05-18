@@ -82,7 +82,7 @@ class CheckTicketEscalationsCommand extends Command
 
         // Alle Boards mit aktiven SLAs finden
         // withoutGlobalScopes() verwenden, da in Console-Kontext kein Auth-User vorhanden ist
-        $boards = \Platform\Helpdesk\Models\HelpdeskBoard::query()
+        $boards = \Platform\Helpdesk\Models\HelpdeskBoard::withStale()
             ->whereHas('sla', function ($query) {
                 $query->where('is_active', true);
             })
@@ -111,7 +111,7 @@ class CheckTicketEscalationsCommand extends Command
 
     private function checkBoardEscalations(TicketEscalationService $escalationService, $boardId, bool $isDryRun, bool $isDetailed): array
     {
-        $board = \Platform\Helpdesk\Models\HelpdeskBoard::find($boardId);
+        $board = \Platform\Helpdesk\Models\HelpdeskBoard::withStale()->find($boardId);
         
         if (!$board) {
             $this->error("❌ Board ID {$boardId} nicht gefunden");
@@ -119,7 +119,7 @@ class CheckTicketEscalationsCommand extends Command
         }
 
         // withoutGlobalScopes() für SLA-Beziehung verwenden, da in Console-Kontext kein Auth-User vorhanden ist
-        $tickets = $board->tickets()
+        $tickets = $board->tickets()->withStale()
             ->where('is_done', false)
             ->with([
                 'helpdeskBoard' => function ($query) {
