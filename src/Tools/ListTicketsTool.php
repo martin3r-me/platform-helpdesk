@@ -40,6 +40,7 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
                     'is_done' => ['type' => 'boolean'],
                     'priority' => ['type' => 'string'],
                     'user_in_charge_id' => ['type' => 'integer'],
+                    'include_stale' => ['type' => 'boolean', 'description' => 'Optional: Wenn true, werden auch stale (lange nicht angesehene) Tickets angezeigt. Default: false.'],
                 ],
             ]
         );
@@ -59,6 +60,11 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
             $query = HelpdeskTicket::query()
                 ->with(['helpdeskBoard', 'helpdeskBoardSlot', 'helpdeskTicketGroup', 'userInCharge'])
                 ->where('team_id', $teamId);
+
+            // Stale Records einblenden wenn gewuenscht
+            if (!empty($arguments['include_stale'])) {
+                $query->withStale();
+            }
 
             if (isset($arguments['board_id'])) {
                 $query->where('helpdesk_board_id', (int)$arguments['board_id']);

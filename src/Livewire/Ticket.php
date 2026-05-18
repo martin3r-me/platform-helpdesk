@@ -43,6 +43,9 @@ class Ticket extends Component
         $this->ticket = $helpdeskTicket;
         $this->ticket->load('helpdeskBoard');
 
+        // Staleness-Tracking
+        $this->ticket->recordView();
+
         // Extra-Felder laden (geerbte Definitionen vom Board + eigene Werte)
         $this->loadExtraFieldValues($this->ticket);
 

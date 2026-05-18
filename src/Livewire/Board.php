@@ -19,6 +19,10 @@ class Board extends Component
     public function mount(HelpdeskBoard $helpdeskBoard)
     {
         $this->helpdeskBoard = $helpdeskBoard;
+
+        // Staleness-Tracking
+        $this->helpdeskBoard->recordView();
+
         $this->loadGroups();
     }
 

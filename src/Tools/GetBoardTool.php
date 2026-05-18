@@ -83,6 +83,9 @@ class GetBoardTool implements ToolContract, ToolMetadataContract
 
             Gate::forUser($context->user)->authorize('view', $board);
 
+            // Staleness-Tracking: View aufzeichnen
+            $board->recordView();
+
             $stats = null;
             if ($includeStats) {
                 $stats = [

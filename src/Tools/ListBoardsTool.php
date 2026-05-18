@@ -36,6 +36,10 @@ class ListBoardsTool implements ToolContract, ToolMetadataContract
                         'type' => 'integer',
                         'description' => 'Optional: Team-ID. Default: aktuelles Team aus Kontext.',
                     ],
+                    'include_stale' => [
+                        'type' => 'boolean',
+                        'description' => 'Optional: Wenn true, werden auch stale (lange nicht angesehene) Boards angezeigt. Default: false.',
+                    ],
                 ],
             ]
         );
@@ -53,6 +57,11 @@ class ListBoardsTool implements ToolContract, ToolMetadataContract
             Gate::forUser($context->user)->authorize('viewAny', HelpdeskBoard::class);
 
             $query = HelpdeskBoard::query()->where('team_id', $teamId);
+
+            // Stale Records einblenden wenn gewuenscht
+            if (!empty($arguments['include_stale'])) {
+                $query->withStale();
+            }
 
             $this->applyStandardFilters($query, $arguments, ['name', 'order', 'created_at']);
             $this->applyStandardSearch($query, $arguments, ['name', 'description']);

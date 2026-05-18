@@ -5,7 +5,9 @@ namespace Platform\Helpdesk\Models;
 use Platform\Core\Contracts\HasDisplayName;
 use Platform\Core\Contracts\AgendaRenderable;
 use Platform\Core\Traits\HasExtraFields;
+use Platform\Core\Traits\TracksLastViewed;
 use Platform\Organization\Traits\HasOrganizationContexts;
+use Platform\Organization\Traits\HasTimeEntries;
 use Platform\ActivityLog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,7 +17,9 @@ use Illuminate\Support\Facades\Log;
 
 class HelpdeskBoard extends Model implements HasDisplayName, AgendaRenderable
 {
-    use HasExtraFields, HasOrganizationContexts, LogsActivity;
+    use HasExtraFields, HasOrganizationContexts, HasTimeEntries, LogsActivity, TracksLastViewed;
+
+    protected int $stalenessThresholdDays = 180;
     protected $fillable = [
         'uuid',
         'name',

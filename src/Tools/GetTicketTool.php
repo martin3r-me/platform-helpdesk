@@ -67,6 +67,9 @@ class GetTicketTool implements ToolContract, ToolMetadataContract
 
             Gate::forUser($context->user)->authorize('view', $ticket);
 
+            // Staleness-Tracking: View aufzeichnen
+            $ticket->recordView();
+
             $githubRepositories = $ticket->githubRepositories()->map(function ($repo) {
                 return [
                     'id' => $repo->id,

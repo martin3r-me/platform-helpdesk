@@ -19,10 +19,14 @@ use Platform\ActivityLog\Traits\LogsActivity;
 use Platform\Core\Contracts\InheritsExtraFields;
 use Platform\Core\Traits\HasExtraFields;
 use Platform\Core\Traits\HasContextFileReferences;
+use Platform\Core\Traits\TracksLastViewed;
+use Platform\Organization\Traits\HasTimeEntries;
 
 class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccountLinkableInterface, InheritsExtraFields, AgendaRenderable
 {
-    use HasFactory, SoftDeletes, LogsActivity, HasExtraFields, HasContextFileReferences;
+    use HasFactory, SoftDeletes, LogsActivity, HasExtraFields, HasContextFileReferences, HasTimeEntries, TracksLastViewed;
+
+    protected int $stalenessThresholdDays = 120;
 
     protected $fillable = [
         'uuid',
