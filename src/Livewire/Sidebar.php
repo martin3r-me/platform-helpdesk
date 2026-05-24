@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
 use Platform\Organization\Models\OrganizationContext;
-use Platform\Organization\Models\OrganizationEntityLink;
+use Platform\Organization\Services\EntityDimensionBridge;
 use Platform\Organization\Models\OrganizationEntity;
 use Livewire\Attributes\On;
 
@@ -117,12 +117,8 @@ class Sidebar extends Component
             }
         }
 
-        // b) OrganizationEntityLink (sekundäre Quelle – DimensionLinker / LLM Tools)
-        $entityLinks = OrganizationEntityLink::query()
-            ->whereIn('linkable_type', $contextMorphTypes)
-            ->whereIn('linkable_id', $boardIds)
-            ->with(['entity.type'])
-            ->get();
+        // b) DimensionLink entity dimension (sekundäre Quelle – DimensionLinker / LLM Tools)
+        $entityLinks = EntityDimensionBridge::linksForLinkables($contextMorphTypes, $boardIds);
 
         foreach ($entityLinks as $link) {
             $entityId = $link->entity_id;
