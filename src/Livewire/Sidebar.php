@@ -6,7 +6,6 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
-use Platform\Organization\Models\OrganizationContext;
 use Platform\Organization\Services\EntityDimensionBridge;
 use Platform\Organization\Models\OrganizationEntity;
 use Livewire\Attributes\On;
@@ -99,25 +98,7 @@ class Sidebar extends Component
         $entityBoardMap = [];
         $linkedBoardIds = [];
 
-        // a) OrganizationContext (primäre Quelle – UI)
         $contextMorphTypes = ['helpdesk_board', HelpdeskBoard::class];
-        $contexts = OrganizationContext::query()
-            ->whereIn('contextable_type', $contextMorphTypes)
-            ->whereIn('contextable_id', $boardIds)
-            ->where('is_active', true)
-            ->with(['organizationEntity.type'])
-            ->get();
-
-        foreach ($contexts as $ctx) {
-            $entityId = $ctx->organization_entity_id;
-            $boardId = $ctx->contextable_id;
-            if ($entityId) {
-                $entityBoardMap[$entityId][] = $boardId;
-                $linkedBoardIds[] = $boardId;
-            }
-        }
-
-        // b) DimensionLink entity dimension (sekundäre Quelle – DimensionLinker / LLM Tools)
         $entityLinks = EntityDimensionBridge::linksForLinkables($contextMorphTypes, $boardIds);
 
         foreach ($entityLinks as $link) {

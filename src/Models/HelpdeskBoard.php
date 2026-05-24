@@ -6,6 +6,7 @@ use Platform\Core\Contracts\HasDisplayName;
 use Platform\Core\Contracts\AgendaRenderable;
 use Platform\Core\Traits\HasExtraFields;
 use Platform\Core\Traits\TracksLastViewed;
+use Platform\Organization\Contracts\HasChildContextRelations;
 use Platform\Organization\Traits\HasOrganizationContexts;
 use Platform\Organization\Traits\HasTimeEntries;
 use Platform\ActivityLog\Traits\LogsActivity;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Symfony\Component\Uid\UuidV7;
 use Illuminate\Support\Facades\Log;
 
-class HelpdeskBoard extends Model implements HasDisplayName, AgendaRenderable
+class HelpdeskBoard extends Model implements HasDisplayName, AgendaRenderable, HasChildContextRelations
 {
     use HasExtraFields, HasOrganizationContexts, HasTimeEntries, LogsActivity, TracksLastViewed;
 
@@ -118,5 +119,12 @@ class HelpdeskBoard extends Model implements HasDisplayName, AgendaRenderable
             'url' => route('helpdesk.boards.show', $this),
             'meta' => [],
         ];
+    }
+
+    // ── HasChildContextRelations ─────────────────────────────
+
+    public static function childContextRelations(): array
+    {
+        return ['tickets', 'slots.tickets'];
     }
 }
