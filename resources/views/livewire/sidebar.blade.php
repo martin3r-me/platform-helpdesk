@@ -29,6 +29,10 @@
             @svg('heroicon-o-clock', 'w-4 h-4 text-gray-400')
             <span>SLA-Verwaltung</span>
         </a>
+        <a href="{{ route('helpdesk.health-index') }}" wire:navigate class="flex items-center gap-2 px-2 py-1.5 rounded-md text-gray-700 hover:bg-emerald-50 hover:text-[#049b5c] transition-colors text-[13px]">
+            @svg('heroicon-o-heart', 'w-4 h-4 text-gray-400')
+            <span>Health-Index</span>
+        </a>
     </div>
 
     {{-- Neues Helpdesk Board --}}

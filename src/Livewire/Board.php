@@ -226,6 +226,9 @@ class Board extends Component
 
         return view('helpdesk::livewire.board', [
             'unreadCount' => $unreadCount,
+            'latestSnapshot' => \Platform\Helpdesk\Models\HelpdeskBoardSnapshot::where('helpdesk_board_id', $this->helpdeskBoard->id)
+                ->orderByDesc('taken_on')
+                ->first(),
         ])->layout('platform::layouts.app');
     }
 }

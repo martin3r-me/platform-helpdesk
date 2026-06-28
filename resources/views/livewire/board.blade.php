@@ -9,6 +9,51 @@
             ['label' => $helpdeskBoard->name],
         ]">
             <x-slot name="left">
+                {{-- Health-Pille — Klick-Einstieg zur Board-Health-Detail-Sicht --}}
+                @if($latestSnapshot)
+                    @php
+                        $hc = $latestSnapshot->health_color ?? 'gray';
+                        $hs = $latestSnapshot->health_score;
+                        $healthTones = [
+                            'green'  => ['border' => 'border-emerald-300', 'bg' => 'bg-emerald-50',  'hover' => 'hover:bg-emerald-100', 'fg' => 'text-emerald-700', 'dot' => 'bg-emerald-500', 'label' => 'Stabil'],
+                            'yellow' => ['border' => 'border-amber-300',   'bg' => 'bg-amber-50',    'hover' => 'hover:bg-amber-100',   'fg' => 'text-amber-700',   'dot' => 'bg-amber-500',   'label' => 'Achtung'],
+                            'red'    => ['border' => 'border-rose-300',    'bg' => 'bg-rose-50',     'hover' => 'hover:bg-rose-100',    'fg' => 'text-rose-700',    'dot' => 'bg-rose-500',    'label' => 'Brennt'],
+                            'gray'   => ['border' => 'border-zinc-300',    'bg' => 'bg-zinc-50',     'hover' => 'hover:bg-zinc-100',    'fg' => 'text-zinc-600',    'dot' => 'bg-zinc-400',    'label' => 'Keine Daten'],
+                        ];
+                        $t = $healthTones[$hc] ?? $healthTones['gray'];
+                        $delta = $latestSnapshot->delta_health_score;
+                        $trendArrow = $delta === null || $delta === 0 ? null : ($delta > 0 ? '↑' : '↓');
+                        $worstAxisLabel = match($latestSnapshot->worst_axis) {
+                            'backlog' => 'Backlog', 'sla' => 'SLA', 'escalation' => 'Eskalation', 'workload' => 'Workload', default => null,
+                        };
+                    @endphp
+                    <a href="{{ route('helpdesk.boards.health', $helpdeskBoard) }}"
+                       wire:navigate
+                       title="Snapshot {{ optional($latestSnapshot->taken_on)->format('d.m.Y') }} · Health {{ $hs ?? '–' }} ({{ $hc }}) · Confidence {{ $latestSnapshot->confidence_score }}%"
+                       class="group inline-flex items-stretch h-9 rounded-lg border {{ $t['border'] }} {{ $t['bg'] }} {{ $t['hover'] }} text-[12px] {{ $t['fg'] }} font-medium overflow-hidden shadow-sm transition-all hover:shadow-md">
+                        <span class="flex items-center gap-2 px-3 border-r {{ $t['border'] }}/70">
+                            <span class="w-2 h-2 rounded-full {{ $t['dot'] }} animate-pulse"></span>
+                            <span class="text-base font-bold tabular-nums leading-none">{{ $hs ?? '–' }}</span>
+                        </span>
+                        <span class="flex items-center gap-1.5 px-3">
+                            <span class="text-[10px] uppercase tracking-wider opacity-70">{{ $worstAxisLabel ?? $t['label'] }}</span>
+                            @if($trendArrow)
+                                <span class="text-[11px] tabular-nums opacity-80">{{ $trendArrow }}{{ abs($delta) }}</span>
+                            @endif
+                            @svg('heroicon-o-arrow-top-right-on-square', 'w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity')
+                        </span>
+                    </a>
+                @else
+                    <a href="{{ route('helpdesk.boards.health', $helpdeskBoard) }}"
+                       wire:navigate
+                       title="Noch kein Snapshot vorhanden"
+                       class="inline-flex items-center gap-1.5 px-3 h-9 rounded-lg border border-dashed border-gray-300 bg-white hover:bg-gray-50 text-[12px] text-gray-500 hover:text-gray-700 transition-colors">
+                        @svg('heroicon-o-heart', 'w-4 h-4')
+                        <span class="font-medium">Health</span>
+                        @svg('heroicon-o-arrow-right', 'w-3 h-3 opacity-50')
+                    </a>
+                @endif
+
                 <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-[13px]" x-data @click="$dispatch('open-modal-board-settings', { boardId: {{ $helpdeskBoard->id }} })">
                     @svg('heroicon-o-cog-6-tooth', 'w-4 h-4')
                     <span>Einstellungen</span>

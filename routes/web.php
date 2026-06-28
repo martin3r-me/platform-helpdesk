@@ -27,6 +27,14 @@ Route::post('/tickets/{helpdeskTicket}/unlock', function(\Platform\Helpdesk\Mode
 Route::get('/slas', SlaIndex::class)->name('helpdesk.slas.index');
 Route::get('/slas/{helpdeskBoardSla}', SlaShow::class)->name('helpdesk.slas.show');
 
+// Board-Health (Snapshot-Detail-Sicht pro Board)
+Route::get('/boards/{helpdeskBoard}/health', \Platform\Helpdesk\Livewire\BoardHealth::class)
+    ->name('helpdesk.boards.health');
+
+// Health-Index (teamweite Board-Snapshot-Aggregat-Sicht)
+Route::get('/health-index', \Platform\Helpdesk\Livewire\HealthIndex::class)
+    ->name('helpdesk.health-index');
+
 // Embedded Teams Config (Helpdesk) – Platzhalter
 Route::get('/embedded/teams/config', function() {
     return view('helpdesk::embedded.teams-config');
