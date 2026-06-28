@@ -44,7 +44,17 @@ class HelpdeskServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \Platform\Helpdesk\Console\Commands\CheckTicketEscalationsCommand::class,
+                \Platform\Helpdesk\Console\Commands\BuildBoardSnapshotsCommand::class,
             ]);
+
+            // Scheduler: nightly Board-Snapshots
+            $this->app->afterResolving(\Illuminate\Console\Scheduling\Schedule::class, function (\Illuminate\Console\Scheduling\Schedule $schedule) {
+                $schedule->command('helpdesk:build-board-snapshots --trigger=cron')
+                    ->dailyAt('03:15')
+                    ->withoutOverlapping()
+                    ->runInBackground()
+                    ->appendOutputTo(storage_path('logs/helpdesk-snapshots.log'));
+            });
         }
     }
 
@@ -232,6 +242,11 @@ class HelpdeskServiceProvider extends ServiceProvider
             $registry->register(new \Platform\Helpdesk\Tools\UpdateKnowledgeEntryTool());
             $registry->register(new \Platform\Helpdesk\Tools\DeleteKnowledgeEntryTool());
             $registry->register(new \Platform\Helpdesk\Tools\SearchKnowledgeEntriesTool());
+
+            // Board-Snapshots (Health-Pipeline)
+            $registry->register(new \Platform\Helpdesk\Tools\GetBoardSnapshotTool());
+            $registry->register(new \Platform\Helpdesk\Tools\GetBoardSnapshotTrendTool());
+            $registry->register(new \Platform\Helpdesk\Tools\ListBoardSnapshotsSummaryTool());
         } catch (\Throwable $e) {
             // Silent fail - ToolRegistry möglicherweise nicht verfügbar
             \Log::warning('Helpdesk: Tool-Registrierung fehlgeschlagen', ['error' => $e->getMessage()]);
