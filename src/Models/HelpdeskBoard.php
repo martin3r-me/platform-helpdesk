@@ -11,6 +11,7 @@ use Platform\Organization\Traits\HasOrganizationContexts;
 use Platform\Organization\Traits\HasTimeEntries;
 use Platform\ActivityLog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Symfony\Component\Uid\UuidV7;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\Log;
 
 class HelpdeskBoard extends Model implements HasDisplayName, AgendaRenderable, HasChildContextRelations
 {
-    use HasExtraFields, HasOrganizationContexts, HasTimeEntries, LogsActivity, TracksLastViewed;
+    use HasExtraFields, HasOrganizationContexts, HasTimeEntries, LogsActivity, TracksLastViewed, SoftDeletes;
 
     protected int $stalenessThresholdDays = 180;
     protected $fillable = [
