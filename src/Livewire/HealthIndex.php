@@ -38,6 +38,7 @@ class HealthIndex extends Component
             ->pluck('a.id');
 
         $all = HelpdeskBoardSnapshot::with(['board:id,name'])
+            ->whereHas('board') // defensiv: nur existierende Boards (keine verwaisten Snapshots)
             ->whereIn('id', $latestIds)
             ->get();
 
