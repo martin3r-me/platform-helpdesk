@@ -303,10 +303,13 @@ class HelpdeskCalDavBackend extends AbstractBackend implements SyncSupport
      */
     private function ticketsQuery($calendarId): Builder
     {
-        $query = HelpdeskTicket::query()->where('team_id', $this->sub()->team_id);
+        // Immer nur die eigenen Tickets des Abonnenten — auch in Board-Listen.
+        $query = HelpdeskTicket::query()
+            ->where('team_id', $this->sub()->team_id)
+            ->where('user_id', $this->userId());
 
         if ($calendarId === self::MINE) {
-            return $query->where('user_id', $this->userId());
+            return $query;
         }
 
         return $query->where('helpdesk_board_id', (int) $calendarId);
