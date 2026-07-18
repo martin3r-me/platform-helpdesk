@@ -16,6 +16,8 @@ use Sabre\CalDAV\Xml\Property\SupportedCalendarComponentSet;
 use Sabre\DAV\Exception\Forbidden;
 use Sabre\DAV\Exception\NotFound;
 use Sabre\DAV\PropPatch;
+use Sabre\VObject\Component\VTodo;
+use Sabre\VObject\Reader;
 
 /**
  * Read-only CalDAV-Backend für Helpdesk-Tickets (VTODO).
@@ -176,17 +178,100 @@ class HelpdeskCalDavBackend extends AbstractBackend implements SyncSupport
 
     public function createCalendarObject($calendarId, $objectUri, $calendarData)
     {
-        throw new Forbidden('Der Ticket-Kalender ist schreibgeschützt.');
+        $this->assertAllowedCalendar($calendarId);
+
+        $vtodo = $this->readVtodo($calendarData);
+
+        $ticket = new HelpdeskTicket();
+        $ticket->uuid = $this->uuidFromUri($objectUri);
+        $ticket->user_id = $this->userId();
+        $ticket->team_id = $this->sub()->team_id;
+        $ticket->title = $this->summary($vtodo) ?: 'Ticket';
+        $ticket->due_date = $this->due($vtodo);
+        $ticket->is_done = $this->isCompleted($vtodo);
+        if ($calendarId !== self::MINE) {
+            $ticket->helpdesk_board_id = (int) $calendarId;
+        }
+        $ticket->save();
+
+        return TicketVTodoMapper::etagFor($ticket->refresh());
     }
 
     public function updateCalendarObject($calendarId, $objectUri, $calendarData)
     {
-        throw new Forbidden('Der Ticket-Kalender ist schreibgeschützt.');
+        $this->assertAllowedCalendar($calendarId);
+
+        $ticket = $this->ticketsQuery($calendarId)
+            ->where('uuid', $this->uuidFromUri($objectUri))
+            ->first();
+
+        if (! $ticket) {
+            throw new NotFound('Ticket nicht gefunden.');
+        }
+
+        $vtodo = $this->readVtodo($calendarData);
+
+        if ($summary = $this->summary($vtodo)) {
+            $ticket->title = $summary;
+        }
+        if (($due = $this->due($vtodo)) !== null) {
+            $ticket->due_date = $due;
+        }
+        $ticket->is_done = $this->isCompleted($vtodo);
+        $ticket->save();
+
+        return TicketVTodoMapper::etagFor($ticket->refresh());
     }
 
     public function deleteCalendarObject($calendarId, $objectUri)
     {
-        throw new Forbidden('Der Ticket-Kalender ist schreibgeschützt.');
+        $this->assertAllowedCalendar($calendarId);
+
+        $ticket = $this->ticketsQuery($calendarId)
+            ->where('uuid', $this->uuidFromUri($objectUri))
+            ->first();
+
+        if ($ticket) {
+            $ticket->delete();
+        }
+    }
+
+    // ----------------------------------------------------------------
+    // VTODO-Parsing (Write-Back)
+    // ----------------------------------------------------------------
+
+    private function readVtodo(string $calendarData): ?VTodo
+    {
+        $vcal = Reader::read($calendarData);
+
+        return $vcal->VTODO ?? null;
+    }
+
+    private function summary(?VTodo $vtodo): string
+    {
+        return $vtodo && $vtodo->SUMMARY ? trim((string) $vtodo->SUMMARY) : '';
+    }
+
+    private function due(?VTodo $vtodo): ?\DateTimeInterface
+    {
+        if ($vtodo && $vtodo->DUE) {
+            return $vtodo->DUE->getDateTime();
+        }
+
+        return null;
+    }
+
+    private function isCompleted(?VTodo $vtodo): bool
+    {
+        if (! $vtodo) {
+            return false;
+        }
+
+        if ($vtodo->STATUS && strtoupper(trim((string) $vtodo->STATUS)) === 'COMPLETED') {
+            return true;
+        }
+
+        return $vtodo->{'PERCENT-COMPLETE'} && (int) (string) $vtodo->{'PERCENT-COMPLETE'} >= 100;
     }
 
     // ----------------------------------------------------------------
