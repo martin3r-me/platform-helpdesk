@@ -126,6 +126,11 @@ class HelpdeskServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'helpdesk');
         $this->registerLivewireComponents();
 
+        // CalDAV: Tickets als VTODO an der Core-DAV-Infrastruktur. Erscheinen
+        // zusammen mit Planner-Aufgaben in einem CalDAV-Account (Apple Erinnerungen).
+        app(\Platform\Core\Dav\DavModuleRegistry::class)
+            ->register(new \Platform\Helpdesk\Dav\HelpdeskCalDavModule());
+
         // Policies nur registrieren, wenn Klassen vorhanden sind
         if (class_exists(HelpdeskTicket::class) && class_exists(HelpdeskTicketPolicy::class)) {
             Gate::policy(HelpdeskTicket::class, HelpdeskTicketPolicy::class);
