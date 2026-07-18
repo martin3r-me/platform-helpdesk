@@ -3,7 +3,9 @@
 namespace Platform\Helpdesk\Livewire;
 
 use Livewire\Component;
+use Platform\Core\Models\DavSubscription;
 use Platform\Helpdesk\Models\HelpdeskBoard;
+use Platform\Helpdesk\Models\HelpdeskCaldavBoardOptin;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
 use Platform\Helpdesk\Models\HelpdeskTicketGroup;
@@ -210,6 +212,47 @@ class Board extends Component
     public function toggleShowDone()
     {
         $this->showDone = !$this->showDone;
+    }
+
+    /**
+     * Hat der User ein Helpdesk-CalDAV-Abo? (Nur dann ist der „In App"-Toggle sinnvoll.)
+     */
+    public function hasHelpdeskCaldavSubscription(): bool
+    {
+        return DavSubscription::query()
+            ->where('module', 'helpdesk')
+            ->where('type', 'caldav')
+            ->where('user_id', Auth::id())
+            ->whereNull('revoked_at')
+            ->exists();
+    }
+
+    /**
+     * Wird dieses Board in der Aufgaben-App (CalDAV) des Users als eigene Liste gezeigt?
+     */
+    public function caldavExposed(): bool
+    {
+        return HelpdeskCaldavBoardOptin::query()
+            ->where('user_id', Auth::id())
+            ->where('helpdesk_board_id', $this->helpdeskBoard->id)
+            ->exists();
+    }
+
+    public function toggleCaldavExposure(): void
+    {
+        $existing = HelpdeskCaldavBoardOptin::query()
+            ->where('user_id', Auth::id())
+            ->where('helpdesk_board_id', $this->helpdeskBoard->id)
+            ->first();
+
+        if ($existing) {
+            $existing->delete();
+        } else {
+            HelpdeskCaldavBoardOptin::create([
+                'user_id' => Auth::id(),
+                'helpdesk_board_id' => $this->helpdeskBoard->id,
+            ]);
+        }
     }
 
     public function render()

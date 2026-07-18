@@ -65,6 +65,16 @@
                     <span>Spalte</span>
                 </button>
             @endcan
+
+            {{-- CalDAV: dieses Board als eigene Liste in Apple Erinnerungen zeigen (nur bei aktivem Abo) --}}
+            @if($this->hasHelpdeskCaldavSubscription())
+                <button type="button" wire:click="toggleCaldavExposure"
+                    title="Dieses Board als eigene Liste in meiner Aufgaben-App (Erinnerungen) zeigen"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md {{ $this->caldavExposed() ? 'text-gray-700 bg-gray-100' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100' }} transition-colors text-[13px]">
+                    @svg($this->caldavExposed() ? 'heroicon-s-bell-alert' : 'heroicon-o-bell', 'w-4 h-4')
+                    <span>{{ $this->caldavExposed() ? 'In App ✓' : 'In App' }}</span>
+                </button>
+            @endif
         </x-ui-page-actionbar>
     </x-slot>
 
