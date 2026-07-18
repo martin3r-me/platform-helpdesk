@@ -106,6 +106,55 @@
                 @else
                     <div class="text-[13px] text-gray-400 italic">Noch keine erledigten Tickets</div>
                 @endif
+
+                {{-- IN ERINNERUNGEN ABONNIEREN (CalDAV) --}}
+                <div>
+                    <div class="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">📅 In Erinnerungen abonnieren</div>
+                    <div class="p-3 rounded-lg bg-white border border-gray-200 space-y-2">
+                        <p class="text-[11px] text-gray-500 leading-relaxed m-0">
+                            Deine Tickets als Liste in Apple Erinnerungen (CalDAV) — eigener Account, schreibgeschützt.
+                        </p>
+
+                        @if($newCaldavSecret)
+                            <div class="rounded border border-amber-300 bg-amber-50 p-2 space-y-1.5">
+                                <p class="text-[10px] font-medium text-amber-900 m-0">Jetzt am iPhone einrichten (Passwort wird nur einmal gezeigt):</p>
+                                <div x-data="{ copied: false }" class="flex items-center gap-1">
+                                    <code x-ref="hturl" class="flex-1 px-2 py-1 text-[10px] rounded bg-white border border-amber-300 font-mono break-all">{{ $newCaldavUrl }}</code>
+                                    <button type="button" @click="navigator.clipboard.writeText($refs.hturl.textContent.trim()); copied=true; setTimeout(()=>copied=false,1500)" class="shrink-0 px-2 py-1 text-[10px] rounded border border-amber-300 text-amber-800">
+                                        <span x-show="!copied">URL</span><span x-show="copied" x-cloak>✓</span>
+                                    </button>
+                                </div>
+                                <div x-data="{ copied: false }" class="flex items-center gap-1">
+                                    <code x-ref="htsecret" class="flex-1 px-2 py-1 text-[10px] rounded bg-white border border-amber-300 font-mono break-all">{{ $newCaldavSecret }}</code>
+                                    <button type="button" @click="navigator.clipboard.writeText($refs.htsecret.textContent.trim()); copied=true; setTimeout(()=>copied=false,1500)" class="shrink-0 px-2 py-1 text-[10px] rounded bg-amber-600 text-white">
+                                        <span x-show="!copied">Passwort</span><span x-show="copied" x-cloak>✓</span>
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-amber-700 m-0">Server = obige URL, Benutzer beliebig, Passwort = das Secret.</p>
+                            </div>
+                        @endif
+
+                        <div class="flex items-center gap-1">
+                            <input type="text" wire:model="caldavName" placeholder="z. B. iPhone" class="flex-1 px-2 py-1 text-[10px] rounded border border-gray-200 bg-white text-gray-700 placeholder:text-gray-400" />
+                            <button type="button" wire:click="createCaldavSubscription" class="shrink-0 px-2.5 py-1 text-[10px] font-medium rounded bg-gray-800 text-white hover:bg-gray-700">Abo</button>
+                        </div>
+
+                        @foreach($this->caldavSubscriptions() as $sub)
+                            <div class="text-[10px]">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-700 font-medium truncate">{{ $sub->name }}</span>
+                                    <button type="button" wire:click="revokeCaldavSubscription({{ $sub->id }})" wire:confirm="Abo widerrufen? Geräte verlieren den Zugriff." class="shrink-0 text-red-500 hover:underline">widerrufen</button>
+                                </div>
+                                <div x-data="{ copied: false }" class="flex items-center gap-1 mt-0.5">
+                                    <code x-ref="hu{{ $sub->id }}" class="flex-1 px-2 py-0.5 text-[10px] rounded bg-gray-50 border border-gray-200 text-gray-500 font-mono break-all">{{ $this->caldavUrlFor($sub->handle) }}</code>
+                                    <button type="button" @click="navigator.clipboard.writeText($refs.hu{{ $sub->id }}.textContent.trim()); copied=true; setTimeout(()=>copied=false,1500)" class="shrink-0 px-2 py-0.5 rounded border border-gray-200 text-gray-500">
+                                        <span x-show="!copied">URL</span><span x-show="copied" x-cloak>✓</span>
+                                    </button>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
             </div>
         </x-ui-page-sidebar>
     </x-slot>

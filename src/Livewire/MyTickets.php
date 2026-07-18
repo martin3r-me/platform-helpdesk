@@ -4,6 +4,7 @@ namespace Platform\Helpdesk\Livewire;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Platform\Core\Models\DavSubscription;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Helpdesk\Models\HelpdeskTicketGroup;
 use Platform\Notifications\Models\NotificationsNotice;
@@ -177,6 +178,68 @@ class MyTickets extends Component
             'createdPoints' => $createdPoints,
             'donePoints' => $donePoints,
         ])->layout('platform::layouts.app');
+    }
+
+    // ----------------------------------------------------------------
+    // CalDAV: Tickets als abonnierbare ToDo-Liste (Abo je Modul, eigene URL)
+    // ----------------------------------------------------------------
+
+    public string $caldavName = '';
+    public ?string $newCaldavSecret = null;
+    public ?string $newCaldavUrl = null;
+
+    public function caldavUrlFor(string $handle): string
+    {
+        return rtrim(url('/'.trim((string) config('dav.path', 'dav'), '/').'/'.$handle), '/');
+    }
+
+    public function caldavSubscriptions()
+    {
+        return DavSubscription::query()
+            ->where('module', 'helpdesk')
+            ->where('type', 'caldav')
+            ->where('user_id', Auth::id())
+            ->whereNull('revoked_at')
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    public function createCaldavSubscription(): void
+    {
+        $subscription = DavSubscription::create([
+            'user_id'     => Auth::id(),
+            'team_id'     => Auth::user()->currentTeam->id,
+            'module'      => 'helpdesk',
+            'type'        => 'caldav',
+            'resource_id' => null,
+            'name'        => trim($this->caldavName) ?: 'Ticket-Abo',
+        ]);
+
+        $this->newCaldavSecret = $subscription->secret;
+        $this->newCaldavUrl = $this->caldavUrlFor($subscription->handle);
+        $this->caldavName = '';
+    }
+
+    public function revokeCaldavSubscription(int $id): void
+    {
+        $subscription = DavSubscription::query()
+            ->where('id', $id)
+            ->where('module', 'helpdesk')
+            ->where('type', 'caldav')
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if ($subscription) {
+            $subscription->revoke();
+            $this->newCaldavSecret = null;
+            $this->newCaldavUrl = null;
+        }
+    }
+
+    public function dismissNewCaldavSecret(): void
+    {
+        $this->newCaldavSecret = null;
+        $this->newCaldavUrl = null;
     }
 
     public function createTicketGroup()
