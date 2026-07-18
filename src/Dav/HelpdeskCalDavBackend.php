@@ -211,9 +211,8 @@ class HelpdeskCalDavBackend extends AbstractBackend implements SyncSupport
 
         $vtodo = $this->readVtodo($calendarData);
 
-        if ($summary = $this->summary($vtodo)) {
-            $ticket->title = $summary;
-        }
+        // Titel NICHT zurückschreiben (SUMMARY enthält Board-Präfix). Nur
+        // Fälligkeit + Status.
         if (($due = $this->due($vtodo)) !== null) {
             $ticket->due_date = $due;
         }

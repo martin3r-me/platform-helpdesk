@@ -27,7 +27,7 @@ class TicketVTodoMapper
             'PRODID' => '-//Platform Helpdesk//CalDAV//DE',
             'VTODO' => [
                 'UID' => $ticket->uuid,
-                'SUMMARY' => (string) ($ticket->title ?? 'Ticket '.$ticket->getKey()),
+                'SUMMARY' => $this->summary($ticket),
             ],
         ]);
 
@@ -59,6 +59,19 @@ class TicketVTodoMapper
     public function serialize(HelpdeskTicket $ticket): string
     {
         return $this->toVCalendar($ticket)->serialize();
+    }
+
+    /**
+     * Titel mit Board-Kontext für die gemischte „Meine Tickets"-Liste:
+     * „Board · Ticket".
+     */
+    private function summary(HelpdeskTicket $ticket): string
+    {
+        $title = (string) ($ticket->title ?? 'Ticket '.$ticket->getKey());
+
+        $board = $ticket->board?->name;
+
+        return $board ? $board.' · '.$title : $title;
     }
 
     public static function etagFor(HelpdeskTicket $ticket): string
