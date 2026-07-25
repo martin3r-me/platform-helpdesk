@@ -126,6 +126,50 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
             }
         });
 
+        // Zuweisung → Eingang: übergibt jemand anderes das Ticket AN MICH
+        // (Ownership-Wechsel, Actor ≠ neuer Inhaber), landet es im Posteingang.
+        static::created(function (self $model) {
+            self::notifyAssignment($model);
+        });
+        static::updated(function (self $model) {
+            if ($model->wasChanged('user_in_charge_id')) {
+                self::notifyAssignment($model);
+            }
+        });
+    }
+
+    /**
+     * Push ein „dir zugewiesen"-Ticket in den Eingang des neuen Inhabers — nur bei
+     * Fremd-Zuweisung (kein Self-Assign, kein System-Actor). Loose/guarded.
+     */
+    protected static function notifyAssignment(self $ticket): void
+    {
+        $assignee = $ticket->user_in_charge_id;
+        $actor = Auth::id();
+
+        if (! $assignee || ! $actor || (int) $assignee === (int) $actor) {
+            return;
+        }
+        if (! class_exists(\Platform\Inbox\Inbox::class)) {
+            return;
+        }
+
+        try {
+            $assigner = Auth::user();
+            \Platform\Inbox\Inbox::deliver([
+                'user_id'           => (int) $assignee,
+                'team_id'           => (int) $ticket->team_id,
+                'channel'           => 'ticket',
+                'subject'           => $ticket->title ?: 'Ticket',
+                'body'              => $ticket->description ?? null,
+                'source'            => $ticket,
+                'sender_kind'       => 'user',
+                'sender_label'      => $assigner?->fullname ?? $assigner?->name ?? 'Jemand',
+                'sender_identifier' => (string) $actor,
+            ]);
+        } catch (\Throwable $e) {
+            // Zuweisung darf nie an der Inbox scheitern.
+        }
     }
 
     public function setUserInChargeIdAttribute($value)
