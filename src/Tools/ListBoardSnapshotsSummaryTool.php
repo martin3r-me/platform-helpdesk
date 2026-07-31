@@ -51,8 +51,16 @@ class ListBoardSnapshotsSummaryTool implements ToolContract, ToolMetadataContrac
 
             $topN = max(1, min(20, (int) ($arguments['top_n'] ?? 5)));
 
+            // Content-Authz: nur Snapshots graph-sichtbarer Boards aggregieren,
+            // sonst leakt das Aggregat Health/SLA aus nicht sichtbaren Boards.
+            $visibleBoardIds = \Platform\Helpdesk\Models\HelpdeskBoard::query()
+                ->where('team_id', $teamId)
+                ->visibleTo($context->user)
+                ->pluck('id');
+
             $latestIds = DB::table('helpdesk_board_snapshots as a')
                 ->where('a.team_id', $teamId)
+                ->whereIn('a.helpdesk_board_id', $visibleBoardIds)
                 ->whereRaw('a.taken_on = (
                     SELECT MAX(b.taken_on) FROM helpdesk_board_snapshots b
                     WHERE b.helpdesk_board_id = a.helpdesk_board_id

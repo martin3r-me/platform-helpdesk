@@ -82,16 +82,17 @@ class Sidebar extends Component
             ->orderBy('name')
             ->get();
 
+        // Die Sidebar zeigt genau, was der User sehen DARF (Graph: Ersteller ODER
+        // Board graph-erreichbar) — der "alle / nur meine"-Toggle ist damit sinnlos.
         $allBoards = HelpdeskBoard::query()
             ->where('team_id', $teamId)
+            ->visibleTo($user)
             ->orderBy('name')
             ->get();
 
-        $boardsToShow = $this->showAllBoards
-            ? $allBoards
-            : $boardsWithUserTickets;
-
-        $hasMoreBoards = $allBoards->count() > $boardsWithUserTickets->count();
+        $this->showAllBoards = true;
+        $boardsToShow = $allBoards;
+        $hasMoreBoards = false;
 
         // 2. Entity-Verknüpfungen laden aus beiden Quellen
         $boardIds = $boardsToShow->pluck('id')->toArray();

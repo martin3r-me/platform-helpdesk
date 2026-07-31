@@ -59,7 +59,11 @@ class ListTicketsTool implements ToolContract, ToolMetadataContract
 
             $query = HelpdeskTicket::query()
                 ->with(['helpdeskBoard', 'helpdeskBoardSlot', 'helpdeskTicketGroup', 'userInCharge'])
-                ->where('team_id', $teamId);
+                ->where('team_id', $teamId)
+                // Content-Authz: nur graph-sichtbare Tickets (Ersteller/Zuständiger
+                // ODER Board graph-erreichbar) — wie die UI. Der Gate-Post-Filter
+                // unten bleibt als zweite Sicherung.
+                ->visibleTo($context->user);
 
             // Stale Records einblenden wenn gewuenscht
             if (!empty($arguments['include_stale'])) {

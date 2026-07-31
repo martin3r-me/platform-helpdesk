@@ -56,7 +56,9 @@ class ListBoardsTool implements ToolContract, ToolMetadataContract
 
             Gate::forUser($context->user)->authorize('viewAny', HelpdeskBoard::class);
 
-            $query = HelpdeskBoard::query()->where('team_id', $teamId);
+            // Content-Authz: nur graph-sichtbare Boards (Ersteller ODER erreichbar) —
+            // wie die UI. Der Gate-Post-Filter unten bleibt als zweite Sicherung.
+            $query = HelpdeskBoard::query()->where('team_id', $teamId)->visibleTo($context->user);
 
             // Stale Records einblenden wenn gewuenscht
             if (!empty($arguments['include_stale'])) {
