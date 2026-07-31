@@ -5,6 +5,7 @@ namespace Platform\Helpdesk\Observers;
 use Illuminate\Support\Facades\Auth;
 use Platform\Core\Models\User;
 use Platform\Helpdesk\Models\HelpdeskTicket;
+use Platform\Helpdesk\Services\TicketRetrievalService;
 use Platform\Notifications\NotificationDispatcher;
 
 class HelpdeskTicketObserver
@@ -49,6 +50,21 @@ class HelpdeskTicketObserver
      */
     public function updated(HelpdeskTicket $ticket): void
     {
+        // Auto-Embedding beim LÖSEN: wird ein Ticket erledigt (oder eine erledigte Kategorie
+        // geändert) und hat eine Kategorie, kommt es mit Admission-Gate (Covering-Set) in den
+        // Board-Index. „gelöst" = ein Mensch hat's vertreten → kein Self-Reinforcement der
+        // Worker-Ratungen. afterResponse: blockiert den Request nicht, braucht keinen Queue-Worker.
+        if (($ticket->wasChanged('is_done') || $ticket->wasChanged('helpdesk_board_category_id'))
+            && $ticket->is_done && $ticket->helpdesk_board_category_id) {
+            $ticketId = $ticket->id;
+            dispatch(function () use ($ticketId) {
+                $t = HelpdeskTicket::with('category')->find($ticketId);
+                if ($t) {
+                    app(TicketRetrievalService::class)->indexIfNovel($t);
+                }
+            })->afterResponse();
+        }
+
         // Ticket wurde jemandem zugewiesen
         if ($ticket->wasChanged('user_in_charge_id') && $ticket->user_in_charge_id) {
             if ($ticket->user_in_charge_id !== Auth::id()) {
