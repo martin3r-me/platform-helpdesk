@@ -157,9 +157,13 @@ class AgentController extends Controller
     /** Den E-Mail-Thread eines Tickets auflösen (Pivot bevorzugt, Fallback Legacy-Spalten). */
     protected function resolveTicketThread(HelpdeskTicket $ticket): ?\Platform\Crm\Models\CommsEmailThread
     {
+        // WICHTIG: der Inbound-Listener speichert context_model als getMorphClass()
+        // (Morph-Alias 'helpdesk.ticket'), NICHT als FQCN — hier genauso matchen.
+        $morph = $ticket->getMorphClass();
+
         $ctx = \Platform\Crm\Models\CommsThreadContext::query()
             ->where('thread_type', \Platform\Crm\Models\CommsEmailThread::class)
-            ->where('context_model', HelpdeskTicket::class)
+            ->where('context_model', $morph)
             ->where('context_model_id', $ticket->id)
             ->latest('id')->first();
 
@@ -168,7 +172,7 @@ class AgentController extends Controller
         }
 
         return \Platform\Crm\Models\CommsEmailThread::query()
-            ->where('context_model', HelpdeskTicket::class)
+            ->where('context_model', $morph)
             ->where('context_model_id', $ticket->id)
             ->latest('id')->first();
     }
