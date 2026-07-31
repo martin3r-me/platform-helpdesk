@@ -16,6 +16,8 @@ use Platform\Helpdesk\Http\Controllers\Api\AgentController;
  */
 Route::prefix('agent')->middleware('auth:api')->group(function () {
     Route::get('/boards', [AgentController::class, 'boards'])->name('helpdesk.api.agent.boards');
+    Route::post('/tickets/next-backlog', [AgentController::class, 'nextBacklogTicket'])->name('helpdesk.api.agent.next-backlog');
+    Route::post('/tickets/{id}/triage', [AgentController::class, 'triageTicket'])->name('helpdesk.api.agent.triage');
 });
 
 Route::get('/tickets/datawarehouse', [TicketDatawarehouseController::class, 'index']);
