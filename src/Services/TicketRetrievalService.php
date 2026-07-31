@@ -3,6 +3,7 @@
 namespace Platform\Helpdesk\Services;
 
 use Platform\Core\Services\EmbeddingService;
+use Platform\Helpdesk\Models\HelpdeskKnowledgeEntry;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 
 /**
@@ -68,13 +69,83 @@ class TicketRetrievalService
                 entityType: $type,
                 entityId: $t->id,
                 text: $text,
-                metadata: ['category_id' => $t->helpdesk_board_category_id, 'category' => $t->category?->name],
+                metadata: ['kind' => 'ticket', 'category_id' => $t->helpdesk_board_category_id, 'category' => $t->category?->name],
             );
 
             return 'embedded';
         } catch (\Throwable $e) {
             return 'error';
         }
+    }
+
+    /**
+     * KB-Eintrag (kuratierte Lösung) in DENSELBEN Board-Index legen — kind='kb', die Lösung
+     * als Metadata. entityId als "kb:<id>", damit sie nicht mit Ticket-IDs kollidiert.
+     * Embedet den PROBLEM-Text (matcht neue Probleme), gibt die Lösung im Treffer zurück.
+     */
+    public function indexKnowledgeEntry(HelpdeskKnowledgeEntry $e): string
+    {
+        if (! $e->helpdesk_board_id) {
+            return 'skipped';
+        }
+        $text = trim(($e->title ? $e->title."\n\n" : '').(string) $e->problem);
+        if ($text === '') {
+            return 'skipped';
+        }
+        try {
+            app(EmbeddingService::class)->embedAndStore(
+                teamId: (int) $e->team_id,
+                entityType: $this->entityType((int) $e->helpdesk_board_id),
+                entityId: 'kb:'.$e->id,
+                text: $text,
+                metadata: ['kind' => 'kb', 'title' => $e->title, 'solution' => $e->solution],
+            );
+
+            return 'embedded';
+        } catch (\Throwable $e2) {
+            return 'error';
+        }
+    }
+
+    /**
+     * Vereinheitlichtes Resolution-Retrieval für den Supporter: ähnliche Probleme aus KB
+     * (kuratierte Lösung) UND gelösten Tickets (Kategorie) — ein Index, nach Bedeutung.
+     *
+     * @return array<int, array{kind:string, title:?string, solution:?string, category:?string, score:float}>
+     */
+    public function resolutions(HelpdeskTicket $ticket, string $text, int $limit = 6): array
+    {
+        if (trim($text) === '') {
+            return [];
+        }
+        try {
+            $hits = app(EmbeddingService::class)->search(
+                (int) $ticket->team_id, $text,
+                [$this->entityType((int) $ticket->helpdesk_board_id)],
+                $limit, 0.2,
+            );
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        return collect($hits)
+            ->filter(fn ($h) => (string) ($h['entity_id'] ?? '') !== (string) $ticket->id)
+            ->map(function ($h) {
+                $m = $h['metadata'] ?? [];
+                if (! is_array($m)) {
+                    $m = json_decode((string) $m, true) ?: [];
+                }
+                $kind = $m['kind'] ?? 'ticket';
+
+                return [
+                    'kind' => $kind,
+                    'title' => $m['title'] ?? ($kind === 'ticket' ? optional(HelpdeskTicket::find($h['entity_id'] ?? 0))->title : null),
+                    'solution' => $m['solution'] ?? null,
+                    'category' => $m['category'] ?? null,
+                    'score' => round((float) ($h['score'] ?? 0), 3),
+                ];
+            })
+            ->values()->all();
     }
 
     /**

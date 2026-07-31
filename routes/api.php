@@ -19,6 +19,8 @@ Route::prefix('agent')->middleware('auth:api')->group(function () {
     Route::post('/tickets/next-backlog', [AgentController::class, 'nextBacklogTicket'])->name('helpdesk.api.agent.next-backlog');
     Route::post('/tickets/{id}/triage', [AgentController::class, 'triageTicket'])->name('helpdesk.api.agent.triage');
     Route::post('/boards/{board}/index-solved', [AgentController::class, 'indexSolvedTickets'])->name('helpdesk.api.agent.index-solved');
+    Route::post('/tickets/next-triaged', [AgentController::class, 'nextTriagedTicket'])->name('helpdesk.api.agent.next-triaged');
+    Route::post('/tickets/{id}/resolve', [AgentController::class, 'resolveTicket'])->name('helpdesk.api.agent.resolve');
 });
 
 Route::get('/tickets/datawarehouse', [TicketDatawarehouseController::class, 'index']);

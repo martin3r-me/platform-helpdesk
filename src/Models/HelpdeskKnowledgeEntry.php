@@ -45,6 +45,21 @@ class HelpdeskKnowledgeEntry extends Model
                 }
             }
         });
+
+        // KB-Eintrag (kuratierte Lösung) in den Board-Retrieval-Index — kuratierte Anker,
+        // höher gewichtet als rohe Tickets. afterResponse (kein Queue-Zwang, blockiert nicht).
+        static::saved(function (self $model): void {
+            if (! $model->helpdesk_board_id || ! $model->problem) {
+                return;
+            }
+            $id = $model->id;
+            dispatch(function () use ($id): void {
+                $e = self::find($id);
+                if ($e) {
+                    app(\Platform\Helpdesk\Services\TicketRetrievalService::class)->indexKnowledgeEntry($e);
+                }
+            })->afterResponse();
+        });
     }
 
     public function helpdeskBoard(): BelongsTo

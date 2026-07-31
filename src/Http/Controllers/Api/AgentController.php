@@ -231,6 +231,137 @@ class AgentController extends Controller
         return app(\Platform\Helpdesk\Services\TicketRetrievalService::class)->similar($ticket, $text);
     }
 
+    /**
+     * POST /api/helpdesk/agent/tickets/next-triaged { board_ids }
+     * Nächstes TRIAGIERTES Ticket (raus aus Backlog: Slot gesetzt, nicht erledigt, nicht
+     * gesperrt) der angehakten Boards — für den Supporter. Nach Fälligkeit, dann Alter.
+     * Liefert Ticket + Kategorie + Resolution-Retrieval (KB-Lösungen + ähnliche Tickets).
+     */
+    public function nextTriagedTicket(Request $request): JsonResponse
+    {
+        $boardIds = collect($request->input('board_ids', []))->map('intval')->filter()->values()->all();
+        if (empty($boardIds)) {
+            return response()->json(null, 204);
+        }
+
+        $ticket = HelpdeskTicket::query()
+            ->whereIn('helpdesk_board_id', $boardIds)
+            ->whereNotNull('helpdesk_board_slot_id')   // triagiert = keinem Backlog mehr
+            ->where('is_done', false)
+            ->where(function ($q) {
+                $q->where('is_locked', false)->orWhereNull('locked_at')->orWhere('locked_at', '<', now()->subMinutes(30));
+            })
+            ->orderByRaw('due_date IS NULL')            // Fälligkeit zuerst, NULL zuletzt
+            ->orderBy('due_date')
+            ->orderBy('created_at')
+            ->with('category')
+            ->first();
+
+        if (! $ticket) {
+            return response()->json(null, 204);
+        }
+
+        $ticket->update(['is_locked' => true, 'locked_at' => now(), 'locked_by_user_id' => (int) $request->user()?->id]);
+
+        $thread = $this->resolveTicketThread($ticket);
+        $svc = app(\Platform\Helpdesk\Services\TicketRetrievalService::class);
+        $text = $ticket->title."\n".$ticket->notes;
+
+        return response()->json(['data' => [
+            'id' => $ticket->id,
+            'uuid' => $ticket->uuid,
+            'title' => $ticket->title,
+            'body' => $ticket->notes ?: $ticket->title,
+            'category' => $ticket->category?->name,
+            'due_date' => $ticket->due_date?->toDateString(),
+            'helpdesk_board_id' => $ticket->helpdesk_board_id,
+            'thread_id' => $thread?->id,
+            'from' => $thread?->last_inbound_from_address,
+            'resolutions' => $svc->resolutions($ticket, $text),
+        ]]);
+    }
+
+    /**
+     * POST /api/helpdesk/agent/tickets/{id}/resolve
+     *   { action: reply_close|propose|escalate, reply_body?, kb?:{problem,solution}, note? }
+     * Führt die vom Supporter (nach Modus) gewählte Aktion aus:
+     *  - reply_close: threaded Antwort an den Kunden + erledigt (+ optional KB-Eintrag).
+     *  - propose:     Entwurf als interne Notiz ans Ticket (kein Mailversand, kein Schließen).
+     *  - escalate:    Eskalation setzen + Notiz.
+     */
+    public function resolveTicket(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate([
+            'action' => 'required|in:reply_close,propose,escalate',
+            'reply_body' => 'nullable|string|max:20000',
+            'note' => 'nullable|string|max:5000',
+            'kb' => 'nullable|array',
+            'kb.problem' => 'nullable|string|max:10000',
+            'kb.solution' => 'nullable|string|max:20000',
+        ]);
+
+        $ticket = HelpdeskTicket::find($id);
+        if (! $ticket) {
+            return response()->json(['message' => 'Ticket not found'], 404);
+        }
+
+        $action = $data['action'];
+        $sent = false;
+
+        if ($action === 'reply_close') {
+            $body = trim((string) ($data['reply_body'] ?? ''));
+            if ($body !== '') {
+                $sent = $this->sendThreadReply($ticket, $body, $request);
+            }
+            $solvedSlot = HelpdeskBoardSlot::where('helpdesk_board_id', $ticket->helpdesk_board_id)
+                ->where('name', 'like', '%elöst%')->orderByDesc('order')->first();
+            $ticket->update([
+                'is_done' => true,
+                'done_at' => now(),
+                'helpdesk_board_slot_id' => $solvedSlot?->id ?? $ticket->helpdesk_board_slot_id,
+                'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
+            ]);
+            // KB-Eintrag (kuratierte Lösung) — nur wenn Problem+Lösung geliefert.
+            if (! empty($data['kb']['problem']) && ! empty($data['kb']['solution'])) {
+                \Platform\Helpdesk\Models\HelpdeskKnowledgeEntry::create([
+                    'helpdesk_board_id' => $ticket->helpdesk_board_id,
+                    'title' => \Illuminate\Support\Str::limit($ticket->title, 120, ''),
+                    'problem' => $data['kb']['problem'],
+                    'solution' => $data['kb']['solution'],
+                    'source_ticket_id' => $ticket->id,
+                ]);
+            }
+            $ticket->logActivity('Supporter: gelöst'.($sent ? ' + Antwort gesendet' : '').'.', ['source' => 'agent', 'status' => 'resolved']);
+        } elseif ($action === 'propose') {
+            $draft = trim((string) ($data['reply_body'] ?? ''));
+            $ticket->update(['is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null]);
+            $this->postToTicketThread($ticket, (int) $request->user()?->id,
+                "Lösungs-Vorschlag des Support-Workers (bitte prüfen + senden):\n\n".$draft);
+            $ticket->logActivity('Supporter: Lösungs-Vorschlag zur Freigabe hinterlegt.', ['source' => 'agent', 'status' => 'proposed']);
+        } else { // escalate
+            $ticket->update([
+                'escalation_level' => 'escalated',
+                'escalated_at' => now(),
+                'escalation_count' => (int) $ticket->escalation_count + 1,
+                'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
+            ]);
+            $ticket->logActivity('Supporter: eskaliert.'.(! empty($data['note']) ? "\n\n".$data['note'] : ''), ['source' => 'agent', 'status' => 'escalated']);
+        }
+
+        return response()->json(['data' => ['id' => $ticket->id, 'action' => $action, 'mail_sent' => $sent, 'is_done' => (bool) $ticket->is_done]]);
+    }
+
+    /** Nachricht in den Kontext-Thread eines Tickets posten (find-or-create) — für Vorschläge. */
+    protected function postToTicketThread(HelpdeskTicket $ticket, int $senderId, string $body): void
+    {
+        try {
+            app(\Platform\Core\Services\PostContextMessage::class)
+                ->post((int) $ticket->team_id, HelpdeskTicket::class, $ticket->id, $ticket->title, $senderId, $body);
+        } catch (\Throwable $e) {
+            Log::warning('[Helpdesk Agent] Vorschlag-Thread fehlgeschlagen: '.$e->getMessage());
+        }
+    }
+
     /** Den E-Mail-Thread eines Tickets auflösen (Pivot bevorzugt, Fallback Legacy-Spalten). */
     protected function resolveTicketThread(HelpdeskTicket $ticket): ?\Platform\Crm\Models\CommsEmailThread
     {
