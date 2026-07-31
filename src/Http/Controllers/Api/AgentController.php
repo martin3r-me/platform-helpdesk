@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use Platform\Core\Services\EmbeddingService;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardCategory;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
@@ -100,6 +101,8 @@ class AgentController extends Controller
             'thread_id' => $thread?->id,
             'from' => $thread?->last_inbound_from_address,
             'categories' => $categories,
+            // Retrieval: ähnliche erledigte Tickets + deren Kategorie (stärkstes Signal).
+            'similar' => $this->similarSolved($ticket, $ticket->title."\n".$ticket->notes),
         ]]);
     }
 
@@ -182,6 +185,96 @@ class AgentController extends Controller
             'category_id' => $ticket->helpdesk_board_category_id,
             'category' => $ticket->category?->name,
         ]]);
+    }
+
+    /**
+     * POST /api/helpdesk/agent/boards/{board}/index-solved
+     * Embeddet alle ERLEDIGTEN + KATEGORISIERTEN Tickets eines Boards in den Vektor-Store
+     * (core EmbeddingService, In-DB), scoped pro Board. Metadata trägt die Kategorie → die
+     * Triage bekommt später die nächsten Nachbarn samt Kategorie. Idempotent (skip-if-unchanged).
+     */
+    public function indexSolvedTickets(Request $request, int $boardId): JsonResponse
+    {
+        $teamId = (int) ($request->user()?->current_team_id ?? 0);
+        $board = HelpdeskBoard::where('id', $boardId)->when($teamId > 0, fn ($q) => $q->where('team_id', $teamId))->first();
+        if (! $board) {
+            return response()->json(['message' => 'Board not found'], 404);
+        }
+
+        $tickets = HelpdeskTicket::query()
+            ->where('helpdesk_board_id', $boardId)
+            ->where('is_done', true)
+            ->whereNotNull('helpdesk_board_category_id')
+            ->with('category')
+            ->get();
+
+        $svc = app(EmbeddingService::class);
+        $type = "helpdesk_ticket_board_{$boardId}";
+        $indexed = 0;
+        $errors = [];
+        foreach ($tickets as $t) {
+            $text = trim($t->title."\n\n".(string) $t->notes);
+            if ($text === '') {
+                continue;
+            }
+            try {
+                $svc->embedAndStore(
+                    teamId: (int) $t->team_id,
+                    entityType: $type,
+                    entityId: $t->id,
+                    text: $text,
+                    metadata: ['category_id' => $t->helpdesk_board_category_id, 'category' => $t->category?->name],
+                );
+                $indexed++;
+            } catch (\Throwable $e) {
+                $errors[] = $e->getMessage();
+            }
+        }
+
+        return response()->json(['data' => [
+            'board_id' => $boardId,
+            'candidates' => $tickets->count(),
+            'indexed' => $indexed,
+            'errors' => array_values(array_slice(array_unique($errors), 0, 3)),
+        ]]);
+    }
+
+    /**
+     * Nächste Nachbarn (ähnliche erledigte Tickets) eines Textes im Board-Index + ihre Kategorie
+     * — das stärkste Signal für die Triage. Fehler/kein Provider → leer (Retrieval ist optional).
+     *
+     * @return array<int, array{title:?string, category:?string, score:float}>
+     */
+    protected function similarSolved(HelpdeskTicket $ticket, string $text): array
+    {
+        if (trim($text) === '') {
+            return [];
+        }
+        try {
+            $hits = app(EmbeddingService::class)->search(
+                teamId: (int) $ticket->team_id,
+                queryText: $text,
+                entityTypes: ["helpdesk_ticket_board_{$ticket->helpdesk_board_id}"],
+                limit: 5,
+                minScore: 0.2,
+            );
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        return collect($hits)->map(function ($h) {
+            $m = $h['metadata'] ?? [];
+            if (! is_array($m)) {
+                $m = json_decode((string) $m, true) ?: [];
+            }
+            $t = HelpdeskTicket::find($h['entity_id'] ?? 0);
+
+            return [
+                'title' => $t?->title,
+                'category' => $m['category'] ?? $t?->category?->name,
+                'score' => round((float) ($h['score'] ?? 0), 3),
+            ];
+        })->filter(fn ($n) => $n['category'])->values()->all();
     }
 
     /** Den E-Mail-Thread eines Tickets auflösen (Pivot bevorzugt, Fallback Legacy-Spalten). */
