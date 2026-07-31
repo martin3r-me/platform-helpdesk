@@ -4,6 +4,7 @@ namespace Platform\Helpdesk\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Symfony\Component\Uid\UuidV7;
 
@@ -49,6 +50,23 @@ class HelpdeskKnowledgeEntry extends Model
     public function helpdeskBoard(): BelongsTo
     {
         return $this->belongsTo(HelpdeskBoard::class, 'helpdesk_board_id');
+    }
+
+    /**
+     * Scope: Knowledge erbt die Sichtbarkeit ihres Boards (graph-erreichbar).
+     * Kein Ersteller-Konzept (keine user_id); board-lose Einträge sind unsichtbar,
+     * bis sie an ein Board gehängt werden (forcing function für die Ablage).
+     */
+    public function scopeVisibleTo(Builder $query, \Platform\Core\Models\User $user): Builder
+    {
+        $reachable = app(\Platform\Core\Authz\AuthzResolver::class)->reachableEntityIds($user, 'read');
+        $reachableBoardIds = empty($reachable) ? [] : \Illuminate\Support\Facades\DB::table('authz_resource_link')
+            ->where('resource_type', \Platform\Helpdesk\Models\HelpdeskBoard::class)
+            ->whereIn('scope_id', $reachable)
+            ->pluck('resource_id')
+            ->all();
+
+        return $query->whereIn('helpdesk_board_id', $reachableBoardIds);
     }
 
     public function team(): BelongsTo

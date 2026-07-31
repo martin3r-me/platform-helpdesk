@@ -10,6 +10,7 @@ use Platform\Core\Contracts\HasDisplayName;
 use Platform\Core\Contracts\AgendaRenderable;
 use Platform\Integrations\Contracts\SocialMediaAccountLinkableInterface;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Symfony\Component\Uid\UuidV7;
 use Illuminate\Support\Facades\Auth;
@@ -199,6 +200,29 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
     public function helpdeskBoard()
     {
         return $this->belongsTo(HelpdeskBoard::class, 'helpdesk_board_id');
+    }
+
+    /**
+     * Scope: Nur Tickets, die der User sehen darf =
+     * - Ersteller (user_id), ODER
+     * - Zuständiger (user_in_charge_id), ODER
+     * - das zugehörige Board ist graph-erreichbar (Tickets erben die Verortung
+     *   ihres Boards; einzeln werden Tickets nicht aufgehängt).
+     */
+    public function scopeVisibleTo(Builder $query, \Platform\Core\Models\User $user): Builder
+    {
+        $reachable = app(\Platform\Core\Authz\AuthzResolver::class)->reachableEntityIds($user, 'read');
+        $reachableBoardIds = empty($reachable) ? [] : \Illuminate\Support\Facades\DB::table('authz_resource_link')
+            ->where('resource_type', \Platform\Helpdesk\Models\HelpdeskBoard::class)
+            ->whereIn('scope_id', $reachable)
+            ->pluck('resource_id')
+            ->all();
+
+        return $query->where(function ($q) use ($user, $reachableBoardIds) {
+            $q->where('user_id', $user->id)
+              ->orWhere('user_in_charge_id', $user->id)
+              ->orWhereIn('helpdesk_board_id', $reachableBoardIds);
+        });
     }
 
     public function helpdeskBoardSlot()

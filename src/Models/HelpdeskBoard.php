@@ -12,6 +12,7 @@ use Platform\Organization\Traits\HasTimeEntries;
 use Platform\ActivityLog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Symfony\Component\Uid\UuidV7;
@@ -52,6 +53,16 @@ class HelpdeskBoard extends Model implements HasDisplayName, AgendaRenderable, H
     public function tickets(): HasMany
     {
         return $this->hasMany(HelpdeskTicket::class, 'helpdesk_board_id');
+    }
+
+    /**
+     * Scope: Nur Boards, die der User sehen darf = Ersteller ODER im Org-Graphen
+     * erreichbar (read). Das Board ist das aufgehängte Objekt; Tickets/Knowledge
+     * erben die Sichtbarkeit von ihrem Board.
+     */
+    public function scopeVisibleTo(Builder $query, \Platform\Core\Models\User $user): Builder
+    {
+        return $query->authzVisibleTo($user, 'read');
     }
 
     public function slots(): HasMany
