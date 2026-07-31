@@ -5,6 +5,7 @@ namespace Platform\Helpdesk\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskBoardCategory;
@@ -244,10 +245,25 @@ class AgentController extends Controller
             return response()->json(null, 204);
         }
 
+        $workerId = (int) $request->user()?->id;
+
+        // Resume-First: wartet ein Ticket dieses Supporters auf eine Kundenantwort, die
+        // inzwischen eingetroffen ist (neue Inbound-Mail nach agent_waiting_at)? Dann DIESES
+        // zuerst — die geparkte Claude-Session wird fortgesetzt (kein Neuanfang, kein Reassign).
+        if ($resume = $this->resumableTicket($boardIds)) {
+            $resume->update([
+                'agent_waiting_at' => null,
+                'is_locked' => true, 'locked_at' => now(), 'locked_by_user_id' => $workerId,
+            ]);
+
+            return response()->json(['data' => $this->triagedPayload($resume, true)]);
+        }
+
         $ticket = HelpdeskTicket::query()
             ->whereIn('helpdesk_board_id', $boardIds)
             ->whereNotNull('helpdesk_board_slot_id')   // triagiert = keinem Backlog mehr
             ->where('is_done', false)
+            ->whereNull('agent_waiting_at')            // auf Kundenantwort wartende überspringen (Resume-Pass holt sie)
             ->where(function ($q) {
                 $q->where('is_locked', false)->orWhereNull('locked_at')->orWhere('locked_at', '<', now()->subMinutes(30));
             })
@@ -261,13 +277,26 @@ class AgentController extends Controller
             return response()->json(null, 204);
         }
 
-        $ticket->update(['is_locked' => true, 'locked_at' => now(), 'locked_by_user_id' => (int) $request->user()?->id]);
+        $ticket->update(['is_locked' => true, 'locked_at' => now(), 'locked_by_user_id' => $workerId]);
 
+        return response()->json(['data' => $this->triagedPayload($ticket, false)]);
+    }
+
+    /**
+     * Einheitliches Payload für next-triaged (Erst-Claim + Resume). Bei $resume=true weiß der
+     * Worker, dass er die gemerkte Claude-Session fortsetzt; `customer_reply` ist die neue
+     * Kundenantwort (aus der letzten Inbound-Mail), die die Rückfrage beantwortet.
+     *
+     * @return array<string, mixed>
+     */
+    protected function triagedPayload(HelpdeskTicket $ticket, bool $resume): array
+    {
+        $ticket->loadMissing('category');
         $thread = $this->resolveTicketThread($ticket);
         $svc = app(\Platform\Helpdesk\Services\TicketRetrievalService::class);
         $text = $ticket->title."\n".$ticket->notes;
 
-        return response()->json(['data' => [
+        return [
             'id' => $ticket->id,
             'uuid' => $ticket->uuid,
             'title' => $ticket->title,
@@ -278,7 +307,53 @@ class AgentController extends Controller
             'thread_id' => $thread?->id,
             'from' => $thread?->last_inbound_from_address,
             'resolutions' => $svc->resolutions($ticket, $text),
-        ]]);
+            // Resume-Signal: gemerkte Session + die frische Kundenantwort.
+            'resume' => $resume,
+            'agent_session_id' => $resume ? $ticket->agent_session_id : null,
+            'customer_reply' => $resume ? $this->latestInboundText($thread) : null,
+        ];
+    }
+
+    /**
+     * Ein auf Kundenantwort wartendes Ticket (agent_waiting_at) in diesen Boards, dessen
+     * E-Mail-Thread seit dem Warten eine neue Inbound-Mail bekommen hat — ältestes zuerst.
+     */
+    protected function resumableTicket(array $boardIds): ?HelpdeskTicket
+    {
+        $morph = (new HelpdeskTicket)->getMorphClass();
+
+        return HelpdeskTicket::query()
+            ->whereIn('helpdesk_board_id', $boardIds)
+            ->where('is_done', false)
+            ->whereNotNull('agent_session_id')
+            ->whereNotNull('agent_waiting_at')
+            ->whereExists(function ($q) use ($morph) {
+                $q->select(DB::raw(1))
+                    ->from('comms_thread_contexts as ctx')
+                    ->join('comms_email_threads as t', 't.id', '=', 'ctx.thread_id')
+                    ->where('ctx.thread_type', \Platform\Crm\Models\CommsEmailThread::class)
+                    ->where('ctx.context_model', $morph)
+                    ->whereColumn('ctx.context_model_id', 'helpdesk_tickets.id')
+                    ->whereColumn('t.last_inbound_at', '>', 'helpdesk_tickets.agent_waiting_at');
+            })
+            ->orderBy('agent_waiting_at')
+            ->with('category')
+            ->first();
+    }
+
+    /** Text der letzten Inbound-Mail eines Threads (Kundenantwort auf die Rückfrage). */
+    protected function latestInboundText(?\Platform\Crm\Models\CommsEmailThread $thread): ?string
+    {
+        if (! $thread) {
+            return null;
+        }
+        $mail = \Platform\Crm\Models\CommsEmailInboundMail::query()
+            ->where('thread_id', $thread->id)
+            ->latest('id')->first();
+
+        $text = trim((string) ($mail?->text_body ?? ''));
+
+        return $text !== '' ? mb_substr($text, 0, 5000) : null;
     }
 
     /**
@@ -292,9 +367,10 @@ class AgentController extends Controller
     public function resolveTicket(Request $request, int $id): JsonResponse
     {
         $data = $request->validate([
-            'action' => 'required|in:reply_close,propose,escalate',
+            'action' => 'required|in:reply_close,propose,escalate,ask',
             'reply_body' => 'nullable|string|max:20000',
             'note' => 'nullable|string|max:5000',
+            'session_id' => 'nullable|string|max:255',
             'kb' => 'nullable|array',
             'kb.problem' => 'nullable|string|max:10000',
             'kb.solution' => 'nullable|string|max:20000',
@@ -308,6 +384,24 @@ class AgentController extends Controller
         $action = $data['action'];
         $sent = false;
 
+        if ($action === 'ask') {
+            // Rückfrage an den Kunden: Frage als threaded Antwort raus, Ticket in den
+            // Warten-Zustand (agent_waiting_at) + Session merken. Owner bleibt der Worker;
+            // der normale Claim überspringt es, bis eine Kundenantwort eintrifft (Resume).
+            $question = trim((string) ($data['reply_body'] ?? ''));
+            if ($question !== '') {
+                $sent = $this->sendThreadReply($ticket, $question, $request);
+            }
+            $ticket->update([
+                'agent_waiting_at' => now(),
+                'agent_session_id' => $data['session_id'] ?? $ticket->agent_session_id,
+                'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
+            ]);
+            $ticket->logActivity('Supporter: Rückfrage an Kunde gestellt — wartet auf Antwort.', ['source' => 'agent', 'status' => 'waiting']);
+
+            return response()->json(['data' => ['id' => $ticket->id, 'action' => 'ask', 'mail_sent' => $sent, 'is_done' => false]]);
+        }
+
         if ($action === 'reply_close') {
             $body = trim((string) ($data['reply_body'] ?? ''));
             if ($body !== '') {
@@ -320,6 +414,7 @@ class AgentController extends Controller
                 'done_at' => now(),
                 'helpdesk_board_slot_id' => $solvedSlot?->id ?? $ticket->helpdesk_board_slot_id,
                 'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
+                'agent_waiting_at' => null, 'agent_session_id' => null,
             ]);
             // KB-Eintrag (kuratierte Lösung) — nur wenn Problem+Lösung geliefert.
             if (! empty($data['kb']['problem']) && ! empty($data['kb']['solution'])) {
@@ -334,7 +429,8 @@ class AgentController extends Controller
             $ticket->logActivity('Supporter: gelöst'.($sent ? ' + Antwort gesendet' : '').'.', ['source' => 'agent', 'status' => 'resolved']);
         } elseif ($action === 'propose') {
             $draft = trim((string) ($data['reply_body'] ?? ''));
-            $ticket->update(['is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null]);
+            $ticket->update(['is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
+                'agent_waiting_at' => null, 'agent_session_id' => null]);
             $this->postToTicketThread($ticket, (int) $request->user()?->id,
                 "Lösungs-Vorschlag des Support-Workers (bitte prüfen + senden):\n\n".$draft);
             $ticket->logActivity('Supporter: Lösungs-Vorschlag zur Freigabe hinterlegt.', ['source' => 'agent', 'status' => 'proposed']);
@@ -344,6 +440,7 @@ class AgentController extends Controller
                 'escalated_at' => now(),
                 'escalation_count' => (int) $ticket->escalation_count + 1,
                 'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
+                'agent_waiting_at' => null, 'agent_session_id' => null,
             ]);
             $ticket->logActivity('Supporter: eskaliert.'.(! empty($data['note']) ? "\n\n".$data['note'] : ''), ['source' => 'agent', 'status' => 'escalated']);
         }

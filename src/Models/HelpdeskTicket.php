@@ -54,6 +54,8 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
         'is_locked',
         'locked_at',
         'locked_by_user_id',
+        'agent_waiting_at',
+        'agent_session_id',
     ];
 
     protected $casts = [
@@ -65,6 +67,7 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
         'escalated_at' => 'datetime',
         'is_locked' => 'boolean',
         'locked_at' => 'datetime',
+        'agent_waiting_at' => 'datetime',
         'dod' => 'array',
     ];
 
