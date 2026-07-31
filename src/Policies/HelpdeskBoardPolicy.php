@@ -5,78 +5,49 @@ namespace Platform\Helpdesk\Policies;
 use Platform\Core\Models\User;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 
+/**
+ * Zugriff auf Boards = Ersteller (owns) ODER strukturell im Org-Graphen
+ * erreichbar (may). Keine team-pauschale Sichtbarkeit mehr. read < write < manage.
+ * Das Board ist das aufgehängte Objekt — Tickets/Knowledge erben davon.
+ */
 class HelpdeskBoardPolicy
 {
-    /**
-     * Darf der User Boards listen?
-     */
     public function viewAny(User $user): bool
     {
         return $user->currentTeam !== null;
     }
 
-    /**
-     * Darf der User ein Board erstellen?
-     */
     public function create(User $user): bool
     {
         return $user->currentTeam !== null;
     }
 
-    /**
-     * Darf der User dieses Helpdesk Board sehen?
-     */
     public function view(User $user, HelpdeskBoard $board): bool
     {
-        // Persönliches Board (Owner)
-        if ($board->user_id === $user->id) {
-            return true;
-        }
-
-        // Team-Board: User ist im aktuellen Team
-        if (
-            $board->team_id &&
-            $user->currentTeam &&
-            $board->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        // Kein Zugriff
-        return false;
+        return $this->graphAllows($user, $board, 'read');
     }
 
-    /**
-     * Darf der User dieses Helpdesk Board bearbeiten?
-     */
     public function update(User $user, HelpdeskBoard $board): bool
     {
-        // Persönliches Board (Owner)
-        if ($board->user_id === $user->id) {
-            return true;
-        }
+        return $this->graphAllows($user, $board, 'write');
+    }
 
-        // Team-Board: User ist im aktuellen Team
-        if (
-            $board->team_id &&
-            $user->currentTeam &&
-            $board->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        // Kein Zugriff
-        return false;
+    public function delete(User $user, HelpdeskBoard $board): bool
+    {
+        return $this->graphAllows($user, $board, 'manage');
     }
 
     /**
-     * Darf der User dieses Helpdesk Board löschen?
+     * Graph-Autorisierung: Ersteller (owns) ODER strukturell erreichbar (may).
      */
-    public function delete(User $user, HelpdeskBoard $board): bool
+    protected function graphAllows(User $user, HelpdeskBoard $board, string $cap): bool
     {
-        // Nur der Ersteller darf löschen!
-        return $board->user_id === $user->id;
-    }
+        if (! $board->id) {
+            return false;
+        }
+        $resolver = app(\Platform\Core\Authz\AuthzResolver::class);
 
-    // Weitere Methoden nach Bedarf (create, assign, invite, ...)
+        return $resolver->may($user, $cap, HelpdeskBoard::class, (int) $board->id)
+            || $resolver->owns($user, HelpdeskBoard::class, (int) $board->id);
+    }
 }

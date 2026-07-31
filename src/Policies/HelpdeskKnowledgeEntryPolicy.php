@@ -4,70 +4,49 @@ namespace Platform\Helpdesk\Policies;
 
 use Platform\Core\Models\User;
 use Platform\Helpdesk\Models\HelpdeskKnowledgeEntry;
+use Platform\Helpdesk\Models\HelpdeskBoard;
 
+/**
+ * Knowledge erbt den Zugriff von ihrem Board (graph-erreichbar). Kein Ersteller-
+ * Konzept (keine user_id); board-lose Einträge sind nicht sichtbar, bis sie an
+ * ein Board gehängt werden. read < write < manage.
+ */
 class HelpdeskKnowledgeEntryPolicy
 {
-    /**
-     * Darf der User Knowledge Entries listen?
-     */
     public function viewAny(User $user): bool
     {
         return $user->currentTeam !== null;
     }
 
-    /**
-     * Darf der User einen Knowledge Entry erstellen?
-     */
     public function create(User $user): bool
     {
         return $user->currentTeam !== null;
     }
 
-    /**
-     * Darf der User diesen Knowledge Entry sehen?
-     */
     public function view(User $user, HelpdeskKnowledgeEntry $entry): bool
     {
-        if (
-            $entry->team_id &&
-            $user->currentTeam &&
-            $entry->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        return false;
+        return $this->boardGraphAllows($user, $entry, 'read');
     }
 
-    /**
-     * Darf der User diesen Knowledge Entry bearbeiten?
-     */
     public function update(User $user, HelpdeskKnowledgeEntry $entry): bool
     {
-        if (
-            $entry->team_id &&
-            $user->currentTeam &&
-            $entry->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        return false;
+        return $this->boardGraphAllows($user, $entry, 'write');
     }
 
-    /**
-     * Darf der User diesen Knowledge Entry löschen?
-     */
     public function delete(User $user, HelpdeskKnowledgeEntry $entry): bool
     {
-        if (
-            $entry->team_id &&
-            $user->currentTeam &&
-            $entry->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
+        return $this->boardGraphAllows($user, $entry, 'manage');
+    }
 
-        return false;
+    protected function boardGraphAllows(User $user, HelpdeskKnowledgeEntry $entry, string $cap): bool
+    {
+        $boardId = $entry->helpdesk_board_id;
+        if (! $boardId) {
+            return false;
+        }
+        $resolver = app(\Platform\Core\Authz\AuthzResolver::class);
+
+        return $resolver->may($user, $cap, HelpdeskBoard::class, (int) $boardId)
+            || $resolver->owns($user, HelpdeskBoard::class, (int) $boardId);
     }
 }

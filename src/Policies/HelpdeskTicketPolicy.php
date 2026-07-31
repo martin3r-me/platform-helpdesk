@@ -4,205 +4,112 @@ namespace Platform\Helpdesk\Policies;
 
 use Platform\Core\Models\User;
 use Platform\Helpdesk\Models\HelpdeskTicket;
+use Platform\Helpdesk\Models\HelpdeskBoard;
 
+/**
+ * Zugriff auf Tickets erbt vom Board (graph-erreichbar) — plus Ersteller und
+ * Zuständiger. Tickets werden einzeln nicht aufgehängt. read < write < manage.
+ * Sperr-Logik (Lock) bleibt erhalten.
+ */
 class HelpdeskTicketPolicy
 {
-    /**
-     * Darf der User Tickets listen?
-     */
     public function viewAny(User $user): bool
     {
         return $user->currentTeam !== null;
     }
 
-    /**
-     * Darf der User ein Ticket erstellen?
-     */
     public function create(User $user): bool
     {
         return $user->currentTeam !== null;
     }
 
-    /**
-     * Darf der User dieses Ticket sehen?
-     */
     public function view(User $user, HelpdeskTicket $ticket): bool
     {
-        // Persönliches Ticket (Owner)
-        if ($ticket->user_id === $user->id) {
+        if ($this->ownerOrAssignee($user, $ticket)) {
             return true;
         }
 
-        // Team-Ticket: User ist im aktuellen Team
-        if (
-            $ticket->team_id &&
-            $user->currentTeam &&
-            $ticket->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        // User ist verantwortlich für das Ticket
-        if ($ticket->user_in_charge_id === $user->id) {
-            return true;
-        }
-
-        // Kein Zugriff
-        return false;
+        return $this->boardGraphAllows($user, $ticket, 'read');
     }
 
-    /**
-     * Darf der User dieses Ticket bearbeiten?
-     */
     public function update(User $user, HelpdeskTicket $ticket): bool
     {
-        // Gesperrte Tickets können nur vom sperrenden User bearbeitet werden
+        // Gesperrte Tickets nur vom sperrenden User.
         if ($ticket->isLocked() && $ticket->locked_by_user_id !== $user->id) {
             return false;
         }
-
-        // Persönliches Ticket (Owner)
         if ($ticket->user_id === $user->id) {
             return true;
         }
 
-        // Team-Ticket: User ist im aktuellen Team
-        if (
-            $ticket->team_id &&
-            $user->currentTeam &&
-            $ticket->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        // User ist verantwortlich für das Ticket
-        if ($ticket->user_in_charge_id === $user->id) {
-            return true;
-        }
-
-        // Kein Zugriff
-        return false;
+        return $this->boardGraphAllows($user, $ticket, 'write');
     }
 
-    /**
-     * Darf der User dieses Ticket sperren?
-     */
+    public function delete(User $user, HelpdeskTicket $ticket): bool
+    {
+        if ($ticket->isLocked() && $ticket->locked_by_user_id !== $user->id) {
+            return false;
+        }
+        if ($ticket->user_id === $user->id) {
+            return true;
+        }
+
+        return $this->boardGraphAllows($user, $ticket, 'manage');
+    }
+
+    public function complete(User $user, HelpdeskTicket $ticket): bool
+    {
+        if ($this->ownerOrAssignee($user, $ticket)) {
+            return true;
+        }
+
+        return $this->boardGraphAllows($user, $ticket, 'write');
+    }
+
     public function lock(User $user, HelpdeskTicket $ticket): bool
     {
-        // Bereits gesperrte Tickets können nicht erneut gesperrt werden
         if ($ticket->isLocked()) {
             return false;
         }
-
-        // Persönliches Ticket (Owner)
-        if ($ticket->user_id === $user->id) {
+        if ($this->ownerOrAssignee($user, $ticket)) {
             return true;
         }
 
-        // Team-Ticket: User ist im aktuellen Team
-        if (
-            $ticket->team_id &&
-            $user->currentTeam &&
-            $ticket->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        // User ist verantwortlich für das Ticket
-        if ($ticket->user_in_charge_id === $user->id) {
-            return true;
-        }
-
-        return false;
+        return $this->boardGraphAllows($user, $ticket, 'write');
     }
 
-    /**
-     * Darf der User dieses Ticket entsperren?
-     */
     public function unlock(User $user, HelpdeskTicket $ticket): bool
     {
-        // Nur gesperrte Tickets können entsperrt werden
-        if (!$ticket->isLocked()) {
+        if (! $ticket->isLocked()) {
             return false;
         }
-
-        // Der User der gesperrt hat, darf entsperren
-        if ($ticket->locked_by_user_id === $user->id) {
+        // Der sperrende User oder der Ersteller darf immer entsperren.
+        if ($ticket->locked_by_user_id === $user->id || $ticket->user_id === $user->id) {
             return true;
         }
 
-        // Persönliches Ticket (Owner)
-        if ($ticket->user_id === $user->id) {
-            return true;
-        }
+        return $this->boardGraphAllows($user, $ticket, 'write');
+    }
 
-        // Team-Ticket: User ist im aktuellen Team (für Notfall-Entsperrung)
-        if (
-            $ticket->team_id &&
-            $user->currentTeam &&
-            $ticket->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        return false;
+    protected function ownerOrAssignee(User $user, HelpdeskTicket $ticket): bool
+    {
+        return $ticket->user_id === $user->id
+            || $ticket->user_in_charge_id === $user->id;
     }
 
     /**
-     * Darf der User dieses Ticket löschen?
+     * Ticket-Zugriff erbt vom Board: Ersteller/erreichbar auf dem Board des Tickets.
+     * Ticket ohne Board (persönlich) → nur über Owner/Assignee (oben).
      */
-    public function delete(User $user, HelpdeskTicket $ticket): bool
+    protected function boardGraphAllows(User $user, HelpdeskTicket $ticket, string $cap): bool
     {
-        // Gesperrte Tickets können nur vom sperrenden User gelöscht werden
-        if ($ticket->isLocked() && $ticket->locked_by_user_id !== $user->id) {
+        $boardId = $ticket->helpdesk_board_id;
+        if (! $boardId) {
             return false;
         }
+        $resolver = app(\Platform\Core\Authz\AuthzResolver::class);
 
-        // Persönliches Ticket (Owner)
-        if ($ticket->user_id === $user->id) {
-            return true;
-        }
-
-        // Team-Ticket: User ist im aktuellen Team
-        if (
-            $ticket->team_id &&
-            $user->currentTeam &&
-            $ticket->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        // Kein Zugriff
-        return false;
+        return $resolver->may($user, $cap, HelpdeskBoard::class, (int) $boardId)
+            || $resolver->owns($user, HelpdeskBoard::class, (int) $boardId);
     }
-
-    /**
-     * Darf der User dieses Ticket als erledigt markieren?
-     */
-    public function complete(User $user, HelpdeskTicket $ticket): bool
-    {
-        // Persönliches Ticket (Owner)
-        if ($ticket->user_id === $user->id) {
-            return true;
-        }
-
-        // User ist verantwortlich für das Ticket
-        if ($ticket->user_in_charge_id === $user->id) {
-            return true;
-        }
-
-        // Team-Ticket: User ist im aktuellen Team
-        if (
-            $ticket->team_id &&
-            $user->currentTeam &&
-            $ticket->team_id === $user->currentTeam->id
-        ) {
-            return true;
-        }
-
-        // Kein Zugriff
-        return false;
-    }
-
-    // Weitere Methoden nach Bedarf (create, assign, ...)
 }
