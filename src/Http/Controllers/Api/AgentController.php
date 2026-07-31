@@ -97,6 +97,7 @@ class AgentController extends Controller
     {
         $data = $request->validate([
             'ack_body' => 'nullable|string|max:10000',
+            'story_points' => 'nullable|in:xs,s,m,l,xl,xxl',
         ]);
 
         $ticket = HelpdeskTicket::find($id);
@@ -107,12 +108,27 @@ class AgentController extends Controller
         // Raus aus dem Backlog: in den ersten Slot des Boards (falls vorhanden) + Sperre lösen.
         $firstSlot = HelpdeskBoardSlot::where('helpdesk_board_id', $ticket->helpdesk_board_id)
             ->orderBy('order')->first();
-        $ticket->update([
+
+        $update = [
             'helpdesk_board_slot_id' => $firstSlot?->id ?? $ticket->helpdesk_board_slot_id,
             'is_locked' => false,
             'locked_at' => null,
             'locked_by_user_id' => null,
-        ]);
+        ];
+
+        // Story Points (Claude-Schätzung).
+        if (! empty($data['story_points'])) {
+            $update['story_points'] = $data['story_points'];
+        }
+
+        // Fälligkeit aus der Board-SLA: created_at + resolution_time_hours (nur setzen, wenn
+        // eine aktive SLA mit Lösungszeit existiert und noch keine Fälligkeit gesetzt ist).
+        $sla = $ticket->helpdeskBoard?->sla;
+        if (! $ticket->due_date && $sla && $sla->is_active && (int) $sla->resolution_time_hours > 0) {
+            $update['due_date'] = ($ticket->created_at ?? now())->copy()->addHours((int) $sla->resolution_time_hours);
+        }
+
+        $ticket->update($update);
 
         // Ack-Mail threaded senden (nur wenn ein Mail-Thread am Ticket hängt und Text da ist).
         $sent = false;
@@ -121,11 +137,21 @@ class AgentController extends Controller
             $sent = $this->sendThreadReply($ticket, $ackBody, $request);
         }
 
-        $ticket->logActivity('Triage: aus dem Backlog geholt'.($sent ? ' + Eingangsbestätigung gesendet' : '').'.', [
-            'source' => 'agent', 'status' => 'triaged',
-        ]);
+        $ticket->refresh();
+        $ticket->logActivity('Triage: aus dem Backlog geholt'
+            .($update['story_points'] ?? null ? ' · '.$update['story_points'].' SP' : '')
+            .(isset($update['due_date']) ? ' · fällig '.$ticket->due_date?->toDateString() : '')
+            .($sent ? ' · Eingangsbestätigung gesendet' : '').'.', [
+                'source' => 'agent', 'status' => 'triaged',
+            ]);
 
-        return response()->json(['data' => ['id' => $ticket->id, 'mail_sent' => $sent, 'slot_id' => $ticket->helpdesk_board_slot_id]]);
+        return response()->json(['data' => [
+            'id' => $ticket->id,
+            'mail_sent' => $sent,
+            'slot_id' => $ticket->helpdesk_board_slot_id,
+            'story_points' => $ticket->story_points?->value ?? $ticket->story_points,
+            'due_date' => $ticket->due_date?->toDateString(),
+        ]]);
     }
 
     /** Den E-Mail-Thread eines Tickets auflösen (Pivot bevorzugt, Fallback Legacy-Spalten). */
