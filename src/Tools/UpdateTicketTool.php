@@ -56,6 +56,7 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                 ],
                 'board_id' => ['type' => 'integer'],
                 'slot_id' => ['type' => 'integer', 'description' => 'Slot-ID. Auf null setzen = Ticket in den Backlog verschieben (keinem Slot zugeordnet).'],
+                'category_id' => ['type' => 'integer', 'description' => 'Board-Kategorie (helpdesk.board_categories.GET). Muss zum Board des Tickets gehören; null/"" entfernt sie.'],
                 'group_id' => ['type' => 'integer'],
                 'due_date' => ['type' => 'string'],
                 'priority' => [
@@ -252,6 +253,19 @@ class UpdateTicketTool implements ToolContract, ToolMetadataContract
                     }
                 }
                 $update['helpdesk_ticket_group_id'] = $groupId;
+            }
+
+            // Kategorie einhängen — muss zum Board DES Tickets gehören. null/"" entfernt sie.
+            if (array_key_exists('category_id', $arguments)) {
+                $categoryId = $arguments['category_id'] ? (int) $arguments['category_id'] : null;
+                if ($categoryId) {
+                    $belongs = \Platform\Helpdesk\Models\HelpdeskBoardCategory::where('id', $categoryId)
+                        ->where('helpdesk_board_id', $ticket->helpdesk_board_id)->exists();
+                    if (! $belongs) {
+                        return ToolResult::error('VALIDATION_ERROR', 'Kategorie gehört nicht zum Board des Tickets.');
+                    }
+                }
+                $update['helpdesk_board_category_id'] = $categoryId;
             }
 
             if (array_key_exists('is_done', $update)) {

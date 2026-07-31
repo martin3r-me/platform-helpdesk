@@ -218,6 +218,10 @@ class HelpdeskServiceProvider extends ServiceProvider
             $registry->register(new \Platform\Helpdesk\Tools\CreateBoardSlotTool());
             $registry->register(new \Platform\Helpdesk\Tools\UpdateBoardSlotTool());
             $registry->register(new \Platform\Helpdesk\Tools\DeleteBoardSlotTool());
+            $registry->register(new \Platform\Helpdesk\Tools\ListBoardCategoriesTool());
+            $registry->register(new \Platform\Helpdesk\Tools\CreateBoardCategoryTool());
+            $registry->register(new \Platform\Helpdesk\Tools\UpdateBoardCategoryTool());
+            $registry->register(new \Platform\Helpdesk\Tools\DeleteBoardCategoryTool());
 
             // Ticket-Tools
             $registry->register(new \Platform\Helpdesk\Tools\CreateTicketTool());
