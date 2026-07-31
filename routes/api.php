@@ -4,12 +4,20 @@ use Illuminate\Support\Facades\Route;
 use Platform\Helpdesk\Http\Controllers\Api\TicketDatawarehouseController;
 use Platform\Helpdesk\Http\Controllers\Api\BoardDatawarehouseController;
 use Platform\Helpdesk\Http\Controllers\Api\GithubRepositoryTicketController;
+use Platform\Helpdesk\Http\Controllers\Api\AgentController;
 
 /**
  * Helpdesk API Routes
  * 
  * Datawarehouse-Endpunkte für Tickets und Boards
  */
+/**
+ * Support-Worker Agent-API (frisch, token-authentifiziert) — Schritt 1: Board-Auswahl.
+ */
+Route::prefix('agent')->middleware('auth:api')->group(function () {
+    Route::get('/boards', [AgentController::class, 'boards'])->name('helpdesk.api.agent.boards');
+});
+
 Route::get('/tickets/datawarehouse', [TicketDatawarehouseController::class, 'index']);
 Route::get('/tickets/datawarehouse/health', [TicketDatawarehouseController::class, 'health']);
 Route::get('/boards/datawarehouse', [BoardDatawarehouseController::class, 'index']);
