@@ -70,6 +70,11 @@ class HelpdeskBoard extends Model implements HasDisplayName, AgendaRenderable, H
         return $this->hasMany(HelpdeskBoardSlot::class, 'helpdesk_board_id');
     }
 
+    public function categories(): HasMany
+    {
+        return $this->hasMany(HelpdeskBoardCategory::class, 'helpdesk_board_id');
+    }
+
     public function serviceHours(): HasMany
     {
         return $this->hasMany(HelpdeskBoardServiceHours::class, 'helpdesk_board_id');

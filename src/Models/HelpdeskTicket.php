@@ -46,6 +46,7 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
         'slot_order',
         'helpdesk_board_id',
         'helpdesk_board_slot_id',
+        'helpdesk_board_category_id',
         'helpdesk_ticket_group_id',
         'escalation_level',
         'escalated_at',
@@ -200,6 +201,11 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
     public function helpdeskBoard()
     {
         return $this->belongsTo(HelpdeskBoard::class, 'helpdesk_board_id');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(HelpdeskBoardCategory::class, 'helpdesk_board_category_id');
     }
 
     /**

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Platform\Helpdesk\Models\HelpdeskBoard;
+use Platform\Helpdesk\Models\HelpdeskBoardCategory;
 use Platform\Helpdesk\Models\HelpdeskBoardSlot;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 
@@ -76,6 +77,20 @@ class AgentController extends Controller
 
         $thread = $this->resolveTicketThread($ticket);
 
+        // Board-Kategorien (kuratiert) mitliefern — description + examples als semantische
+        // Grundlage, damit die Triage eine passende wählen kann (oder bewusst keine).
+        $categories = HelpdeskBoardCategory::query()
+            ->where('helpdesk_board_id', $ticket->helpdesk_board_id)
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get(['id', 'name', 'description', 'examples'])
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'description' => $c->description,
+                'examples' => $c->examples,
+            ])->all();
+
         return response()->json(['data' => [
             'id' => $ticket->id,
             'uuid' => $ticket->uuid,
@@ -84,6 +99,7 @@ class AgentController extends Controller
             'helpdesk_board_id' => $ticket->helpdesk_board_id,
             'thread_id' => $thread?->id,
             'from' => $thread?->last_inbound_from_address,
+            'categories' => $categories,
         ]]);
     }
 
@@ -98,6 +114,7 @@ class AgentController extends Controller
         $data = $request->validate([
             'ack_body' => 'nullable|string|max:10000',
             'story_points' => 'nullable|in:xs,s,m,l,xl,xxl',
+            'category_id' => 'nullable|integer',
         ]);
 
         $ticket = HelpdeskTicket::find($id);
@@ -121,6 +138,16 @@ class AgentController extends Controller
             $update['story_points'] = $data['story_points'];
         }
 
+        // Kategorie (Claude-Wahl) — nur setzen, wenn sie zu DIESEM Board gehört (kein
+        // Einhängen fremder Kategorien). Leer/„keine passt" → Kategorie bleibt offen.
+        if (! empty($data['category_id'])) {
+            $belongs = HelpdeskBoardCategory::where('id', $data['category_id'])
+                ->where('helpdesk_board_id', $ticket->helpdesk_board_id)->exists();
+            if ($belongs) {
+                $update['helpdesk_board_category_id'] = (int) $data['category_id'];
+            }
+        }
+
         // Fälligkeit aus der Board-SLA: created_at + resolution_time_hours (nur setzen, wenn
         // eine aktive SLA mit Lösungszeit existiert und noch keine Fälligkeit gesetzt ist).
         $sla = $ticket->helpdeskBoard?->sla;
@@ -139,6 +166,7 @@ class AgentController extends Controller
 
         $ticket->refresh();
         $ticket->logActivity('Triage: aus dem Backlog geholt'
+            .($ticket->category ? ' · '.$ticket->category->name : '')
             .($update['story_points'] ?? null ? ' · '.$update['story_points'].' SP' : '')
             .(isset($update['due_date']) ? ' · fällig '.$ticket->due_date?->toDateString() : '')
             .($sent ? ' · Eingangsbestätigung gesendet' : '').'.', [
@@ -151,6 +179,8 @@ class AgentController extends Controller
             'slot_id' => $ticket->helpdesk_board_slot_id,
             'story_points' => $ticket->story_points?->value ?? $ticket->story_points,
             'due_date' => $ticket->due_date?->toDateString(),
+            'category_id' => $ticket->helpdesk_board_category_id,
+            'category' => $ticket->category?->name,
         ]]);
     }
 
