@@ -55,6 +55,7 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
         'locked_at',
         'locked_by_user_id',
         'agent_waiting_at',
+        'agent_waiting_kind',
         'agent_session_id',
         'agent_handled_at',
     ];
