@@ -457,6 +457,7 @@ class AgentController extends Controller
                 'agent_waiting_kind' => 'customer',
                 'agent_session_id' => $data['session_id'] ?? $ticket->agent_session_id,
                 'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
+                'helpdesk_board_slot_id' => $this->slotFor($ticket, 'waiting') ?? $ticket->helpdesk_board_slot_id,
             ]);
             $ticket->logActivity('Supporter: Rückfrage an Kunde gestellt — wartet auf Antwort.', ['source' => 'agent', 'status' => 'waiting']);
 
@@ -468,12 +469,10 @@ class AgentController extends Controller
             if ($body !== '') {
                 $sent = $this->sendThreadReply($ticket, $body, $request);
             }
-            $solvedSlot = HelpdeskBoardSlot::where('helpdesk_board_id', $ticket->helpdesk_board_id)
-                ->where('name', 'like', '%elöst%')->orderByDesc('order')->first();
             $ticket->update([
                 'is_done' => true,
                 'done_at' => now(),
-                'helpdesk_board_slot_id' => $solvedSlot?->id ?? $ticket->helpdesk_board_slot_id,
+                'helpdesk_board_slot_id' => $this->slotFor($ticket, 'solved') ?? $ticket->helpdesk_board_slot_id,
                 'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
                 'agent_waiting_at' => null, 'agent_waiting_kind' => null, 'agent_session_id' => null,
             ]);
@@ -493,12 +492,14 @@ class AgentController extends Controller
             // Antwortet er (z. B. „passt, senden" oder Änderungswunsch), holt der Resume-Pass
             // (resumableApproval) das Ticket zurück und der Worker setzt genau diese Session fort.
             $draft = trim((string) ($data['reply_body'] ?? ''));
-            $this->postToTicketThread($ticket, (int) $request->user()?->id,
-                "Lösungs-Vorschlag des Support-Workers — bitte hier freigeben: antworte „passt/senden\", "
-                ."oder nenne die gewünschte Änderung (dann überarbeite ich):\n\n".$draft);
             $ticket->update(['is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
                 'agent_waiting_at' => now(), 'agent_waiting_kind' => 'approval',
-                'agent_session_id' => $data['session_id'] ?? $ticket->agent_session_id]);
+                'agent_session_id' => $data['session_id'] ?? $ticket->agent_session_id,
+                'helpdesk_board_slot_id' => $this->slotFor($ticket, 'waiting') ?? $ticket->helpdesk_board_slot_id]);
+            // @Mention + Zuweisung an den Verantwortlichen → er weiß, dass ein Vorschlag auf ihn wartet.
+            $this->handToHuman($ticket, (int) $request->user()?->id,
+                "Lösungs-Vorschlag des Support-Workers — bitte hier freigeben: antworte „passt/senden\", "
+                ."oder nenne die gewünschte Änderung (dann überarbeite ich):\n\n".$draft);
             $ticket->logActivity('Supporter: Vorschlag zur Freigabe hinterlegt — wartet auf OK im Thread.', ['source' => 'agent', 'status' => 'proposed']);
         } else { // escalate
             $ticket->update([
@@ -507,9 +508,13 @@ class AgentController extends Controller
                 'escalation_count' => (int) $ticket->escalation_count + 1,
                 'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
                 'agent_waiting_at' => null, 'agent_waiting_kind' => null, 'agent_session_id' => null,
-                // an einen Menschen übergeben → nicht erneut vom Worker ziehen.
+                // an einen Menschen übergeben → nicht erneut vom Worker ziehen + in „In Bearbeitung".
                 'agent_handled_at' => now(),
+                'helpdesk_board_slot_id' => $this->slotFor($ticket, 'in_progress') ?? $ticket->helpdesk_board_slot_id,
             ]);
+            // @Mention + Zuweisung → der Verantwortliche ist jetzt am Ball.
+            $this->handToHuman($ticket, (int) $request->user()?->id,
+                "Support-Worker hat ESKALIERT — du bist am Ball:\n\n".(! empty($data['note']) ? $data['note'] : '(kein Grund angegeben)'));
             $ticket->logActivity('Supporter: eskaliert.'.(! empty($data['note']) ? "\n\n".$data['note'] : ''), ['source' => 'agent', 'status' => 'escalated']);
         }
 
@@ -525,6 +530,60 @@ class AgentController extends Controller
         } catch (\Throwable $e) {
             Log::warning('[Helpdesk Agent] Vorschlag-Thread fehlgeschlagen: '.$e->getMessage());
         }
+    }
+
+    /**
+     * Slot für ein semantisches Ziel auf DIESEM Board — dynamisch aus den AKTUELLEN Slots
+     * aufgelöst (nie gespeichert → überlebt Umbenennen/Umsortieren). Kein Treffer → null =
+     * Ticket bleibt, wo es ist (nie falsch verschieben). 'solved' fällt auf den letzten Slot.
+     */
+    protected function slotFor(HelpdeskTicket $ticket, string $purpose): ?int
+    {
+        $slots = HelpdeskBoardSlot::where('helpdesk_board_id', $ticket->helpdesk_board_id)
+            ->orderBy('order')->get(['id', 'name']);
+        if ($slots->isEmpty()) {
+            return null;
+        }
+        $re = [
+            'solved' => '/gel[öo]st|erledigt|closed|done|fertig|abgeschlossen/i',
+            'waiting' => '/wart|wait|hold|pending|pausiert|freigabe/i',
+            'in_progress' => '/bearbeit|in arbeit|progress|doing|pr[üu]fung|zugewiesen/i',
+        ][$purpose] ?? null;
+        if ($re) {
+            foreach ($slots as $s) {
+                if (preg_match($re, (string) $s->name)) {
+                    return (int) $s->id;
+                }
+            }
+        }
+
+        return $purpose === 'solved' ? (int) $slots->last()->id : null;
+    }
+
+    /**
+     * Übergabe an den Menschen: Verantwortlichen setzen (falls noch offen) = Board-Owner,
+     * + Nachricht mit @Mention in den Kontext-Thread → er wird benachrichtigt und ist „am Ball".
+     * Gibt die zuständige User-ID zurück (oder null).
+     */
+    protected function handToHuman(HelpdeskTicket $ticket, int $senderId, string $body): ?int
+    {
+        $ownerId = (int) ($ticket->user_in_charge_id ?: $ticket->helpdeskBoard?->user_id ?: $ticket->user_id);
+        if ($ownerId < 1) {
+            return null;
+        }
+        if (! $ticket->user_in_charge_id) {
+            $ticket->update(['user_in_charge_id' => $ownerId]);
+        }
+        try {
+            app(\Platform\Core\Services\PostContextMessage::class)->post(
+                (int) $ticket->team_id, HelpdeskTicket::class, $ticket->id, $ticket->title,
+                $senderId, $body, [$ownerId], [$ownerId] // member + mention → Benachrichtigung
+            );
+        } catch (\Throwable $e) {
+            Log::warning('[Helpdesk Agent] Handoff-Nachricht fehlgeschlagen: '.$e->getMessage());
+        }
+
+        return $ownerId;
     }
 
     /** Den E-Mail-Thread eines Tickets auflösen (Pivot bevorzugt, Fallback Legacy-Spalten). */
