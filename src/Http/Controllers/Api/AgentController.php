@@ -264,6 +264,7 @@ class AgentController extends Controller
             ->whereNotNull('helpdesk_board_slot_id')   // triagiert = keinem Backlog mehr
             ->where('is_done', false)
             ->whereNull('agent_waiting_at')            // auf Kundenantwort wartende überspringen (Resume-Pass holt sie)
+            ->whereNull('agent_handled_at')            // bereits vom Worker behandelt (Vorschlag/Eskalation) → Mensch ist dran
             ->where(function ($q) {
                 $q->where('is_locked', false)->orWhereNull('locked_at')->orWhere('locked_at', '<', now()->subMinutes(30));
             })
@@ -429,8 +430,9 @@ class AgentController extends Controller
             $ticket->logActivity('Supporter: gelöst'.($sent ? ' + Antwort gesendet' : '').'.', ['source' => 'agent', 'status' => 'resolved']);
         } elseif ($action === 'propose') {
             $draft = trim((string) ($data['reply_body'] ?? ''));
+            // agent_handled_at: an den Menschen übergeben → der Worker zieht es nicht erneut.
             $ticket->update(['is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
-                'agent_waiting_at' => null, 'agent_session_id' => null]);
+                'agent_waiting_at' => null, 'agent_session_id' => null, 'agent_handled_at' => now()]);
             $this->postToTicketThread($ticket, (int) $request->user()?->id,
                 "Lösungs-Vorschlag des Support-Workers (bitte prüfen + senden):\n\n".$draft);
             $ticket->logActivity('Supporter: Lösungs-Vorschlag zur Freigabe hinterlegt.', ['source' => 'agent', 'status' => 'proposed']);
@@ -441,6 +443,8 @@ class AgentController extends Controller
                 'escalation_count' => (int) $ticket->escalation_count + 1,
                 'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
                 'agent_waiting_at' => null, 'agent_session_id' => null,
+                // an einen Menschen übergeben → nicht erneut vom Worker ziehen.
+                'agent_handled_at' => now(),
             ]);
             $ticket->logActivity('Supporter: eskaliert.'.(! empty($data['note']) ? "\n\n".$data['note'] : ''), ['source' => 'agent', 'status' => 'escalated']);
         }
