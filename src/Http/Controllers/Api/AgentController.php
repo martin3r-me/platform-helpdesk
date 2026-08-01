@@ -430,6 +430,7 @@ class AgentController extends Controller
             'action' => 'required|in:reply_close,propose,escalate,ask',
             'reply_body' => 'nullable|string|max:20000',
             'note' => 'nullable|string|max:5000',
+            'resolution' => 'nullable|string|max:20000',
             'session_id' => 'nullable|string|max:255',
             'kb' => 'nullable|array',
             'kb.problem' => 'nullable|string|max:10000',
@@ -472,6 +473,9 @@ class AgentController extends Controller
             $ticket->update([
                 'is_done' => true,
                 'done_at' => now(),
+                // Prozess-bewusste Lösung (aus dem vollen Verlauf) → beim Auto-Index als
+                // solution-Metadatum ins Retrieval (indexIfNovel liest $ticket->resolution).
+                'resolution' => trim((string) ($data['resolution'] ?? '')) ?: $ticket->resolution,
                 'helpdesk_board_slot_id' => $this->slotFor($ticket, 'solved') ?? $ticket->helpdesk_board_slot_id,
                 'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
                 'agent_waiting_at' => null, 'agent_waiting_kind' => null, 'agent_session_id' => null,

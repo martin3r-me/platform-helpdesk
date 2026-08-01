@@ -69,7 +69,10 @@ class TicketRetrievalService
                 entityType: $type,
                 entityId: $t->id,
                 text: $text,
-                metadata: ['kind' => 'ticket', 'category_id' => $t->helpdesk_board_category_id, 'category' => $t->category?->name],
+                metadata: ['kind' => 'ticket', 'category_id' => $t->helpdesk_board_category_id, 'category' => $t->category?->name,
+                    // Embeddet wird das PROBLEM (Matching); die prozess-bewusste Lösung reist als
+                    // Payload mit → resolutions() liefert „ähnliches Problem → so wurde es gelöst".
+                    'solution' => trim((string) $t->resolution) ?: null],
             );
 
             return 'embedded';
