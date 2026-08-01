@@ -31,7 +31,7 @@ class TicketRetrievalService
      * bringt (kein sehr ähnlicher Anker DERSELBEN Kategorie existiert). Verhindert Bloat durch
      * Fast-Duplikate. Gibt zurück: 'embedded' | 'covered' | 'skipped' | 'error'.
      */
-    public function indexIfNovel(HelpdeskTicket $t): string
+    public function indexIfNovel(HelpdeskTicket $t, bool $force = false): string
     {
         if (! $t->is_done || ! $t->helpdesk_board_category_id) {
             return 'skipped';
@@ -44,22 +44,26 @@ class TicketRetrievalService
         $svc = app(EmbeddingService::class);
         $type = $this->entityType((int) $t->helpdesk_board_id);
 
-        try {
-            $hits = $svc->search((int) $t->team_id, $text, [$type], 5, 0.0);
-        } catch (\Throwable $e) {
-            $hits = [];
-        }
-        foreach ($hits as $h) {
-            if ((string) ($h['entity_id'] ?? '') === (string) $t->id) {
-                continue; // sich selbst nicht als „Abdeckung" zählen
+        // $force (Learn-Stufe: nachträglich gelernte Lösung nachtragen) → Admission-Gate
+        // überspringen, das Ticket ist schon aufgenommen; wir aktualisieren nur die Metadaten.
+        if (! $force) {
+            try {
+                $hits = $svc->search((int) $t->team_id, $text, [$type], 5, 0.0);
+            } catch (\Throwable $e) {
+                $hits = [];
             }
-            $m = $h['metadata'] ?? [];
-            if (! is_array($m)) {
-                $m = json_decode((string) $m, true) ?: [];
-            }
-            if ((float) ($h['score'] ?? 0) >= self::COVER_THRESHOLD
-                && (int) ($m['category_id'] ?? 0) === (int) $t->helpdesk_board_category_id) {
-                return 'covered';
+            foreach ($hits as $h) {
+                if ((string) ($h['entity_id'] ?? '') === (string) $t->id) {
+                    continue; // sich selbst nicht als „Abdeckung" zählen
+                }
+                $m = $h['metadata'] ?? [];
+                if (! is_array($m)) {
+                    $m = json_decode((string) $m, true) ?: [];
+                }
+                if ((float) ($h['score'] ?? 0) >= self::COVER_THRESHOLD
+                    && (int) ($m['category_id'] ?? 0) === (int) $t->helpdesk_board_category_id) {
+                    return 'covered';
+                }
             }
         }
 
@@ -73,6 +77,7 @@ class TicketRetrievalService
                     // Embeddet wird das PROBLEM (Matching); die prozess-bewusste Lösung reist als
                     // Payload mit → resolutions() liefert „ähnliches Problem → so wurde es gelöst".
                     'solution' => trim((string) $t->resolution) ?: null],
+                force: $force,
             );
 
             return 'embedded';

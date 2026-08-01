@@ -21,6 +21,8 @@ Route::prefix('agent')->middleware('auth:api')->group(function () {
     Route::post('/boards/{board}/index-solved', [AgentController::class, 'indexSolvedTickets'])->name('helpdesk.api.agent.index-solved');
     Route::post('/tickets/next-triaged', [AgentController::class, 'nextTriagedTicket'])->name('helpdesk.api.agent.next-triaged');
     Route::post('/tickets/{id}/resolve', [AgentController::class, 'resolveTicket'])->name('helpdesk.api.agent.resolve');
+    Route::post('/tickets/next-learnable', [AgentController::class, 'nextLearnableTicket'])->name('helpdesk.api.agent.next-learnable');
+    Route::post('/tickets/{id}/learn', [AgentController::class, 'learnTicket'])->name('helpdesk.api.agent.learn');
 });
 
 Route::get('/tickets/datawarehouse', [TicketDatawarehouseController::class, 'index']);

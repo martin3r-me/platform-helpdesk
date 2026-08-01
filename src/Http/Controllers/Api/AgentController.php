@@ -593,6 +593,142 @@ class AgentController extends Controller
         return $ownerId;
     }
 
+    /**
+     * POST /api/helpdesk/agent/tickets/next-learnable  { board_ids }
+     * Learn-Stufe (nächtlich): nächstes ABGESCHLOSSENE Ticket OHNE `resolution` und noch
+     * nicht gelernt (learned_at null), kategorisiert. Liefert den vollen Verlauf zum
+     * Destillieren. Nebenbei: Slot-Aufräumen (is_done ohne Gelöst-Slot → Gelöst).
+     */
+    public function nextLearnableTicket(Request $request): JsonResponse
+    {
+        $boardIds = collect($request->input('board_ids', []))->map('intval')->filter()->values()->all();
+        if (empty($boardIds)) {
+            return response()->json(null, 204);
+        }
+        $workerId = (int) $request->user()?->id;
+
+        $this->normalizeSolvedSlots($boardIds);
+
+        $ticket = HelpdeskTicket::query()
+            ->whereIn('helpdesk_board_id', $boardIds)
+            ->where('is_done', true)
+            ->whereNull('resolution')
+            ->whereNull('learned_at')
+            ->whereNotNull('helpdesk_board_category_id')
+            ->where(function ($q) {
+                $q->where('is_locked', false)->orWhereNull('locked_at')->orWhere('locked_at', '<', now()->subMinutes(30));
+            })
+            ->orderBy('done_at')
+            ->with('category')->first();
+
+        if (! $ticket) {
+            return response()->json(null, 204);
+        }
+
+        $ticket->update(['is_locked' => true, 'locked_at' => now(), 'locked_by_user_id' => $workerId]);
+
+        return response()->json(['data' => [
+            'id' => $ticket->id,
+            'uuid' => $ticket->uuid,
+            'title' => $ticket->title,
+            'category' => $ticket->category?->name,
+            'conversation' => $this->conversationText($ticket),
+        ]]);
+    }
+
+    /**
+     * POST /api/helpdesk/agent/tickets/{id}/learn  { resolution? }
+     * Ergebnis der Learn-Stufe: resolution gesetzt → als solution-Metadatum in den Index
+     * (force, auch wenn das Problem schon embeddet war). Leer = „nichts zu lernen".
+     * In beiden Fällen learned_at → nicht erneut sweepen.
+     */
+    public function learnTicket(Request $request, int $id): JsonResponse
+    {
+        $data = $request->validate(['resolution' => 'nullable|string|max:20000']);
+        $ticket = HelpdeskTicket::with('category')->find($id);
+        if (! $ticket) {
+            return response()->json(['message' => 'Ticket not found'], 404);
+        }
+        $resolution = trim((string) ($data['resolution'] ?? ''));
+        $ticket->update([
+            'resolution' => $resolution ?: null,
+            'learned_at' => now(),
+            'is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
+        ]);
+        $indexed = false;
+        if ($resolution !== '') {
+            try {
+                app(\Platform\Helpdesk\Services\TicketRetrievalService::class)->indexIfNovel($ticket->fresh(), force: true);
+                $indexed = true;
+            } catch (\Throwable $e) {
+                Log::warning('[Helpdesk Agent] Learn-Index fehlgeschlagen: '.$e->getMessage());
+            }
+        }
+
+        return response()->json(['data' => ['id' => $ticket->id, 'learned' => $resolution !== '', 'indexed' => $indexed]]);
+    }
+
+    /** is_done-Tickets, die nicht im Gelöst-Slot hängen, dorthin ziehen (Aufräumen). */
+    protected function normalizeSolvedSlots(array $boardIds): void
+    {
+        $tickets = HelpdeskTicket::query()
+            ->whereIn('helpdesk_board_id', $boardIds)
+            ->where('is_done', true)
+            ->limit(50)->get(['id', 'helpdesk_board_id', 'helpdesk_board_slot_id']);
+        foreach ($tickets as $t) {
+            $solved = $this->slotFor($t, 'solved');
+            if ($solved && (int) $t->helpdesk_board_slot_id !== $solved) {
+                $t->update(['helpdesk_board_slot_id' => $solved]);
+            }
+        }
+    }
+
+    /** Voller Verlauf eines Tickets fürs Destillieren: Problem + Mail-Thread + interne Notizen. */
+    protected function conversationText(HelpdeskTicket $ticket): string
+    {
+        $parts = ['PROBLEM:'."\n".trim((string) $ticket->notes)];
+
+        $thread = $this->resolveTicketThread($ticket);
+        if ($thread) {
+            try {
+                foreach (\Platform\Crm\Models\CommsEmailInboundMail::where('thread_id', $thread->id)->orderBy('id')->get() as $m) {
+                    $b = trim((string) ($m->text_body ?? ''));
+                    if ($b !== '') {
+                        $parts[] = 'KUNDE:'."\n".mb_substr($b, 0, 2000);
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
+            try {
+                foreach (\Platform\Crm\Models\CommsEmailOutboundMail::where('thread_id', $thread->id)->orderBy('id')->get() as $m) {
+                    $b = trim(strip_tags((string) ($m->text_body ?? $m->html_body ?? '')));
+                    if ($b !== '') {
+                        $parts[] = 'SUPPORT:'."\n".mb_substr($b, 0, 2000);
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
+        try {
+            $ctx = \Platform\Core\Models\TerminalMessage::query()
+                ->join('terminal_channels as tc', 'terminal_messages.channel_id', '=', 'tc.id')
+                ->where('tc.context_type', HelpdeskTicket::class)
+                ->where('tc.context_id', $ticket->id)
+                ->orderBy('terminal_messages.id')->limit(30)
+                ->pluck('terminal_messages.body_plain');
+            foreach ($ctx as $b) {
+                $b = trim((string) $b);
+                if ($b !== '') {
+                    $parts[] = 'INTERN:'."\n".mb_substr($b, 0, 1500);
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+
+        return mb_substr(implode("\n\n", $parts), 0, 8000);
+    }
+
     /** Den E-Mail-Thread eines Tickets auflösen (Pivot bevorzugt, Fallback Legacy-Spalten). */
     protected function resolveTicketThread(HelpdeskTicket $ticket): ?\Platform\Crm\Models\CommsEmailThread
     {

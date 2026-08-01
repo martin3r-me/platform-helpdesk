@@ -37,6 +37,7 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
         'title',
         'notes',
         'resolution',
+        'learned_at',
         'dod',
         'due_date',
         'priority',
