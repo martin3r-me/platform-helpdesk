@@ -496,10 +496,11 @@ class AgentController extends Controller
                 'agent_waiting_at' => now(), 'agent_waiting_kind' => 'approval',
                 'agent_session_id' => $data['session_id'] ?? $ticket->agent_session_id,
                 'helpdesk_board_slot_id' => $this->slotFor($ticket, 'waiting') ?? $ticket->helpdesk_board_slot_id]);
-            // @Mention + Zuweisung an den Verantwortlichen → er weiß, dass ein Vorschlag auf ihn wartet.
+            // Nur @Mention (KEIN Reassign): der Worker bleibt Owner/Problemlöser und wartet
+            // auf die Freigabe — wie eine Rückfrage. Verantwortlicher wechselt nur bei escalate.
             $this->handToHuman($ticket, (int) $request->user()?->id,
                 "Lösungs-Vorschlag des Support-Workers — bitte hier freigeben: antworte „passt/senden\", "
-                ."oder nenne die gewünschte Änderung (dann überarbeite ich):\n\n".$draft);
+                ."oder nenne die gewünschte Änderung (dann überarbeite ich):\n\n".$draft, assign: false);
             $ticket->logActivity('Supporter: Vorschlag zur Freigabe hinterlegt — wartet auf OK im Thread.', ['source' => 'agent', 'status' => 'proposed']);
         } else { // escalate
             $ticket->update([
@@ -561,17 +562,19 @@ class AgentController extends Controller
     }
 
     /**
-     * Übergabe an den Menschen: Verantwortlichen setzen (falls noch offen) = Board-Owner,
-     * + Nachricht mit @Mention in den Kontext-Thread → er wird benachrichtigt und ist „am Ball".
-     * Gibt die zuständige User-ID zurück (oder null).
+     * Benachrichtigung mit @Mention in den Kontext-Thread an den zuständigen Menschen
+     * (Board-Owner). $assign=true wechselt zusätzlich die Zuständigkeit — NUR bei echter
+     * Übergabe (escalate: Worker kann nicht lösen). Bei Rückfrage/Freigabe bleibt der
+     * Worker Owner und Problemlöser (wartet + resumed), analog zu dev/planner — dann nur
+     * benachrichtigen, NICHT umhängen. Gibt die adressierte User-ID zurück.
      */
-    protected function handToHuman(HelpdeskTicket $ticket, int $senderId, string $body): ?int
+    protected function handToHuman(HelpdeskTicket $ticket, int $senderId, string $body, bool $assign = true): ?int
     {
         $ownerId = (int) ($ticket->user_in_charge_id ?: $ticket->helpdeskBoard?->user_id ?: $ticket->user_id);
         if ($ownerId < 1) {
             return null;
         }
-        if (! $ticket->user_in_charge_id) {
+        if ($assign && ! $ticket->user_in_charge_id) {
             $ticket->update(['user_in_charge_id' => $ownerId]);
         }
         try {
