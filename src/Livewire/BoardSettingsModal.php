@@ -45,6 +45,7 @@ class BoardSettingsModal extends Component
         return [
             'board.name' => 'required|string|max:255',
             'board.description' => 'nullable|string',
+            'board.require_triage' => 'boolean',
             'board.helpdesk_board_sla_id' => 'nullable|exists:helpdesk_board_slas,id',
             'newServiceZeit.name' => 'required|string|max:255',
             'newServiceZeit.description' => 'nullable|string',

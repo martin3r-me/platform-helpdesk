@@ -30,10 +30,12 @@ class HelpdeskBoard extends Model implements HasDisplayName, AgendaRenderable, H
         'order',
         'user_id',
         'team_id',
+        'require_triage',
     ];
 
     protected $casts = [
         'uuid' => 'string',
+        'require_triage' => 'boolean',
     ];
 
     protected static function booted(): void

@@ -83,6 +83,15 @@
                             <span class="text-xs text-red-600 mt-1">{{ $message }}</span>
                         @enderror
                     </div>
+
+                    <label class="flex items-start gap-3 cursor-pointer rounded-md border border-gray-200 p-3 hover:bg-gray-50 transition-colors">
+                        <input type="checkbox" wire:model="board.require_triage"
+                               class="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#049b5c] focus:ring-[#049b5c]">
+                        <span>
+                            <span class="block text-sm font-medium text-gray-800">✅ Triage-Pflicht</span>
+                            <span class="block text-xs text-gray-500">Neue Tickets werden erst von der Triage bearbeitet (Eingangsbestätigung + Einordnung), bevor der Supporter sie zieht. Standardmäßig an — nur ausschalten, wenn der Supporter Tickets direkt aus dem Backlog nehmen soll.</span>
+                        </span>
+                    </label>
                 </div>
             </div>
 

@@ -269,9 +269,20 @@ class AgentController extends Controller
             return response()->json(['data' => $this->triagedPayload($resume, true, 'customer', $msg)]);
         }
 
+        // Triage-Pflicht ist eine Eigenschaft der QUELLE (Board, Default an). Boards MIT Pflicht:
+        // nur triagierte Tickets (Slot gesetzt = raus aus Backlog). Boards OHNE Pflicht: der
+        // Supporter darf auch untriagierte ziehen. So bleibt das bisherige Verhalten (alle
+        // Boards default an), ist aber pro Board abschaltbar — einheitlich mit dev/planner.
+        $requireTriageBoardIds = \Platform\Helpdesk\Models\HelpdeskBoard::whereIn('id', $boardIds)
+            ->where('require_triage', true)->pluck('id')->all();
+
         $ticket = HelpdeskTicket::query()
             ->whereIn('helpdesk_board_id', $boardIds)
-            ->whereNotNull('helpdesk_board_slot_id')   // triagiert = keinem Backlog mehr
+            ->where(function ($q) use ($requireTriageBoardIds) {
+                // Board ohne Triage-Pflicht → jedes Ticket; sonst nur triagierte (Slot gesetzt).
+                $q->whereNotIn('helpdesk_board_id', $requireTriageBoardIds)
+                  ->orWhereNotNull('helpdesk_board_slot_id');
+            })
             ->where('is_done', false)
             ->whereNull('agent_waiting_at')            // auf Kundenantwort wartende überspringen (Resume-Pass holt sie)
             ->whereNull('agent_handled_at')            // bereits vom Worker behandelt (Vorschlag/Eskalation) → Mensch ist dran
