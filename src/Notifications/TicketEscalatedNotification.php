@@ -35,7 +35,7 @@ class TicketEscalatedNotification extends Notification implements ShouldQueue
             ->line("**Ticket-Details:**")
             ->line("• **Titel:** {$this->ticket->title}")
             ->line("• **Board:** {$boardName}")
-            ->line("• **Eskalations-Level:** {$escalationLevel->label()}")
+            ->line("• **Eskalations-Level:** {$escalationLevel->description()}")
             ->line("• **Grund:** {$this->escalation->reason}")
             ->line("• **Erstellt:** {$this->ticket->created_at->format('d.m.Y H:i')}")
             ->line("• **Eskaliert:** {$this->escalation->escalated_at->format('d.m.Y H:i')}")
