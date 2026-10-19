@@ -160,13 +160,13 @@ class HelpdeskTicket extends Model implements HasDisplayName, SocialMediaAccount
         if (! $assignee || ! $actor || (int) $assignee === (int) $actor) {
             return;
         }
-        if (! class_exists(\Platform\Inbox\Inbox::class)) {
+        if (! class_exists(\Platform\Core\Inbox\Inbox::class)) {
             return;
         }
 
         try {
             $assigner = Auth::user();
-            \Platform\Inbox\Inbox::deliver([
+            \Platform\Core\Inbox\Inbox::deliver([
                 'user_id'           => (int) $assignee,
                 'team_id'           => (int) $ticket->team_id,
                 'channel'           => 'ticket',
