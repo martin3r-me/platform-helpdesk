@@ -3,14 +3,16 @@
 namespace Platform\Helpdesk\Organization;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Platform\Helpdesk\Models\HelpdeskBoard;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Organization\Contracts\EntityLinkProvider;
+use Platform\Organization\Contracts\HasContextParent;
 use Platform\Organization\Contracts\HasMetricDefinitions;
 use Platform\Organization\Contracts\HasPersonMetrics;
 
-class HelpdeskEntityLinkProvider implements EntityLinkProvider, HasMetricDefinitions, HasPersonMetrics
+class HelpdeskEntityLinkProvider implements EntityLinkProvider, HasContextParent, HasMetricDefinitions, HasPersonMetrics
 {
     public function morphAliases(): array
     {
@@ -257,5 +259,15 @@ class HelpdeskEntityLinkProvider implements EntityLinkProvider, HasMetricDefinit
             'story_points_total' => ['label' => 'Story Points gesamt', 'group' => 'persons', 'direction' => 'neutral', 'unit' => 'points'],
             'story_points_done'  => ['label' => 'Story Points erledigt', 'group' => 'persons', 'direction' => 'up', 'unit' => 'points'],
         ];
+    }
+
+    /**
+     * Ticket ohne eigene Verortung erbt vom Board.
+     */
+    public function contextParent(string $morphAlias, Model $object): ?array
+    {
+        return $morphAlias === 'helpdesk_ticket' && $object->helpdesk_board_id
+            ? ['helpdesk_board', (int) $object->helpdesk_board_id]
+            : null;
     }
 }
