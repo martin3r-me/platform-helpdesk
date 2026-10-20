@@ -109,24 +109,6 @@ class Ticket extends Component
             ],
         ]);
 
-        // Playground-Kontext setzen - ermöglicht LLM den Ticket-Kontext zu kennen
-        \Log::info('[Playground] Ticket dispatching playground event', ['ticket_id' => $this->ticket->id, 'title' => $this->ticket->title]);
-        $this->dispatch('playground', [
-            'type' => 'Ticket',
-            'model' => get_class($this->ticket),
-            'modelId' => $this->ticket->id,
-            'title' => $this->ticket->title,
-            'description' => $this->ticket->notes ?? '',
-            'url' => route('helpdesk.tickets.show', $this->ticket),
-            'source' => 'helpdesk.ticket.view',
-            'meta' => [
-                'priority' => $this->ticket->priority,
-                'due_date' => $this->ticket->due_date?->toIso8601String(),
-                'story_points' => $this->ticket->story_points,
-                'is_done' => $this->ticket->is_done,
-                'board' => $this->ticket->helpdeskBoard?->name,
-            ],
-        ]);
     }
 
     public function updatedTicket($property, $value)
