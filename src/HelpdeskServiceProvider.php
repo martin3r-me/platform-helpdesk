@@ -3,7 +3,6 @@
 namespace Platform\Helpdesk;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -84,7 +83,7 @@ class HelpdeskServiceProvider extends ServiceProvider
 
         // Modul-Registrierung nur, wenn Config & Tabelle vorhanden
         if (
-            Schema::hasTable('modules')
+            PlatformCore::modulesTableExists()
         ) {
             PlatformCore::registerModule([
                 'key'        => 'helpdesk',
