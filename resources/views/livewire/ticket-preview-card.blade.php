@@ -75,7 +75,7 @@
         <div class="mb-3">
             <span class="inline-flex items-start gap-1 text-xs text-gray-500 min-w-0">
                 @if($userInCharge->avatar)
-                    <img src="{{ $userInCharge->avatar }}" alt="{{ $userInCharge->name ?? $userInCharge->email }}" class="w-3.5 h-3.5 rounded-full object-cover mt-0.5">
+                    <img src="{{ method_exists($userInCharge, 'avatarUrl') ? $userInCharge->avatarUrl() : $userInCharge->avatar }}" loading="lazy" alt="{{ $userInCharge->name ?? $userInCharge->email }}" class="w-3.5 h-3.5 rounded-full object-cover mt-0.5">
                 @else
                     <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-gray-100 border border-gray-200 text-[10px] text-gray-500 mt-0.5">{{ $initials }}</span>
                 @endif
