@@ -247,18 +247,8 @@ class AgentController extends Controller
 
         $workerId = (int) $request->user()?->id;
 
-        // Resume-First (beides setzt die geparkte Claude-Session fort, kein Reassign):
-        //  1) Freigabe-Loop: Supervisor hat den Vorschlag im Kontext-Thread beantwortet.
-        //  2) Kunden-Rückfrage: Kunde hat per E-Mail auf eine Rückfrage geantwortet.
-        if ($resume = $this->resumableApproval($boardIds, $workerId)) {
-            $msg = $this->supervisorReplyText($resume, $workerId);
-            $resume->update([
-                'agent_waiting_at' => null, 'agent_waiting_kind' => null,
-                'is_locked' => true, 'locked_at' => now(), 'locked_by_user_id' => $workerId,
-            ]);
-
-            return response()->json(['data' => $this->triagedPayload($resume, true, 'approval', $msg)]);
-        }
+        // Resume-First: Kunde hat per E-Mail auf eine Rückfrage geantwortet (setzt die geparkte
+        // Claude-Session fort, kein Reassign). Freigaben laufen nicht mehr über einen Chat-Thread.
         if ($resume = $this->resumableTicket($boardIds)) {
             $msg = $this->latestInboundText($this->resolveTicketThread($resume));
             $resume->update([
@@ -329,7 +319,7 @@ class AgentController extends Controller
             'thread_id' => $thread?->id,
             'from' => $thread?->last_inbound_from_address,
             'resolutions' => $svc->resolutions($ticket, $text),
-            // Resume-Signal: gemerkte Session + Art (customer=Kundenantwort / approval=Supervisor-OK)
+            // Resume-Signal: gemerkte Session + Art (customer = Kundenantwort per E-Mail)
             // + die auslösende Nachricht.
             'resume' => $resume,
             'resume_kind' => $resume ? $resumeKind : null,
@@ -363,53 +353,6 @@ class AgentController extends Controller
             ->orderBy('agent_waiting_at')
             ->with('category')
             ->first();
-    }
-
-    /**
-     * Ein auf Supervisor-Freigabe wartendes Ticket (agent_waiting_kind='approval'), dessen
-     * Kontext-Thread seit dem Warten eine Nachricht von jemand ANDEREM als dem Worker bekam
-     * (= das OK/der Kommentar des Supervisors). Kontext-Channel wie PostContextMessage ihn
-     * anlegt: context_type = HelpdeskTicket-FQCN.
-     */
-    protected function resumableApproval(array $boardIds, int $workerId): ?HelpdeskTicket
-    {
-        $ctxType = HelpdeskTicket::class;
-
-        return HelpdeskTicket::query()
-            ->whereIn('helpdesk_board_id', $boardIds)
-            ->where('is_done', false)
-            ->where('agent_waiting_kind', 'approval')
-            ->whereNotNull('agent_session_id')
-            ->whereNotNull('agent_waiting_at')
-            ->whereExists(function ($q) use ($ctxType, $workerId) {
-                $q->select(DB::raw(1))
-                    ->from('terminal_messages as tm')
-                    ->join('terminal_channels as tc', 'tm.channel_id', '=', 'tc.id')
-                    ->where('tc.context_type', $ctxType)
-                    ->whereColumn('tc.context_id', 'helpdesk_tickets.id')
-                    ->where('tm.user_id', '!=', $workerId)
-                    ->whereColumn('tm.created_at', '>', 'helpdesk_tickets.agent_waiting_at');
-            })
-            ->orderBy('agent_waiting_at')
-            ->with('category')
-            ->first();
-    }
-
-    /** Jüngste Supervisor-Nachricht im Kontext-Thread seit dem Warten (das Freigabe-OK). */
-    protected function supervisorReplyText(HelpdeskTicket $ticket, int $workerId): ?string
-    {
-        $body = \Platform\Core\Models\TerminalMessage::query()
-            ->join('terminal_channels as tc', 'terminal_messages.channel_id', '=', 'tc.id')
-            ->where('tc.context_type', HelpdeskTicket::class)
-            ->where('tc.context_id', $ticket->id)
-            ->where('terminal_messages.user_id', '!=', $workerId)
-            ->where('terminal_messages.created_at', '>', $ticket->agent_waiting_at)
-            ->orderByDesc('terminal_messages.id')
-            ->value('terminal_messages.body_plain');
-
-        $t = trim((string) $body);
-
-        return $t !== '' ? mb_substr($t, 0, 5000) : null;
     }
 
     /** Text der letzten Inbound-Mail eines Threads (Kundenantwort auf die Rückfrage). */
@@ -503,20 +446,15 @@ class AgentController extends Controller
             }
             $ticket->logActivity('Supporter: gelöst'.($sent ? ' + Antwort gesendet' : '').'.', ['source' => 'agent', 'status' => 'resolved']);
         } elseif ($action === 'propose') {
-            // Freigabe-Loop: Entwurf in den Thread + WARTEN auf das OK des Supervisors dort.
-            // Antwortet er (z. B. „passt, senden" oder Änderungswunsch), holt der Resume-Pass
-            // (resumableApproval) das Ticket zurück und der Worker setzt genau diese Session fort.
+            // Vorschlag zur Freigabe: Entwurf im Activity-Log festhalten + Warten-Zustand. Kein
+            // Chat-Thread mehr — die Freigabe (und das Auflösen des Wartens) macht ein Mensch.
             $draft = trim((string) ($data['reply_body'] ?? ''));
             $ticket->update(['is_locked' => false, 'locked_at' => null, 'locked_by_user_id' => null,
                 'agent_waiting_at' => now(), 'agent_waiting_kind' => 'approval',
                 'agent_session_id' => $data['session_id'] ?? $ticket->agent_session_id,
                 'helpdesk_board_slot_id' => $this->slotFor($ticket, 'waiting') ?? $ticket->helpdesk_board_slot_id]);
-            // Nur @Mention (KEIN Reassign): der Worker bleibt Owner/Problemlöser und wartet
-            // auf die Freigabe — wie eine Rückfrage. Verantwortlicher wechselt nur bei escalate.
-            $this->handToHuman($ticket, (int) $request->user()?->id,
-                "Lösungs-Vorschlag des Support-Workers — bitte hier freigeben: antworte „passt/senden\", "
-                ."oder nenne die gewünschte Änderung (dann überarbeite ich):\n\n".$draft, assign: false);
-            $ticket->logActivity('Supporter: Vorschlag zur Freigabe hinterlegt — wartet auf OK im Thread.', ['source' => 'agent', 'status' => 'proposed']);
+            $ticket->logActivity('Supporter: Vorschlag zur Freigabe hinterlegt — wartet auf OK.'
+                .($draft !== '' ? "\n\n".$draft : ''), ['source' => 'agent', 'status' => 'proposed']);
         } else { // escalate
             $ticket->update([
                 'escalation_level' => 'escalated',
@@ -528,24 +466,12 @@ class AgentController extends Controller
                 'agent_handled_at' => now(),
                 'helpdesk_board_slot_id' => $this->slotFor($ticket, 'in_progress') ?? $ticket->helpdesk_board_slot_id,
             ]);
-            // @Mention + Zuweisung → der Verantwortliche ist jetzt am Ball.
-            $this->handToHuman($ticket, (int) $request->user()?->id,
-                "Support-Worker hat ESKALIERT — du bist am Ball:\n\n".(! empty($data['note']) ? $data['note'] : '(kein Grund angegeben)'));
+            // Zuweisung an den zuständigen Menschen (Board-Owner) → er ist jetzt am Ball.
+            $this->assignToHuman($ticket);
             $ticket->logActivity('Supporter: eskaliert.'.(! empty($data['note']) ? "\n\n".$data['note'] : ''), ['source' => 'agent', 'status' => 'escalated']);
         }
 
         return response()->json(['data' => ['id' => $ticket->id, 'action' => $action, 'mail_sent' => $sent, 'is_done' => (bool) $ticket->is_done]]);
-    }
-
-    /** Nachricht in den Kontext-Thread eines Tickets posten (find-or-create) — für Vorschläge. */
-    protected function postToTicketThread(HelpdeskTicket $ticket, int $senderId, string $body): void
-    {
-        try {
-            app(\Platform\Core\Services\PostContextMessage::class)
-                ->post((int) $ticket->team_id, HelpdeskTicket::class, $ticket->id, $ticket->title, $senderId, $body);
-        } catch (\Throwable $e) {
-            Log::warning('[Helpdesk Agent] Vorschlag-Thread fehlgeschlagen: '.$e->getMessage());
-        }
     }
 
     /**
@@ -577,28 +503,17 @@ class AgentController extends Controller
     }
 
     /**
-     * Benachrichtigung mit @Mention in den Kontext-Thread an den zuständigen Menschen
-     * (Board-Owner). $assign=true wechselt zusätzlich die Zuständigkeit — NUR bei echter
-     * Übergabe (escalate: Worker kann nicht lösen). Bei Rückfrage/Freigabe bleibt der
-     * Worker Owner und Problemlöser (wartet + resumed), analog zu dev/planner — dann nur
-     * benachrichtigen, NICHT umhängen. Gibt die adressierte User-ID zurück.
+     * Echte Übergabe (escalate): Zuständigkeit an den Menschen (Ticket-Verantwortlicher,
+     * sonst Board-Owner, sonst Ersteller). Gibt die User-ID zurück.
      */
-    protected function handToHuman(HelpdeskTicket $ticket, int $senderId, string $body, bool $assign = true): ?int
+    protected function assignToHuman(HelpdeskTicket $ticket): ?int
     {
         $ownerId = (int) ($ticket->user_in_charge_id ?: $ticket->helpdeskBoard?->user_id ?: $ticket->user_id);
         if ($ownerId < 1) {
             return null;
         }
-        if ($assign && ! $ticket->user_in_charge_id) {
+        if (! $ticket->user_in_charge_id) {
             $ticket->update(['user_in_charge_id' => $ownerId]);
-        }
-        try {
-            app(\Platform\Core\Services\PostContextMessage::class)->post(
-                (int) $ticket->team_id, HelpdeskTicket::class, $ticket->id, $ticket->title,
-                $senderId, $body, [$ownerId], [$ownerId] // member + mention → Benachrichtigung
-            );
-        } catch (\Throwable $e) {
-            Log::warning('[Helpdesk Agent] Handoff-Nachricht fehlgeschlagen: '.$e->getMessage());
         }
 
         return $ownerId;
@@ -694,7 +609,7 @@ class AgentController extends Controller
         }
     }
 
-    /** Voller Verlauf eines Tickets fürs Destillieren: Problem + Mail-Thread + interne Notizen. */
+    /** Voller Verlauf eines Tickets fürs Destillieren: Problem + Mail-Thread. */
     protected function conversationText(HelpdeskTicket $ticket): string
     {
         $parts = ['PROBLEM:'."\n".trim((string) $ticket->notes)];
@@ -719,22 +634,6 @@ class AgentController extends Controller
                 }
             } catch (\Throwable $e) {
             }
-        }
-
-        try {
-            $ctx = \Platform\Core\Models\TerminalMessage::query()
-                ->join('terminal_channels as tc', 'terminal_messages.channel_id', '=', 'tc.id')
-                ->where('tc.context_type', HelpdeskTicket::class)
-                ->where('tc.context_id', $ticket->id)
-                ->orderBy('terminal_messages.id')->limit(30)
-                ->pluck('terminal_messages.body_plain');
-            foreach ($ctx as $b) {
-                $b = trim((string) $b);
-                if ($b !== '') {
-                    $parts[] = 'INTERN:'."\n".mb_substr($b, 0, 1500);
-                }
-            }
-        } catch (\Throwable $e) {
         }
 
         return mb_substr(implode("\n\n", $parts), 0, 8000);
