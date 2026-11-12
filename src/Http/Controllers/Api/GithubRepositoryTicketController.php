@@ -6,7 +6,7 @@ use Platform\Core\Http\Controllers\ApiController;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Integrations\Models\IntegrationsGithubRepository;
 use Platform\Integrations\Models\IntegrationAccountLink;
-use Platform\Core\Services\OpenAiService;
+use Platform\Core\Services\AnthropicProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -643,7 +643,7 @@ class GithubRepositoryTicketController extends ApiController
         }
 
         try {
-            $openAiService = app(OpenAiService::class);
+            $claude = app(AnthropicProvider::class);
             
             // Erstelle strukturierten Prompt für Claude
             $prompt = $this->buildCodeAnalysisPrompt(
@@ -654,7 +654,7 @@ class GithubRepositoryTicketController extends ApiController
                 $repoFiles
             );
 
-            // Rufe Claude/OpenAI auf
+            // Claude-API
             $messages = [
                 [
                     'role' => 'system',
@@ -666,11 +666,10 @@ class GithubRepositoryTicketController extends ApiController
                 ],
             ];
 
-            $response = $openAiService->chat($messages, 'gpt-5.2', [
-                'max_tokens' => 4000,
+            $response = $claude->chat($messages, [
+                'max_tokens' => 8000,
                 'temperature' => 0.3,
-                'tools' => false,
-                'with_context' => false,
+                'timeout' => 180,
             ]);
 
             $analysis = $response['content'] ?? '';
