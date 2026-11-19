@@ -24,8 +24,6 @@ class Board extends Component
 
         // Staleness-Tracking
         $this->helpdeskBoard->recordView();
-
-        $this->loadGroups();
     }
 
     public function rendered()
@@ -257,6 +255,9 @@ class Board extends Component
 
     public function render()
     {
+        // $groups trägt dynamische Props (tasks) – die überleben den Livewire-Roundtrip nicht
+        $this->loadGroups();
+
         $unreadCount = 0;
         if (class_exists(NotificationsNotice::class)) {
             $unreadCount = NotificationsNotice::unread()
