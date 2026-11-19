@@ -3,16 +3,18 @@
 namespace Platform\Helpdesk\Livewire;
 
 use Livewire\Component;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
+use Platform\Core\Livewire\Concerns\HasPageContext;
 use Platform\Core\Livewire\Concerns\WithExtraFields;
 use Platform\Helpdesk\Models\HelpdeskTicket;
 use Platform\Notifications\Models\NotificationsNotice;
 
 class Ticket extends Component
 {
-    use WithExtraFields;
+    use WithExtraFields, HasPageContext;
     public $ticket;
     public $dueDateModalShow = false;
     public $calendarMonth; // Aktueller Monat (1-12)
@@ -64,38 +66,19 @@ class Ticket extends Component
         }
     }
 
-    public function rendered()
+    protected function pageContext(): ?Model
     {
-        // Extra-Fields-Kontext setzen (zeigt auf Board für Definitionen)
-        if ($this->ticket->helpdeskBoard) {
-            $this->dispatch('extrafields', [
-                'context_type' => get_class($this->ticket->helpdeskBoard),
-                'context_id' => $this->ticket->helpdeskBoard->id,
-            ]);
-        }
+        return $this->ticket;
+    }
 
-        // Organization-Kontext setzen - nur Zeiten erlauben, keine Entity-Verknüpfung, keine Dimensionen
-        $this->dispatch('organization', [
-            'context_type' => get_class($this->ticket),
-            'context_id' => $this->ticket->id,
-            'linked_contexts' => $this->ticket->helpdeskBoard ? [['type' => get_class($this->ticket->helpdeskBoard), 'id' => $this->ticket->helpdeskBoard->id]] : [],
-            'allow_time_entry' => true,
-            'allow_entities' => false,
-            'allow_dimensions' => false,
-        ]);
-
-        // Files-Tab im Terminal aktivieren
-        $this->dispatch('terminal:app:files');
-
-        // Comms-Kontext setzen - ermöglicht Kommunikation im Ticket-Kontext
-        $this->dispatch('comms', [
-            'model' => get_class($this->ticket),
-            'modelId' => $this->ticket->id,
+    protected function pageContextOptions(): array
+    {
+        return [
             'subject' => $this->ticket->title,
             'description' => $this->ticket->notes ?? '',
             'url' => route('helpdesk.tickets.show', $this->ticket),
             'source' => 'helpdesk.ticket.view',
-            'recipients' => [],
+            'apps' => ['links' => false],
             'capabilities' => [
                 'manage_channels' => false,
                 'threads' => true,
@@ -107,8 +90,22 @@ class Ticket extends Component
                 'is_done' => $this->ticket->is_done,
                 'board' => $this->ticket->helpdeskBoard?->name,
             ],
-        ]);
+        ];
+    }
 
+    public function rendered(): void
+    {
+        $this->dispatchPageContext();
+
+        // Zeiten nur im Ticket (Board als verknüpfter Kontext), keine Entity-Verknüpfung, keine Dimensionen
+        $this->dispatch('organization', [
+            'context_type' => get_class($this->ticket),
+            'context_id' => $this->ticket->id,
+            'linked_contexts' => $this->ticket->helpdeskBoard ? [['type' => get_class($this->ticket->helpdeskBoard), 'id' => $this->ticket->helpdeskBoard->id]] : [],
+            'allow_time_entry' => true,
+            'allow_entities' => false,
+            'allow_dimensions' => false,
+        ]);
     }
 
     public function updatedTicket($property, $value)
