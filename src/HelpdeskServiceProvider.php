@@ -73,6 +73,17 @@ class HelpdeskServiceProvider extends ServiceProvider
             // Organization-Modul nicht geladen
         }
 
+        // ImpactSource registrieren (Wirkung im people-Modul, loose Kopplung).
+        // HelpdeskImpactSource erbt von einer people-Klasse → nur instanziieren, wenn people da ist.
+        try {
+            if (class_exists(\Platform\People\Support\ImpactSourceBase::class)) {
+                resolve(\Platform\People\Services\ImpactSourceRegistry::class)
+                    ->register(new \Platform\Helpdesk\People\HelpdeskImpactSource());
+            }
+        } catch (\Throwable $e) {
+            // people-Modul nicht geladen
+        }
+
         // PersonActivityProvider registrieren (Dashboard Person-Metriken)
         try {
             resolve(\Platform\Organization\Services\PersonActivityRegistry::class)
