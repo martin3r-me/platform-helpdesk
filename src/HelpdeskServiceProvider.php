@@ -73,6 +73,11 @@ class HelpdeskServiceProvider extends ServiceProvider
             // Organization-Modul nicht geladen
         }
 
+        // Arbeitsfeld der Agenten (GET /api/org/agent/field) — nur, wenn organization es schon kennt
+        if (class_exists(\Platform\Organization\Support\AgentFieldSources::class)) {
+            \Platform\Organization\Support\AgentFieldSources::register(new \Platform\Helpdesk\Organization\HelpdeskAgentField());
+        }
+
         // ImpactSource registrieren (Wirkung im people-Modul, loose Kopplung).
         // HelpdeskImpactSource erbt von einer people-Klasse → nur instanziieren, wenn people da ist.
         try {
